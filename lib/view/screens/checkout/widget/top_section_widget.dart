@@ -3,21 +3,19 @@ import 'package:efood_multivendor/controller/location_controller.dart';
 import 'package:efood_multivendor/controller/order_controller.dart';
 import 'package:efood_multivendor/controller/restaurant_controller.dart';
 import 'package:efood_multivendor/controller/splash_controller.dart';
-import 'package:efood_multivendor/data/model/response/address_model.dart';
 import 'package:efood_multivendor/helper/price_converter.dart';
 import 'package:efood_multivendor/helper/responsive_helper.dart';
-import 'package:efood_multivendor/helper/route_helper.dart';
 import 'package:efood_multivendor/util/dimensions.dart';
 import 'package:efood_multivendor/util/images.dart';
 import 'package:efood_multivendor/util/styles.dart';
-import 'package:efood_multivendor/view/base/custom_dropdown.dart';
 import 'package:efood_multivendor/view/base/custom_snackbar.dart';
 import 'package:efood_multivendor/view/base/custom_text_field.dart';
-import 'package:efood_multivendor/view/screens/address/widget/address_widget.dart';
 import 'package:efood_multivendor/view/screens/cart/widget/delivery_option_button.dart';
 import 'package:efood_multivendor/view/screens/checkout/widget/order_type_widget.dart';
+import 'package:efood_multivendor/view/screens/checkout/widget/partial_pay_view.dart';
 import 'package:efood_multivendor/view/screens/checkout/widget/sections/coupon_section.dart';
 import 'package:efood_multivendor/view/screens/checkout/widget/sections/delivery_man_tips_section.dart';
+import 'package:efood_multivendor/view/screens/checkout/widget/sections/delivery_section.dart';
 import 'package:efood_multivendor/view/screens/checkout/widget/sections/payment_section.dart';
 import 'package:efood_multivendor/view/screens/checkout/widget/sections/time_slot_section.dart';
 import 'package:efood_multivendor/view/screens/checkout/widget/subscription_view.dart';
@@ -25,8 +23,8 @@ import 'package:efood_multivendor/view/screens/location/widget/permission_dialog
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:just_the_tooltip/just_the_tooltip.dart';
+
 class TopSectionWidget extends StatelessWidget {
   final double charge;
   final double deliveryCharge;
@@ -40,25 +38,33 @@ class TopSectionWidget extends StatelessWidget {
   final bool showTips;
   final bool isCashOnDeliveryActive;
   final bool isDigitalPaymentActive;
+  final bool isOfflinePaymentActive;
   final bool isWalletActive;
   final bool fromCart;
   final double total;
   final JustTheController tooltipController3;
   final JustTheController tooltipController2;
+  final TextEditingController guestNameTextEditingController;
+  final TextEditingController guestNumberTextEditingController;
+  final TextEditingController guestEmailController;
+  final FocusNode guestNumberNode;
+  final FocusNode guestEmailNode;
 
   const TopSectionWidget({
     Key? key, required this.charge, required this.deliveryCharge, required this.locationController,
     required this.tomorrowClosed, required this.todayClosed, required this.price, required this.discount,
     required this.addOns, required this.restaurantSubscriptionActive, required this.showTips,
     required this.isCashOnDeliveryActive, required this.isDigitalPaymentActive, required this.isWalletActive,
-    required this.fromCart, required this.total, required this.tooltipController3, required this.tooltipController2}) : super(key: key);
+    required this.fromCart, required this.total, required this.tooltipController3, required this.tooltipController2,
+    required this.guestNameTextEditingController, required this.guestNumberTextEditingController, required this.guestNumberNode,
+    required this.isOfflinePaymentActive, required this.guestEmailController, required this.guestEmailNode}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     bool takeAway = false;
     bool isDesktop = ResponsiveHelper.isDesktop(context);
-    GlobalKey<CustomDropdownState> dropDownKey = GlobalKey<CustomDropdownState>();
-    AddressModel addressModel;
+    bool isGuestLoggedIn = Get.find<AuthController>().isGuestLoggedIn();
+    bool isLoggedIn = Get.find<AuthController>().isLoggedIn();
 
     return GetBuilder<OrderController>(
       builder: (orderController) {
@@ -69,7 +75,7 @@ class TopSectionWidget extends StatelessWidget {
 
               SizedBox(height: !isDesktop && isCashOnDeliveryActive && restaurantSubscriptionActive ? Dimensions.paddingSizeSmall : 0),
 
-              isCashOnDeliveryActive && restaurantSubscriptionActive ? Container(
+              isCashOnDeliveryActive && restaurantSubscriptionActive && isLoggedIn ? Container(
                 width: context.width,
                 decoration: BoxDecoration(
                   color: Theme.of(context).cardColor,
@@ -171,172 +177,17 @@ class TopSectionWidget extends StatelessWidget {
               TimeSlotSection(fromCart: fromCart, orderController: orderController, restController: restController, tomorrowClosed: tomorrowClosed, todayClosed: todayClosed, tooltipController2: tooltipController2,),
 
               ///Delivery Address
-              orderController.orderType != 'take_away' ? Container(
-                margin: EdgeInsets.symmetric(horizontal: isDesktop ? 0 : Dimensions.fontSizeDefault),
-                padding: EdgeInsets.symmetric(horizontal: isDesktop ? Dimensions.paddingSizeLarge : Dimensions.paddingSizeSmall, vertical: Dimensions.paddingSizeSmall),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 2, spreadRadius: 1, offset: const Offset(1, 2))],
-                ),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                    Text('deliver_to'.tr, style: robotoMedium),
-                    InkWell(
-                      onTap: () async{
-                        dropDownKey.currentState?.toggleDropdown();
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall, horizontal: Dimensions.paddingSizeSmall),
-                        child: Icon(Icons.arrow_drop_down, size: 34, color: Theme.of(context).primaryColor),
-                      ),
-                    ),
-                  ]),
-
-
-                  Container(
-                    decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                        color: Colors.transparent,
-                        border: Border.all(color: Colors.transparent)
-                    ),
-                    child: CustomDropdown<int>(
-                      key: dropDownKey,
-                      hideIcon: true,
-                      onChange: (int? value, int index) async {
-
-                        if(value == -1) {
-                          var address = await Get.toNamed(RouteHelper.getAddAddressRoute(true, restController.restaurant!.zoneId));
-                          if(address != null) {
-                            orderController.streetNumberController.text = address.road ?? '';
-                            orderController.houseController.text = address.house ?? '';
-                            orderController.floorController.text = address.floor ?? '';
-
-                            orderController.getDistanceInMeter(
-                              LatLng(double.parse(address.latitude), double.parse(address.longitude )),
-                              LatLng(double.parse(restController.restaurant!.latitude!), double.parse(restController.restaurant!.longitude!)),
-                            );
-                          }
-                        } else if(value == -2) {
-                          _checkPermission(() async {
-                            addressModel = await locationController.getCurrentLocation(true, mapController: null, showSnackBar: true);
-
-                            if(addressModel.zoneIds!.isNotEmpty) {
-
-                              restController.insertAddresses(Get.context!, addressModel, notify: true);
-
-                              orderController.getDistanceInMeter(
-                                LatLng(
-                                  locationController.position.latitude, locationController.position.longitude,
-                                ),
-                                LatLng(double.parse(restController.restaurant!.latitude!), double.parse(restController.restaurant!.longitude!)),
-                              );
-                            }
-                          });
-
-                        } else{
-                          orderController.getDistanceInMeter(
-                            LatLng(
-                              double.parse(restController.address[value!].latitude!),
-                              double.parse(restController.address[value].longitude!),
-                            ),
-                            LatLng(double.parse(restController.restaurant!.latitude!), double.parse(restController.restaurant!.longitude!)),
-                          );
-                          orderController.setAddressIndex(value);
-
-                          orderController.streetNumberController.text = restController.address[value].road ?? '';
-                          orderController.houseController.text = restController.address[value].house ?? '';
-                          orderController.floorController.text = restController.address[value].floor ?? '';
-                        }
-
-                      },
-                      dropdownButtonStyle: DropdownButtonStyle(
-                        height: 0, width: double.infinity,
-                        padding: EdgeInsets.zero,
-                        backgroundColor: Colors.transparent,
-                        primaryColor: Theme.of(context).textTheme.bodyLarge!.color,
-                      ),
-                      dropdownStyle: DropdownStyle(
-                        elevation: 10,
-                        borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                        padding: const EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
-                      ),
-                      items: restController.addressList,
-                      child: const SizedBox(),
-
-                    ),
-                  ),
-                  Container(
-                    constraints: BoxConstraints(minHeight: ResponsiveHelper.isDesktop(context) ? 90 : 75),
-                    decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                        color: Theme.of(context).primaryColor.withOpacity(0.1),
-                        border: Border.all(color: Theme.of(context).primaryColor)
-                    ),
-                    child: AddressWidget(
-                      address: (restController.address.length-1) >= orderController.addressIndex ? restController.address[orderController.addressIndex] : restController.address[0],
-                      fromAddress: false, fromCheckout: true,
-                    ),
-                  ),
-
-                  SizedBox(height: ResponsiveHelper.isDesktop(context) ? Dimensions.paddingSizeExtraLarge : Dimensions.paddingSizeDefault),
-
-                  !ResponsiveHelper.isDesktop(context) ? CustomTextField(
-                    titleText: 'street_number'.tr,
-                    inputType: TextInputType.streetAddress,
-                    focusNode: orderController.streetNode,
-                    nextFocus: orderController.houseNode,
-                    controller: orderController.streetNumberController,
-                  ) : const SizedBox(),
-                  SizedBox(height: !ResponsiveHelper.isDesktop(context) ? Dimensions.paddingSizeLarge : 0),
-
-                  Row(
-                    children: [
-                      ResponsiveHelper.isDesktop(context) ? Expanded(
-                        child: CustomTextField(
-                          titleText: 'street_number'.tr,
-                          inputType: TextInputType.streetAddress,
-                          focusNode: orderController.streetNode,
-                          nextFocus: orderController.houseNode,
-                          controller: orderController.streetNumberController,
-                          showTitle: ResponsiveHelper.isDesktop(context),
-                        ),
-                      ) : const SizedBox(),
-                      SizedBox(width: ResponsiveHelper.isDesktop(context) ? Dimensions.paddingSizeSmall : 0),
-
-                      Expanded(
-                        child: CustomTextField(
-                          titleText: 'house'.tr,
-                          inputType: TextInputType.text,
-                          focusNode: orderController.houseNode,
-                          nextFocus: orderController.floorNode,
-                          controller: orderController.houseController,
-                          showTitle: ResponsiveHelper.isDesktop(context),
-                        ),
-                      ),
-                      const SizedBox(width: Dimensions.paddingSizeSmall),
-
-                      Expanded(
-                        child: CustomTextField(
-                          titleText: 'floor'.tr,
-                          inputType: TextInputType.text,
-                          focusNode: orderController.floorNode,
-                          inputAction: TextInputAction.done,
-                          controller: orderController.floorController,
-                          showTitle: ResponsiveHelper.isDesktop(context),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: Dimensions.paddingSizeExtraSmall),
-
-                ]),
-              ) : const SizedBox(),
+              DeliverySection(
+                orderController: orderController, restController: restController,
+                locationController: locationController, guestNameTextEditingController: guestNameTextEditingController,
+                guestNumberTextEditingController: guestNumberTextEditingController, guestNumberNode: guestNumberNode,
+                guestEmailController: guestEmailController, guestEmailNode: guestEmailNode,
+              ),
               const SizedBox(height: Dimensions.paddingSizeSmall),
 
 
               /// Coupon
-              !ResponsiveHelper.isDesktop(context) ? CouponSection(
+              !ResponsiveHelper.isDesktop(context) && !isGuestLoggedIn ? CouponSection(
                 charge: charge, orderController: orderController, price: price,
                 discount: discount, addOns: addOns, deliveryCharge: deliveryCharge, total: total,
               ) : const SizedBox(),
@@ -351,12 +202,24 @@ class TopSectionWidget extends StatelessWidget {
               SizedBox(height: (orderController.orderType != 'take_away' && Get.find<SplashController>().configModel!.dmTipsStatus == 1) ? Dimensions.paddingSizeExtraSmall : 0),
 
               ///payment..
-              ResponsiveHelper.isDesktop(context) ? PaymentSection(
-                isCashOnDeliveryActive: isCashOnDeliveryActive, isDigitalPaymentActive: isDigitalPaymentActive,
-                isWalletActive: isWalletActive, total: total, orderController: orderController,
-              ) : const SizedBox(),
+              Column(children: [
+                isDesktop ? PaymentSection(
+                  isCashOnDeliveryActive: isCashOnDeliveryActive, isDigitalPaymentActive: isDigitalPaymentActive,
+                  isWalletActive: isWalletActive, total: total, orderController: orderController, isOfflinePaymentActive: isOfflinePaymentActive,
+                ) : const SizedBox(),
+                SizedBox(height: isGuestLoggedIn ? 0 : Dimensions.paddingSizeLarge),
 
-              SizedBox(height: ResponsiveHelper.isDesktop(context) ? Dimensions.paddingSizeLarge : 0),
+                !isDesktop && !isGuestLoggedIn ? PartialPayView(totalPrice: total) : const SizedBox(),
+
+              ]),
+
+
+              /*ResponsiveHelper.isDesktop(context) ? PaymentSection(
+                isCashOnDeliveryActive: isCashOnDeliveryActive, isDigitalPaymentActive: isDigitalPaymentActive,
+                isWalletActive: isWalletActive, total: total, orderController: orderController, isOfflinePaymentActive: isOfflinePaymentActive,
+              ) : const SizedBox(),*/
+
+              //SizedBox(height: ResponsiveHelper.isDesktop(context) ? Dimensions.paddingSizeLarge : 0),
 
               ResponsiveHelper.isDesktop(context) ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text('additional_note'.tr, style: robotoMedium),

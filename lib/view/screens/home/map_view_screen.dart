@@ -30,9 +30,7 @@ class _MapViewScreenState extends State<MapViewScreen> {
   void initState() {
     super.initState();
 
-    if(Get.find<RestaurantController>().restaurantModel == null) {
-      Get.find<RestaurantController>().getRestaurantList(1, false);
-    }
+    Get.find<RestaurantController>().getRestaurantList(1, false, fromMap: true);
     Get.find<SplashController>().setNearestRestaurantIndex(-1, notify: false);
   }
 

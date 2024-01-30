@@ -1,8 +1,11 @@
+import 'package:country_code_picker/country_code.dart';
 import 'package:efood_multivendor/controller/auth_controller.dart';
+import 'package:efood_multivendor/controller/localization_controller.dart';
 import 'package:efood_multivendor/controller/location_controller.dart';
 import 'package:efood_multivendor/controller/splash_controller.dart';
 import 'package:efood_multivendor/controller/user_controller.dart';
 import 'package:efood_multivendor/data/model/response/address_model.dart';
+import 'package:efood_multivendor/helper/custom_validator.dart';
 import 'package:efood_multivendor/helper/responsive_helper.dart';
 import 'package:efood_multivendor/helper/route_helper.dart';
 import 'package:efood_multivendor/util/dimensions.dart';
@@ -14,7 +17,6 @@ import 'package:efood_multivendor/view/base/custom_snackbar.dart';
 import 'package:efood_multivendor/view/base/custom_text_field.dart';
 import 'package:efood_multivendor/view/base/footer_view.dart';
 import 'package:efood_multivendor/view/base/menu_drawer.dart';
-import 'package:efood_multivendor/view/base/not_logged_in_screen.dart';
 import 'package:efood_multivendor/view/base/web_page_title_widget.dart';
 import 'package:efood_multivendor/view/screens/location/pick_map_screen.dart';
 import 'package:efood_multivendor/view/screens/location/widget/location_search_dialog.dart';
@@ -23,12 +25,14 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:get/get.dart';
+import 'package:phone_number/phone_number.dart';
 
 class AddAddressScreen extends StatefulWidget {
   final bool fromCheckout;
   final int? zoneId;
   final AddressModel? address;
-  const AddAddressScreen({Key? key, required this.fromCheckout, this.zoneId, this.address}) : super(key: key);
+  final bool forGuest;
+  const AddAddressScreen({Key? key, required this.fromCheckout, this.zoneId, this.address, this.forGuest = false}) : super(key: key);
 
   @override
   State<AddAddressScreen> createState() => _AddAddressScreenState();
@@ -42,6 +46,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
   final TextEditingController _houseController = TextEditingController();
   final TextEditingController _floorController = TextEditingController();
   final TextEditingController _levelController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
   final FocusNode _addressNode = FocusNode();
   final FocusNode _nameNode = FocusNode();
   final FocusNode _numberNode = FocusNode();
@@ -49,9 +54,12 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
   final FocusNode _houseNode = FocusNode();
   final FocusNode _floorNode = FocusNode();
   final FocusNode _levelNode = FocusNode();
+  final FocusNode _emailFocus = FocusNode();
   CameraPosition? _cameraPosition;
   late LatLng _initialPosition;
   bool _otherSelect = false;
+  String? _countryDialCode = Get.find<AuthController>().getUserCountryCode().isNotEmpty ? Get.find<AuthController>().getUserCountryCode()
+      : CountryCode.fromCountryCode(Get.find<SplashController>().configModel!.country!).dialCode;
 
   final ScrollController scrollController = ScrollController();
 
@@ -92,69 +100,83 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
     }
   }
 
+  void splitPhoneNumber(String number) async {
+    if(GetPlatform.isAndroid || GetPlatform.isIOS) {
+      try {
+        PhoneNumber phoneNumber = await PhoneNumberUtil().parse(number);
+        _countryDialCode = '+${phoneNumber.countryCode}';
+        _contactPersonNumberController.text = phoneNumber.nationalNumber;
+      } catch (_) {}
+    } else if(GetPlatform.isWeb) {
+      if(number.contains(_countryDialCode!)) {
+        _contactPersonNumberController.text = number.replaceAll(_countryDialCode!, '');
+      } else {
+        _contactPersonNumberController.text = number;
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    bool isLoggedIn = Get.find<AuthController>().isLoggedIn();
     return Scaffold(
-      appBar: CustomAppBar(title: widget.address == null ? 'add_new_address'.tr : 'update_address'.tr),
+      appBar: CustomAppBar(title: widget.forGuest ? 'delivery_address'.tr : widget.address == null ? 'add_new_address'.tr : 'update_address'.tr),
       endDrawer: const MenuDrawer(), endDrawerEnableOpenDragGesture: false,
       body: SafeArea(
-        child: isLoggedIn ? GetBuilder<UserController>(builder: (userController) {
-          if(widget.address != null) {
-            if(_contactPersonNameController.text.isEmpty) {
-              _contactPersonNameController.text = widget.address!.contactPersonName!;
-              _contactPersonNumberController.text = widget.address!.contactPersonNumber!;
+          child: GetBuilder<UserController>(builder: (userController) {
+            if(widget.address != null) {
+              splitPhoneNumber(widget.address!.contactPersonNumber!);
+              _contactPersonNameController.text = widget.address!.contactPersonName ?? '';
+              _emailController.text = widget.address!.email ?? '';
               _streetNumberController.text = widget.address!.road ?? '';
               _houseController.text = widget.address!.house ?? '';
               _floorController.text = widget.address!.floor ?? '';
+            }else if(userController.userInfoModel != null && _contactPersonNameController.text.isEmpty) {
+              _contactPersonNameController.text = '${userController.userInfoModel!.fName} ${userController.userInfoModel!.lName}';
+              splitPhoneNumber(userController.userInfoModel!.phone!);
             }
-          }else if(userController.userInfoModel != null && _contactPersonNameController.text.isEmpty) {
-            _contactPersonNameController.text = '${userController.userInfoModel!.fName} ${userController.userInfoModel!.lName}';
-            _contactPersonNumberController.text = userController.userInfoModel!.phone!;
-          }
 
-          return GetBuilder<LocationController>(builder: (locationController) {
-            _addressController.text = locationController.address!;
+            return GetBuilder<LocationController>(builder: (locationController) {
+              _addressController.text = locationController.address!;
 
-            return Column(children: [
-              Expanded(child: Scrollbar(controller: scrollController, child: SingleChildScrollView(
-                controller: scrollController,
-                physics: const BouncingScrollPhysics(),
-                padding: EdgeInsets.all(ResponsiveHelper.isDesktop(context) ? 0 : Dimensions.paddingSizeSmall),
-                child: Column(
-                  children: [
-                    WebScreenTitleWidget(title:  widget.address == null ? 'add_new_address'.tr : 'update_address'.tr),
-                    const SizedBox(height: Dimensions.paddingSizeLarge),
+              return Column(children: [
+                Expanded(child: Scrollbar(controller: scrollController, child: SingleChildScrollView(
+                  controller: scrollController,
+                  physics: const BouncingScrollPhysics(),
+                  padding: EdgeInsets.all(ResponsiveHelper.isDesktop(context) ? 0 : Dimensions.paddingSizeSmall),
+                  child: Column(
+                    children: [
+                      WebScreenTitleWidget(title:  widget.address == null ? 'add_new_address'.tr : 'update_address'.tr),
+                      const SizedBox(height: Dimensions.paddingSizeLarge),
 
-                    FooterView(
-                      child: Center(child: SizedBox(width: Dimensions.webMaxWidth, child: ResponsiveHelper.isDesktop(context)
-                          ? Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      FooterView(
+                        child: Center(child: SizedBox(width: Dimensions.webMaxWidth, child: ResponsiveHelper.isDesktop(context)
+                            ? Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
-                            Expanded(flex: 6, child: addressSectionWidget(locationController)),
-                            const SizedBox(width: Dimensions.paddingSizeLarge),
+                          Expanded(flex: 6, child: addressSectionWidget(locationController)),
+                          const SizedBox(width: Dimensions.paddingSizeLarge),
 
-                            Expanded(flex: 4, child: informationSectionWidget(locationController)),
-                      ])
-                          : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Expanded(flex: 4, child: informationSectionWidget(locationController)),
+                        ])
+                            : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
-                            addressSectionWidget(locationController),
-                            informationSectionWidget(locationController),
+                          addressSectionWidget(locationController),
+                          informationSectionWidget(locationController),
 
-                            // saveButton(locationController),
-                      ]),
-                      )),
-                    ),
-                  ],
-                ),
-              ))),
+                          // saveButton(locationController),
+                        ]),
+                        )),
+                      ),
+                    ],
+                  ),
+                ))),
 
-              !ResponsiveHelper.isDesktop(context) ? saveButton(locationController) : const SizedBox(),
-            ]);
-          });
-        }) : NotLoggedInScreen(callBack: (value){
-          initCall();
-          setState(() {});
-        }),
+                !ResponsiveHelper.isDesktop(context) ? saveButton(locationController) : const SizedBox(),
+              ]);
+            });
+          }) /*: NotLoggedInScreen(callBack: (value){
+            initCall();
+            setState(() {});
+          }),*/
       ),
     );
   }
@@ -181,7 +203,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
               GoogleMap(
                 initialCameraPosition: CameraPosition(target: _initialPosition, zoom: 17),
                 minMaxZoomPreference: const MinMaxZoomPreference(0, 16),
-                onTap: (latLng) {
+                onTap: ResponsiveHelper.isDesktop(context) ? null : (latLng) {
                   Get.toNamed(
                     RouteHelper.getPickMapRoute('add-address', false),
                     arguments: PickMapScreen(
@@ -378,13 +400,28 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
 
         CustomTextField(
           titleText: 'contact_person_number'.tr,
-          showTitle: ResponsiveHelper.isDesktop(context),
-          inputType: TextInputType.phone,
-          focusNode: _numberNode,
-          nextFocus: _streetNode,
           controller: _contactPersonNumberController,
+          focusNode: _numberNode,
+          showTitle: ResponsiveHelper.isDesktop(context),
+          nextFocus: widget.forGuest ? _emailFocus : _streetNode,
+          inputType: TextInputType.phone,
+          isPhone: true,
+          onCountryChanged: (CountryCode countryCode) {
+            _countryDialCode = countryCode.dialCode;
+          },
+          countryDialCode: _countryDialCode ?? Get.find<LocalizationController>().locale.countryCode,
         ),
         const SizedBox(height: Dimensions.paddingSizeLarge),
+
+        widget.forGuest ? CustomTextField(
+          showTitle: ResponsiveHelper.isDesktop(context),
+          titleText: '${'email'.tr} (${'optional'.tr})',
+          controller: _emailController,
+          focusNode: _emailFocus,
+          nextFocus: _streetNode,
+          inputType: TextInputType.emailAddress,
+        ) : const SizedBox(),
+        SizedBox(height: widget.forGuest ? Dimensions.paddingSizeLarge : 0),
 
         CustomTextField(
           titleText: 'street_number'.tr,
@@ -437,39 +474,56 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
       padding: EdgeInsets.all(ResponsiveHelper.isDesktop(context) ? 0 : Dimensions.paddingSizeSmall),
       child: !locationController.isLoading ? CustomButton(
         radius: Dimensions.paddingSizeSmall,
-        buttonText: widget.address == null ? 'save_location'.tr : 'update_address'.tr,
-        onPressed: locationController.loading ? null : () {
-          AddressModel addressModel = AddressModel(
-            id: widget.address != null ? widget.address!.id : null,
-            addressType: (locationController.addressTypeIndex == 2 && _levelController.text != 'null') ? _levelController.text : locationController.addressTypeList[locationController.addressTypeIndex],
-            contactPersonName: _contactPersonNameController.text,
-            contactPersonNumber: _contactPersonNumberController.text,
-            address: _addressController.text,
-            latitude: locationController.position.latitude.toString(),
-            longitude: locationController.position.longitude.toString(),
-            zoneId: locationController.zoneID,
-            road: _streetNumberController.text.trim(),
-            house: _houseController.text.trim(),
-            floor: _floorController.text.trim(),
-          );
-          if(widget.address == null) {
-            locationController.addAddress(addressModel, widget.fromCheckout, widget.zoneId).then((response) {
-              if(response.isSuccess) {
-                Get.back(result: addressModel);
-                showCustomSnackBar('new_address_added_successfully'.tr, isError: false);
+        buttonText: widget.forGuest ? 'continue'.tr : widget.address == null ? 'save_location'.tr : 'update_address'.tr,
+        onPressed: locationController.loading ? null : () async {
+          String numberWithCountryCode = _countryDialCode! + _contactPersonNumberController.text;
+          PhoneValid phoneValid = await CustomValidator.isPhoneValid(numberWithCountryCode);
+          numberWithCountryCode = phoneValid.phone;
+
+          if(_contactPersonNameController.text.isEmpty) {
+            showCustomSnackBar('please_provide_contact_person_name'.tr);
+          } else if(!phoneValid.isValid) {
+            showCustomSnackBar('invalid_phone_number'.tr);
+          } else {
+            AddressModel addressModel = AddressModel(
+              id: widget.address != null ? widget.address!.id : null,
+              addressType: (locationController.addressTypeIndex == 2 && _levelController.text != 'null') ? _levelController.text : locationController.addressTypeList[locationController.addressTypeIndex],
+              contactPersonName: _contactPersonNameController.text,
+              contactPersonNumber: numberWithCountryCode,
+              address: _addressController.text,
+              latitude: locationController.position.latitude.toString(),
+              longitude: locationController.position.longitude.toString(),
+              zoneId: locationController.zoneID,
+              road: _streetNumberController.text.trim(),
+              house: _houseController.text.trim(),
+              floor: _floorController.text.trim(),
+            );
+
+            if(widget.forGuest){
+              addressModel.email = _emailController.text;
+              Get.back(result: addressModel);
+            }else{
+              if(widget.address == null) {
+                locationController.addAddress(addressModel, widget.fromCheckout, widget.zoneId).then((response) {
+                  if(response.isSuccess) {
+                    //Get.back(result: addressModel);
+                    Get.offAllNamed(RouteHelper.getAddressRoute());
+                    showCustomSnackBar('new_address_added_successfully'.tr, isError: false);
+                  }else {
+                    showCustomSnackBar(response.message);
+                  }
+                });
               }else {
-                showCustomSnackBar(response.message);
+                locationController.updateAddress(addressModel, widget.address!.id).then((response) {
+                  if(response.isSuccess) {
+                    Get.back();
+                    showCustomSnackBar(response.message, isError: false);
+                  }else {
+                    showCustomSnackBar(response.message);
+                  }
+                });
               }
-            });
-          }else {
-            locationController.updateAddress(addressModel, widget.address!.id).then((response) {
-              if(response.isSuccess) {
-                Get.back();
-                showCustomSnackBar(response.message, isError: false);
-              }else {
-                showCustomSnackBar(response.message);
-              }
-            });
+            }
           }
         },
       ) : const Center(child: CircularProgressIndicator()),

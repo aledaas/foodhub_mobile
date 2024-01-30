@@ -1,3 +1,4 @@
+import 'package:efood_multivendor/controller/auth_controller.dart';
 import 'package:efood_multivendor/controller/order_controller.dart';
 import 'package:efood_multivendor/controller/splash_controller.dart';
 import 'package:efood_multivendor/data/model/response/order_model.dart';
@@ -148,7 +149,7 @@ class TrackDetailsView extends StatelessWidget {
           ),
           const SizedBox(width: Dimensions.paddingSizeSmall),
 
-          InkWell(
+         Get.find<AuthController>().isLoggedIn() ? InkWell(
             onTap: callback as void Function()?,
             child: Container(
               padding: EdgeInsets.symmetric(vertical: Get.context!.width >= 1300 ? 7 : Dimensions.paddingSizeExtraSmall, horizontal: Dimensions.paddingSizeSmall),
@@ -158,7 +159,7 @@ class TrackDetailsView extends StatelessWidget {
               ),
               child: Icon(Icons.chat, size: 12, color: Theme.of(context).cardColor),
             ),
-          ),
+          ) : const SizedBox(),
 
         ]),
 

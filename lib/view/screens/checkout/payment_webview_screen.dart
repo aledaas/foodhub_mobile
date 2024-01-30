@@ -22,7 +22,9 @@ class PaymentWebViewScreen extends StatefulWidget {
   final String paymentMethod;
   final String? addFundUrl;
   final String? subscriptionUrl;
-  const PaymentWebViewScreen({Key? key, required this.orderModel, required this.paymentMethod, this.addFundUrl, this.subscriptionUrl}) : super(key: key);
+  final String guestId;
+  final String contactNumber;
+  const PaymentWebViewScreen({Key? key, required this.orderModel, required this.paymentMethod, this.addFundUrl, this.subscriptionUrl, required this.guestId, required this.contactNumber}) : super(key: key);
 
   @override
   PaymentScreenState createState() => PaymentScreenState();
@@ -40,7 +42,7 @@ class PaymentScreenState extends State<PaymentWebViewScreen> {
   void initState() {
     super.initState();
     if(widget.addFundUrl == '' && widget.addFundUrl!.isEmpty && widget.subscriptionUrl == '' && widget.subscriptionUrl!.isEmpty){
-      selectedUrl = '${AppConstants.baseUrl}/payment-mobile?customer_id=${widget.orderModel.userId}&order_id=${widget.orderModel.id}&payment_method=${widget.paymentMethod}';
+      selectedUrl = '${AppConstants.baseUrl}/payment-mobile?customer_id=${widget.orderModel.userId == 0 ? widget.guestId : widget.orderModel.userId}&order_id=${widget.orderModel.id}&payment_method=${widget.paymentMethod}';
     } else if(widget.subscriptionUrl != '' && widget.subscriptionUrl!.isNotEmpty){
       selectedUrl = widget.subscriptionUrl!;
     } else {
@@ -91,7 +93,7 @@ class PaymentScreenState extends State<PaymentWebViewScreen> {
                 webViewController = controller;
               },
               onLoadStart: (controller, url) async {
-                _redirect(url.toString());
+                _redirect(url.toString(), widget.contactNumber);
                 setState(() {
                   _isLoading = true;
                 });
@@ -111,7 +113,7 @@ class PaymentScreenState extends State<PaymentWebViewScreen> {
                 setState(() {
                   _isLoading = false;
                 });
-                _redirect(url.toString());
+                _redirect(url.toString(), widget.contactNumber);
               },
               onProgressChanged: (controller, progress) {
                 if (progress == 100) {
@@ -148,7 +150,7 @@ class PaymentScreenState extends State<PaymentWebViewScreen> {
 
   }
 
-  void _redirect(String url) {
+  void _redirect(String url, String? contactNumber) {
     if(_canRedirect) {
       bool isSuccess = url.contains('success') && url.startsWith(AppConstants.baseUrl);
       bool isFailed = url.contains('fail') && url.startsWith(AppConstants.baseUrl);
@@ -162,9 +164,9 @@ class PaymentScreenState extends State<PaymentWebViewScreen> {
         if (isSuccess) {
           double total = ((widget.orderModel.orderAmount! / 100) * Get.find<SplashController>().configModel!.loyaltyPointItemPurchasePoint!);
           Get.find<AuthController>().saveEarningPoint(total.toStringAsFixed(0));
-          Get.offNamed(RouteHelper.getOrderSuccessRoute(widget.orderModel.id.toString(), 'success', widget.orderModel.orderAmount));
+          Get.offNamed(RouteHelper.getOrderSuccessRoute(widget.orderModel.id.toString(), 'success', widget.orderModel.orderAmount, contactNumber));
         } else if (isFailed || isCancel) {
-          Get.offNamed(RouteHelper.getOrderSuccessRoute(widget.orderModel.id.toString(), 'fail', widget.orderModel.orderAmount));
+          Get.offNamed(RouteHelper.getOrderSuccessRoute(widget.orderModel.id.toString(), 'fail', widget.orderModel.orderAmount, contactNumber));
         }
       } else{
         if(isSuccess || isFailed || isCancel) {

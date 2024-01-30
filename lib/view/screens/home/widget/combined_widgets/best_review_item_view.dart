@@ -16,6 +16,7 @@ class BestReviewItemView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    bool isSelect = false;
     return GetBuilder<ProductController>(builder: (productController) {
         return (productController.reviewedProductList !=null && productController.reviewedProductList!.isEmpty) ? const SizedBox() : Padding(
           padding:  EdgeInsets.symmetric(vertical: ResponsiveHelper.isMobile(context)  ? Dimensions.paddingSizeDefault : Dimensions.paddingSizeLarge),

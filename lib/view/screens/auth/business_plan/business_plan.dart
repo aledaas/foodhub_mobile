@@ -10,6 +10,7 @@ import 'package:efood_multivendor/util/images.dart';
 import 'package:efood_multivendor/util/styles.dart';
 import 'package:efood_multivendor/view/base/custom_app_bar.dart';
 import 'package:efood_multivendor/view/base/custom_button.dart';
+
 import 'package:efood_multivendor/view/screens/auth/business_plan/widgets/subscription_card.dart';
 import 'package:efood_multivendor/view/screens/auth/business_plan/widgets/success_widget.dart';
 import 'package:efood_multivendor/view/screens/auth/widget/registration_stepper_widget.dart';
@@ -27,6 +28,7 @@ class BusinessPlanScreen extends StatefulWidget {
 class _BusinessPlanScreenState extends State<BusinessPlanScreen> {
 
   final bool _canBack = GetPlatform.isWeb ? true : false;
+  final ScrollController scrollController = ScrollController();
 
   @override
   void initState() {
@@ -62,6 +64,7 @@ class _BusinessPlanScreenState extends State<BusinessPlanScreen> {
 
                 Expanded(
                   child: SingleChildScrollView(
+                    controller: scrollController,
                     child: SizedBox(
                       width: Dimensions.webMaxWidth,
                       child: Center(
@@ -188,14 +191,14 @@ class _BusinessPlanScreenState extends State<BusinessPlanScreen> {
                                   if(ResponsiveHelper.isDesktop(context)) {
                                     Get.dialog(const Dialog(backgroundColor: Colors.transparent, child: PaymentMethodBottomSheet(
                                       isCashOnDeliveryActive: false, isWalletActive: false, isDigitalPaymentActive: true,
-                                      isSubscriptionPackage: true, totalPrice: 0,
+                                      isSubscriptionPackage: true, totalPrice: 0, isOfflinePaymentActive: false,
                                     )));
                                   } else {
                                     showModalBottomSheet(
                                       context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
                                       builder: (con) => const PaymentMethodBottomSheet(
                                         isCashOnDeliveryActive: false, isWalletActive: false, isDigitalPaymentActive: true,
-                                        isSubscriptionPackage: true, totalPrice: 0,
+                                        isSubscriptionPackage: true, totalPrice: 0, isOfflinePaymentActive: false,
                                       ),
                                     );
                                   }

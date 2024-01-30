@@ -150,7 +150,6 @@ class RestaurantController extends GetxController implements GetxService {
 
       if(addressModel != null) {
         _address.add(addressModel);
-        print('--sss-----check for new add');
         _addressList.add(DropdownItem<int>(value: _address.length- 1, child: SizedBox(
           width: context.width > Dimensions.webMaxWidth ? Dimensions.webMaxWidth-50 : context.width-50,
           child: AddressWidget(
@@ -182,7 +181,6 @@ class RestaurantController extends GetxController implements GetxService {
             ),
           ))
       );
-      print('=======sss===== : ${address.length}');
     }
     if(notify) {
       update();
@@ -256,12 +254,12 @@ class RestaurantController extends GetxController implements GetxService {
 
 
 
-  Future<void> getRestaurantList(int offset, bool reload) async {
+  Future<void> getRestaurantList(int offset, bool reload, {bool fromMap = false}) async {
     if(reload) {
       _restaurantModel = null;
       update();
     }
-    Response response = await restaurantRepo.getRestaurantList(offset, _restaurantType, _topRated, _discount, _veg, _nonVeg);
+    Response response = await restaurantRepo.getRestaurantList(offset, _restaurantType, _topRated, _discount, _veg, _nonVeg, fromMap: fromMap);
     if (response.statusCode == 200) {
       if (offset == 1) {
         _restaurantModel = RestaurantModel.fromJson(response.body);
@@ -421,6 +419,11 @@ class RestaurantController extends GetxController implements GetxService {
     return _restaurant;
   }
 
+  void makeEmptyRestaurant() {
+    _restaurant = null;
+    update();
+  }
+
   Future<void> getCartRestaurantSuggestedItemList(int? restaurantID) async {
     Response response = await restaurantRepo.getCartRestaurantSuggestedItemList(restaurantID);
     if (response.statusCode == 200) {
@@ -544,14 +547,11 @@ class RestaurantController extends GetxController implements GetxService {
     update();
   }
 
-  bool isRestaurantClosed(bool today, bool active, List<Schedules>? schedules) {
+  bool isRestaurantClosed(DateTime dateTime, bool active, List<Schedules>? schedules, {int? customDateDuration}) {
     if(!active) {
       return true;
     }
-    DateTime date = DateTime.now();
-    if(!today) {
-      date = date.add(const Duration(days: 1));
-    }
+    DateTime date = dateTime;
     int weekday = date.weekday;
     if(weekday == 7) {
       weekday = 0;
@@ -565,7 +565,7 @@ class RestaurantController extends GetxController implements GetxService {
   }
 
   bool isRestaurantOpenNow(bool active, List<Schedules>? schedules) {
-    if(isRestaurantClosed(true, active, schedules)) {
+    if(isRestaurantClosed(DateTime.now(), active, schedules)) {
       return false;
     }
     int weekday = DateTime.now().weekday;

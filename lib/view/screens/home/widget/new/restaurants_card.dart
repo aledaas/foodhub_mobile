@@ -20,7 +20,7 @@ import 'package:shimmer_animation/shimmer_animation.dart';
 class RestaurantsCard extends StatelessWidget {
   final Restaurant restaurant;
   final bool? isNewOnStackFood;
-   const RestaurantsCard({Key? key, this.isNewOnStackFood, required this.restaurant}) : super(key: key);
+  const RestaurantsCard({Key? key, this.isNewOnStackFood, required this.restaurant}) : super(key: key);
 
 
   @override
@@ -33,6 +33,7 @@ class RestaurantsCard extends StatelessWidget {
     //   distance = 100;
     // }
     return InkWell(
+      hoverColor: Colors.transparent,
       onTap: () {
         Get.toNamed(
           RouteHelper.getRestaurantRoute(restaurant.id),
@@ -111,7 +112,7 @@ class RestaurantsCard extends StatelessWidget {
                           text: '${distance > 100 ? '100+' : distance.toStringAsFixed(2)} ${'km'.tr}',
                           style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall),
                         ) : restaurant.freeDelivery! ? ImageWithTextRowWidget(widget: Image.asset(Images.deliveryIcon, height: 20, width: 20),
-                           text: 'free'.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall)) : const SizedBox(),
+                            text: 'free'.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall)) : const SizedBox(),
                         isNewOnStackFood! ? const SizedBox(width : Dimensions.paddingSizeExtraSmall) : restaurant.freeDelivery! ? const SizedBox(width: Dimensions.paddingSizeSmall) : const SizedBox(),
 
                         isNewOnStackFood! ? ImageWithTextRowWidget(

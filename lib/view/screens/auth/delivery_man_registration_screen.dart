@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:dotted_border/dotted_border.dart';
@@ -5,7 +6,9 @@ import 'package:efood_multivendor/controller/auth_controller.dart';
 import 'package:efood_multivendor/controller/localization_controller.dart';
 import 'package:efood_multivendor/controller/splash_controller.dart';
 import 'package:efood_multivendor/data/model/body/delivery_man_body.dart';
+import 'package:efood_multivendor/data/model/response/config_model.dart';
 import 'package:efood_multivendor/helper/custom_validator.dart';
+import 'package:efood_multivendor/helper/extensions.dart';
 import 'package:efood_multivendor/helper/responsive_helper.dart';
 import 'package:efood_multivendor/util/dimensions.dart';
 import 'package:efood_multivendor/util/styles.dart';
@@ -16,9 +19,12 @@ import 'package:efood_multivendor/view/base/custom_snackbar.dart';
 import 'package:efood_multivendor/view/base/custom_text_field.dart';
 import 'package:efood_multivendor/view/base/footer_view.dart';
 import 'package:efood_multivendor/view/base/menu_drawer.dart';
+
 import 'package:efood_multivendor/view/base/web_page_title_widget.dart';
-import 'package:efood_multivendor/view/screens/auth/widget/condition_check_box.dart';
+import 'package:efood_multivendor/view/screens/auth/widget/additional_data_section.dart';
 import 'package:efood_multivendor/view/screens/auth/widget/pass_view.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -46,6 +52,7 @@ class _DeliveryManRegistrationScreenState extends State<DeliveryManRegistrationS
   final FocusNode _confirmPasswordNode = FocusNode();
   final FocusNode _identityNumberNode = FocusNode();
   String? _countryDialCode;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -64,6 +71,7 @@ class _DeliveryManRegistrationScreenState extends State<DeliveryManRegistrationS
     Get.find<AuthController>().getZoneList();
     Get.find<AuthController>().getVehicleList();
     Get.find<AuthController>().initIdentityTypeIndex();
+    Get.find<AuthController>().setDeliverymanAdditionalJoinUsPageData(isUpdate: false);
   }
 
   @override
@@ -332,7 +340,8 @@ class _DeliveryManRegistrationScreenState extends State<DeliveryManRegistrationS
                           inputType: TextInputType.visiblePassword,
                           prefixIcon: Icons.lock,
                           isPassword: true,
-                        )
+                        ),
+                        const SizedBox(height: Dimensions.paddingSizeExtraLarge),
 
                       ]),
                     ),
@@ -411,7 +420,7 @@ class _DeliveryManRegistrationScreenState extends State<DeliveryManRegistrationS
                           ),
                           child: CustomDropdown<int>(
                             onChange: (int? value, int index) {
-                              authController.setVehicleIndex(value, true);
+                              authController.setVehicleIndex(index, true);
                             },
                             dropdownButtonStyle: DropdownButtonStyle(
                               height: 45,
@@ -533,9 +542,13 @@ class _DeliveryManRegistrationScreenState extends State<DeliveryManRegistrationS
                           },
                         ),
 
+                        const SizedBox(height: Dimensions.paddingSizeExtraLarge),
+
+                        AdditionalDataSection(authController: authController, scrollController: _scrollController),
+
                         const SizedBox(height: Dimensions.paddingSizeSmall),
 
-                        ConditionCheckBox(authController: authController, fromSignUp: true),
+                        //ConditionCheckBox(authController: authController, fromSignUp: true),
                       ]),
                     ),
                   ],
@@ -558,6 +571,7 @@ class _DeliveryManRegistrationScreenState extends State<DeliveryManRegistrationS
   Widget webView(AuthController authController, List<int> zoneIndexList, List<DropdownItem<int>> typeList, List<DropdownItem<int>> zoneList,
       List<DropdownItem<int>> identityTypeList, List<DropdownItem<int>> vehicleList){
     return SingleChildScrollView(
+      controller: _scrollController,
       child: FooterView(
         child: Center(
           child: Column(
@@ -845,7 +859,7 @@ class _DeliveryManRegistrationScreenState extends State<DeliveryManRegistrationS
                               ),
                               child: CustomDropdown<int>(
                                 onChange: (int? value, int index) {
-                                  authController.setVehicleIndex(value, true);
+                                  authController.setVehicleIndex(index, true);
                                 },
                                 dropdownButtonStyle: DropdownButtonStyle(
                                   height: 45,
@@ -988,40 +1002,64 @@ class _DeliveryManRegistrationScreenState extends State<DeliveryManRegistrationS
                       ),
                       const SizedBox(height: Dimensions.paddingSizeLarge),
 
-                      Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-                        Container(
-                          decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-                              border: Border.all(color: Theme.of(context).hintColor)
-                          ),
-                          width: 165,
-                          child: CustomButton(
-                            transparent: true,
-                            textColor: Theme.of(context).hintColor,
-                            radius: Dimensions.radiusSmall,
-                            onPressed: () {
-                              _phoneController.text = '';
-                              _emailController.text = '';
-                              _fNameController.text = '';
-                              _lNameController.text = '';
-                              _lNameController.text = '';
-                              _passwordController.text = '';
-                              _confirmPasswordController.text = '';
-                              _identityNumberController.text = '';
-                              authController.resetDeliveryRegistration();
-                            },
-                            buttonText: 'reset'.tr,
-                            isBold: false,
-                            fontSize: Dimensions.fontSizeSmall,
-                          ),
-                        ),
+                    ]),
+                  ),
+                  const SizedBox(height: Dimensions.paddingSizeSmall),
 
-                        const SizedBox( width: Dimensions.paddingSizeLarge),
-                        SizedBox(width: 165, child: buttonView()),
-                      ])
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+                      boxShadow: const [BoxShadow(color: Colors.black12, spreadRadius: 1, blurRadius: 5)],
+                    ),
+                    padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+                    margin: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall),
+                    child: Column(children: [
+                      Row(children: [
+                        const Icon(Icons.person),
+                        Text('additional_information'.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall))
+                      ]),
+                      const Divider(),
+                      const SizedBox(height: Dimensions.paddingSizeLarge),
+
+                      AdditionalDataSection(authController: authController, scrollController: _scrollController),
 
                     ]),
                   ),
+
+                  Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+                    Container(
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+                          border: Border.all(color: Theme.of(context).hintColor)
+                      ),
+                      width: 165,
+                      child: CustomButton(
+                        transparent: true,
+                        textColor: Theme.of(context).hintColor,
+                        radius: Dimensions.radiusSmall,
+                        onPressed: () {
+                          _phoneController.text = '';
+                          _emailController.text = '';
+                          _fNameController.text = '';
+                          _lNameController.text = '';
+                          _lNameController.text = '';
+                          _passwordController.text = '';
+                          _confirmPasswordController.text = '';
+                          _identityNumberController.text = '';
+                          authController.resetDeliveryRegistration();
+                          authController.setRestaurantAdditionalJoinUsPageData(isUpdate: true);
+                        },
+                        buttonText: 'reset'.tr,
+                        isBold: false,
+                        fontSize: Dimensions.fontSizeSmall,
+                      ),
+                    ),
+
+                    const SizedBox( width: Dimensions.paddingSizeLarge),
+                    SizedBox(width: 165, child: buttonView()),
+                  ]),
+
                 ]),
               )
             ],
@@ -1092,6 +1130,84 @@ class _DeliveryManRegistrationScreenState extends State<DeliveryManRegistrationS
     String identityNumber = _identityNumberController.text.trim();
     String numberWithCountryCode = _countryDialCode!+phone;
 
+    bool customFieldEmpty = false;
+
+    Map<String, dynamic> additionalData = {};
+    List<FilePickerResult> additionalDocuments = [];
+    List<String> additionalDocumentsInputType = [];
+
+    if(authController.dmStatus != 0.4) {
+      for (DataModel data in authController.dataList!) {
+        bool isTextField = data.fieldType == 'text' || data.fieldType == 'number' || data.fieldType == 'email' || data.fieldType == 'phone';
+        bool isDate = data.fieldType == 'date';
+        bool isCheckBox = data.fieldType == 'check_box';
+        bool isFile = data.fieldType == 'file';
+        int index = authController.dataList!.indexOf(data);
+        bool isRequired = data.isRequired == 1;
+
+        if(isTextField) {
+          if (kDebugMode) {
+            print('=====check text field : ${authController.additionalList![index].text == ''}');
+          }
+          if(authController.additionalList![index].text != '') {
+            additionalData.addAll({data.inputData! : authController.additionalList![index].text});
+          } else {
+            if(isRequired) {
+              customFieldEmpty = true;
+              showCustomSnackBar('${data.placeholderData} ${'can_not_be_empty'.tr}');
+              break;
+            }
+          }
+        } else if(isDate) {
+          if (kDebugMode) {
+            print('---check date : ${authController.additionalList![index]}');
+          }
+          if(authController.additionalList![index] != null) {
+            additionalData.addAll({data.inputData! : authController.additionalList![index]});
+          } else {
+            if(isRequired) {
+              customFieldEmpty = true;
+              showCustomSnackBar('${data.placeholderData} ${'can_not_be_empty'.tr}');
+              break;
+            }
+          }
+        } else if(isCheckBox) {
+          List<String> checkData = [];
+          bool noNeedToGoElse = false;
+          for(var e in authController.additionalList![index]) {
+            if(e != 0) {
+              checkData.add(e);
+              customFieldEmpty = false;
+              noNeedToGoElse = true;
+            } else if(!noNeedToGoElse) {
+              customFieldEmpty = true;
+            }
+          }
+          if(customFieldEmpty && isRequired) {
+            showCustomSnackBar( '${'please_set_data_in'.tr} ${authController.dataList![index].inputData?.replaceAll('_', ' ').toTitleCase()} ${'field'.tr}');
+            break;
+          } else {
+            additionalData.addAll({data.inputData! : checkData});
+          }
+
+        } else if(isFile) {
+          if (kDebugMode) {
+            print('---check file : ${authController.additionalList![index]}');
+          }
+          if(authController.additionalList![index].length == 0 && isRequired) {
+            customFieldEmpty = true;
+            showCustomSnackBar('${'please_add'.tr} ${authController.dataList![index].inputData?.replaceAll('_', ' ').toTitleCase()}');
+            break;
+          } else {
+            authController.additionalList![index].forEach((file) {
+              additionalDocuments.add(file);
+              additionalDocumentsInputType.add(authController.dataList![index].inputData!);
+            });
+          }
+        }
+      }
+    }
+
     if(ResponsiveHelper.isDesktop(context)){
       PhoneValid phoneValid = await CustomValidator.isPhoneValid(numberWithCountryCode);
       numberWithCountryCode = phoneValid.phone;
@@ -1131,13 +1247,31 @@ class _DeliveryManRegistrationScreenState extends State<DeliveryManRegistrationS
       showCustomSnackBar('enter_delivery_man_identity_number'.tr);
     }else if(authController.pickedIdentities.isEmpty) {
       showCustomSnackBar('please_select_identity_image'.tr);
+    }else if(customFieldEmpty) {
+      if (kDebugMode) {
+        print('not provide addition data');
+      }
     }else {
-      authController.registerDeliveryMan(DeliveryManBody(
+
+      Map<String, String> data = {};
+
+      data.addAll(DeliveryManBody(
         fName: fName, lName: lName, password: password, phone: numberWithCountryCode, email: email,
         identityNumber: identityNumber, identityType: authController.identityTypeList[authController.identityTypeIndex],
         earning: authController.dmTypeIndex == 1 ? '1' : '0', zoneId: authController.zoneList![authController.selectedZoneIndex!].id.toString(),
-        vehicleId: authController.vehicles![authController.vehicleIndex! - 1].id.toString(),
-      ));
+        vehicleId: authController.vehicles![authController.vehicleIndex!].id.toString(),
+      ).toJson());
+
+      data.addAll({
+        'additional_data': jsonEncode(additionalData),
+      });
+
+      if (kDebugMode) {
+        print('-------final data-- :  $data');
+      }
+
+      authController.registerDeliveryMan(data, additionalDocuments, additionalDocumentsInputType);
+
     }
   }
 }

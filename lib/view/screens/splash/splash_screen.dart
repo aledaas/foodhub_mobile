@@ -57,7 +57,9 @@ class SplashScreenState extends State<SplashScreen> {
         || Get.find<LocationController>().getUserAddress()!.zoneData == null)) {
       Get.find<AuthController>().clearSharedAddress();
     }
-    Get.find<CartController>().getCartData();
+    if(Get.find<AuthController>().isGuestLoggedIn() || Get.find<AuthController>().isLoggedIn()) {
+      Get.find<CartController>().getCartDataOnline();
+    }
     _route();
 
   }
@@ -115,7 +117,15 @@ class SplashScreenState extends State<SplashScreen> {
                     Get.offNamed(RouteHelper.getOnBoardingRoute());
                   }
                 } else {
-                  Get.offNamed(RouteHelper.getSignInRoute(RouteHelper.splash));
+                  if(Get.find<AuthController>().isGuestLoggedIn()) {
+                    if (Get.find<LocationController>().getUserAddress() != null) {
+                      Get.offNamed(RouteHelper.getInitialRoute(fromSplash: true));
+                    } else {
+                      Get.find<LocationController>().navigateToLocationScreen('splash', offNamed: true);
+                    }
+                  } else {
+                    Get.offNamed(RouteHelper.getSignInRoute(RouteHelper.splash));
+                  }
                 }
               }
             }
@@ -134,7 +144,7 @@ class SplashScreenState extends State<SplashScreen> {
           child: splashController.hasConnection ? Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Image.asset(Images.logo, width: 150),
+              Image.asset(Images.logo, width: 100),
               const SizedBox(height: Dimensions.paddingSizeLarge),
               Image.asset(Images.logoName, width: 150),
 

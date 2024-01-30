@@ -25,12 +25,12 @@
     </queries>
 
     <application
-        android:label="Foods Hub"
+        android:label="FoodsHub"
         android:requestLegacyExternalStorage="true"
         android:usesCleartextTraffic="true"
         android:icon="@mipmap/ic_launcher">
         <meta-data android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyABx-JAxkjf3eIchmy39m44zDH_YdOC1Ew"/>
+            android:value="AIzaSyCaCSJ0BZItSyXqBv8vpD1N4WBffJeKhLQ"/>
 
         <activity
             android:name=".MainActivity"

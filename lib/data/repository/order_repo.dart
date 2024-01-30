@@ -1,10 +1,10 @@
 import 'dart:convert';
 
+import 'package:efood_multivendor/controller/auth_controller.dart';
 import 'package:efood_multivendor/data/api/api_client.dart';
 import 'package:efood_multivendor/data/model/body/place_order_body.dart';
 import 'package:efood_multivendor/util/app_constants.dart';
 import 'package:get/get.dart';
-import 'package:get/get_connect/http/src/response/response.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,8 +14,8 @@ class OrderRepo {
   final SharedPreferences sharedPreferences;
   OrderRepo({required this.apiClient, required this.sharedPreferences});
 
-  Future<Response> getRunningOrderList(int offset) async {
-    return await apiClient.getData('${AppConstants.runningOrderListUri}?offset=$offset&limit=${100}');
+  Future<Response> getRunningOrderList(int offset, String? guestId) async {
+    return await apiClient.getData('${AppConstants.runningOrderListUri}?offset=$offset&limit=${100}${guestId != null ? '&guest_id=$guestId' : ''}');
   }
 
   Future<Response> getRunningSubscriptionOrderList(int offset) async {
@@ -26,24 +26,32 @@ class OrderRepo {
     return await apiClient.getData('${AppConstants.historyOrderListUri}?offset=$offset&limit=10');
   }
 
-  Future<Response> getOrderDetails(String orderID) async {
-    return await apiClient.getData('${AppConstants.orderDetailsUri}$orderID');
+  Future<Response> getOrderDetails(String orderID, String? guestId) async {
+    return await apiClient.getData('${AppConstants.orderDetailsUri}$orderID${guestId != null ? '&guest_id=$guestId' : ''}');
   }
 
   Future<Response> cancelOrder(String orderID, String? reason) async {
-    return await apiClient.postData(AppConstants.orderCancelUri, {'_method': 'put', 'order_id': orderID, 'reason': reason});
+    Map<String, String> data = {'_method': 'put', 'order_id': orderID, 'reason': reason!};
+    if(Get.find<AuthController>().isGuestLoggedIn()){
+      data.addAll({'guest_id': Get.find<AuthController>().getGuestId()});
+    }
+    return await apiClient.postData(AppConstants.orderCancelUri, data);
   }
 
-  Future<Response> trackOrder(String? orderID) async {
-    return await apiClient.getData('${AppConstants.trackUri}$orderID');
+  Future<Response> trackOrder(String? orderID, String? guestId, {String? contactNumber}) async {
+    return await apiClient.getData(
+      '${AppConstants.trackUri}$orderID'
+          '${guestId != null ? '&guest_id=$guestId' : ''}'
+          '${contactNumber != null ? '&contact_number=$contactNumber' : ''}',
+    );
   }
 
   Future<Response> placeOrder(PlaceOrderBody orderBody) async {
     return await apiClient.postData(AppConstants.placeOrderUri, orderBody.toJson());
   }
 
-  Future<Response> sendNotificationRequest(String orderId) async {
-    return await apiClient.getData('${AppConstants.sendCheckoutNotificationUri}/$orderId');
+  Future<Response> sendNotificationRequest(String orderId, String? guestId) async {
+    return await apiClient.getData('${AppConstants.sendCheckoutNotificationUri}/$orderId${guestId != null ? '?guest_id=$guestId' : ''}');
   }
 
   Future<Response> getDeliveryManData(String orderID) async {
@@ -51,7 +59,11 @@ class OrderRepo {
   }
 
   Future<Response> switchToCOD(String? orderID) async {
-    return await apiClient.postData(AppConstants.codSwitchUri, {'_method': 'put', 'order_id': orderID});
+    Map<String, String> data = {'_method': 'put', 'order_id': orderID!};
+    if(Get.find<AuthController>().isGuestLoggedIn()) {
+      data.addAll({'guest_id': Get.find<AuthController>().getGuestId()});
+    }
+    return await apiClient.postData(AppConstants.codSwitchUri, data);
   }
 
   Future<Response> getDistanceInMeter(LatLng originLatLng, LatLng destinationLatLng) async {
@@ -68,8 +80,8 @@ class OrderRepo {
     return await apiClient.getData('${AppConstants.orderCancellationUri}?offset=1&limit=30&type=customer');
   }
 
-  Future<Response> submitRefundRequest(Map<String, String> body, XFile? data) async {
-    return apiClient.postMultipartData(AppConstants.refundRequestUri, body,  [MultipartBody('image[]', data)]);
+  Future<Response> submitRefundRequest(Map<String, String> body, XFile? data, String? guestId) async {
+    return apiClient.postMultipartData('${AppConstants.refundRequestUri}${guestId != null ? '?guest_id=$guestId' : ''}', body,  [MultipartBody('image[]', data)], []);
   }
 
   Future<Response> getExtraCharge(double? distance) async {
@@ -101,5 +113,17 @@ class OrderRepo {
 
   Future<Response> getDmTipMostTapped() async {
     return await apiClient.getData(AppConstants.mostTipsUri);
+  }
+
+  Future<Response> getOfflineMethodList() async {
+    return await apiClient.getData(AppConstants.offlineMethodListUri);
+  }
+
+  Future<Response> saveOfflineInfo(String data) async {
+    return await apiClient.postData(AppConstants.offlinePaymentSaveInfoUri, jsonDecode(data));
+  }
+
+  Future<Response> updateOfflineInfo(String data) async {
+    return await apiClient.postData(AppConstants.offlinePaymentUpdateInfoUri, jsonDecode(data));
   }
 }

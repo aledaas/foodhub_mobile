@@ -2,8 +2,9 @@ import 'package:efood_multivendor/util/app_constants.dart';
 import 'package:flutter/material.dart';
 
 ThemeData light = ThemeData(
+  useMaterial3: false,
   fontFamily: AppConstants.fontFamily,
-  primaryColor: const Color(0xFFFF8200),
+  primaryColor: const Color(0xFF00B263),
   secondaryHeaderColor: const Color(0xFF1ED7AA),
   disabledColor: const Color(0xFFBABFC4),
   brightness: Brightness.light,

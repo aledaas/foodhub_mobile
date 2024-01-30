@@ -1,9 +1,12 @@
+import 'dart:convert';
+
 import 'package:efood_multivendor/controller/auth_controller.dart';
 import 'package:efood_multivendor/controller/cart_controller.dart';
 import 'package:efood_multivendor/controller/product_controller.dart';
 import 'package:efood_multivendor/controller/splash_controller.dart';
 import 'package:efood_multivendor/controller/theme_controller.dart';
 import 'package:efood_multivendor/controller/wishlist_controller.dart';
+import 'package:efood_multivendor/data/model/body/place_order_body.dart';
 import 'package:efood_multivendor/data/model/response/cart_model.dart';
 import 'package:efood_multivendor/data/model/response/product_model.dart';
 import 'package:efood_multivendor/helper/price_converter.dart';
@@ -38,12 +41,13 @@ class ItemCard extends StatelessWidget {
     double discountPrice = PriceConverter.convertWithDiscount(price, discount, product.discountType)!;
 
     CartModel cartModel = CartModel(
-      price, discountPrice, (price - discountPrice),
-      1, [], [], isCampaignItem, product, [],
+      null, price, discountPrice, (price - discountPrice),
+      1, [], [], isCampaignItem, product, [], product.quantityLimit
     );
 
 
     return InkWell(
+      hoverColor: Colors.transparent,
       onTap: () {
         ResponsiveHelper.isMobile(context) ? Get.bottomSheet(
           ProductBottomSheet(product: product, isCampaign: isCampaignItem),
@@ -119,7 +123,7 @@ class ItemCard extends StatelessWidget {
                         ),
                         child: Row(children: [
                           InkWell(
-                            onTap: () {
+                            onTap: cartController.isLoading ? null : () {
                               if (cartController.cartList[cartIndex].quantity! > 1) {
                                 cartController.setQuantity(false, cartModel, cartIndex: cartIndex);
                               }else {
@@ -140,14 +144,14 @@ class ItemCard extends StatelessWidget {
 
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall),
-                            child: Text(
+                            child: /*!cartController.isLoading ? */Text(
                               cartQty.toString(),
                               style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).cardColor),
-                            ),
+                            )/* : const Center(child: SizedBox(height: 15, width: 15, child: CircularProgressIndicator(color: Colors.white)))*/,
                           ),
 
                           InkWell(
-                            onTap: () {
+                            onTap: cartController.isLoading ? null : () {
                               cartController.setQuantity(true, cartModel, cartIndex: cartIndex);
                             },
                             child: Container(
@@ -176,19 +180,25 @@ class ItemCard extends StatelessWidget {
 
                               productController.setExistInCart(product);
 
+                              OnlineCart onlineCart = OnlineCart(null, product.id, null, product.price!.toString(), [], 1, [], [], [], 'Food');
+
                               if (Get.find<CartController>().existAnotherRestaurantProduct(cartModel.product!.restaurantId)) {
                                 Get.dialog(ConfirmationDialog(
                                   icon: Images.warning,
                                   title: 'are_you_sure_to_reset'.tr,
                                   description: 'if_you_continue'.tr,
                                   onYesPressed: () {
-                                    Get.back();
-                                    Get.find<CartController>().removeAllAndAddToCart(cartModel);
-                                    _showCartSnackBar();
+                                    Get.find<CartController>().clearCartOnline().then((success) async {
+                                      if (success) {
+                                        await Get.find<CartController>().addToCartOnline(onlineCart);
+                                        Get.back();
+                                        _showCartSnackBar();
+                                      }
+                                    });
                                   },
                                 ), barrierDismissible: false);
                               } else {
-                                Get.find<CartController>().addToCart(cartModel, productController.cartIndex);
+                                Get.find<CartController>().addToCartOnline(onlineCart);
                                 _showCartSnackBar();
                               }
 
@@ -225,16 +235,16 @@ class ItemCard extends StatelessWidget {
               padding: const EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
               child: Column(
               crossAxisAlignment: isBestItem == true ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   product.restaurantName!, style: robotoRegular.copyWith(color: Theme.of(context).disabledColor, fontSize: Dimensions.fontSizeSmall),
                   overflow: TextOverflow.ellipsis, maxLines: 1,
                 ),
-                const SizedBox(height: Dimensions.paddingSizeExtraSmall),
 
-                Wrap(crossAxisAlignment: WrapCrossAlignment.center,
+                Row(mainAxisAlignment: isBestItem == true ? MainAxisAlignment.center : MainAxisAlignment.start,
                   children: [
-                    Text(product.name!, style: robotoMedium, overflow: TextOverflow.ellipsis, maxLines: 1),
+                    Flexible(child: Text(product.name!, style: robotoMedium, overflow: TextOverflow.ellipsis, maxLines: 1)),
                     const SizedBox(width: Dimensions.paddingSizeExtraSmall),
 
                     (Get.find<SplashController>().configModel!.toggleVegNonVeg!)? Image.asset(
@@ -243,7 +253,6 @@ class ItemCard extends StatelessWidget {
                     ) : const SizedBox(),
                   ],
                 ),
-                const SizedBox(height: Dimensions.paddingSizeExtraSmall),
 
                 Row(
                   mainAxisAlignment: isBestItem == true ? MainAxisAlignment.center : MainAxisAlignment.start,
@@ -255,10 +264,10 @@ class ItemCard extends StatelessWidget {
                     Text('(${product.ratingCount})', style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).disabledColor)),
                   ],
                 ),
-                const SizedBox(height: Dimensions.paddingSizeExtraSmall),
 
-                Row(
-                  mainAxisAlignment: isBestItem == true ? MainAxisAlignment.center : MainAxisAlignment.start,
+                Wrap(
+                  alignment: isBestItem == true ? WrapAlignment.center : WrapAlignment.start,
+                  // mainAxisAlignment: isBestItem == true ? MainAxisAlignment.center : MainAxisAlignment.start,
                   children: [
                     discountPrice < price ? Text(PriceConverter.convertPrice(price),
                         style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).disabledColor, decoration: TextDecoration.lineThrough)): const SizedBox(),

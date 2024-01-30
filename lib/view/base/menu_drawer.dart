@@ -25,7 +25,7 @@ class MenuDrawerState extends State<MenuDrawer> with SingleTickerProviderStateMi
     Menu(icon: Images.profileIcon, title: 'profile'.tr, onTap: () {
       Get.offNamed(RouteHelper.getProfileRoute());
     }),
-    Menu(icon: Images.orderPlaceHolder, title: 'my_orders'.tr, onTap: () {
+    Menu(icon: Images.orderMenuIcon, title: 'my_orders'.tr, onTap: () {
       Get.offNamed(RouteHelper.getOrderRoute());
     }),
     Menu(icon: Images.location, title: 'my_address'.tr, onTap: () {

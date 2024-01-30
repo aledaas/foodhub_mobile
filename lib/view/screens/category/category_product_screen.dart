@@ -10,6 +10,7 @@ import 'package:efood_multivendor/view/base/footer_view.dart';
 import 'package:efood_multivendor/view/base/menu_drawer.dart';
 import 'package:efood_multivendor/view/base/product_view.dart';
 import 'package:efood_multivendor/view/base/veg_filter_widget.dart';
+import 'package:efood_multivendor/view/base/web_header.dart';
 import 'package:efood_multivendor/view/base/web_menu_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';

@@ -20,11 +20,12 @@ import 'package:efood_multivendor/view/base/product_view.dart';
 import 'package:efood_multivendor/view/base/veg_filter_widget.dart';
 import 'package:efood_multivendor/view/base/web_menu_bar.dart';
 import 'package:efood_multivendor/view/screens/home/widget/new/arrow_icon_button.dart';
+import 'package:efood_multivendor/view/screens/home/widget/new/item_card.dart';
 import 'package:efood_multivendor/view/screens/restaurant/widget/restaurant_info_section.dart';
+import 'package:efood_multivendor/view/screens/restaurant/widget/restaurant_screen_shimmer_view.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
-import '../home/widget/new/item_card.dart';
 
 class RestaurantScreen extends StatefulWidget {
   final Restaurant? restaurant;
@@ -81,8 +82,7 @@ class _RestaurantScreenState extends State<RestaurantScreen> {
           }
           restController.setCategoryList();
 
-          return (restController.restaurant != null && restController.restaurant!.name != null && categoryController.categoryList != null)
-          ? CustomScrollView(
+          return (restController.restaurant != null && restController.restaurant!.name != null && categoryController.categoryList != null) ? CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             controller: scrollController,
             slivers: [
@@ -91,7 +91,6 @@ class _RestaurantScreenState extends State<RestaurantScreen> {
 
               SliverToBoxAdapter(child: Center(child: Container(
                 width: Dimensions.webMaxWidth,
-                // padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
                 color: Theme.of(context).cardColor,
                 child: Column(children: [
                   // isDesktop ? const SizedBox() : RestaurantDescriptionView(restaurant: restaurant),
@@ -129,7 +128,22 @@ class _RestaurantScreenState extends State<RestaurantScreen> {
                       ),
                     ]),
                   ) : const SizedBox(),
-                  const SizedBox(height: Dimensions.paddingSizeSmall),
+                  SizedBox(height: (restaurant.announcementActive! && restaurant.announcementMessage != null) ? 0 : Dimensions.paddingSizeSmall),
+
+                  ResponsiveHelper.isMobile(context) ? (restaurant.announcementActive! && restaurant.announcementMessage != null) ? Container(
+                    decoration: const BoxDecoration(color: Colors.green),
+                    padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall, horizontal: Dimensions.paddingSizeLarge),
+                    margin: const EdgeInsets.only(bottom: Dimensions.paddingSizeSmall),
+                    child: Row(children: [
+                      Image.asset(Images.announcement, height: 26, width: 26),
+                      const SizedBox(width: Dimensions.paddingSizeSmall),
+
+                      Flexible(child: Text(restaurant.announcementMessage ?? '',
+                        style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).cardColor),
+                      ),
+                      ),
+                    ]),
+                  ) : const SizedBox() : const SizedBox(),
 
                   restController.recommendedProductModel != null && restController.recommendedProductModel!.products!.isNotEmpty ? Container(
                     color: Theme.of(context).primaryColor.withOpacity(0.10),
@@ -146,13 +160,13 @@ class _RestaurantScreenState extends State<RestaurantScreen> {
                               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                 Text('popular_in_this_restaurant'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, fontWeight: FontWeight.w700)),
                                 const SizedBox(height: Dimensions.paddingSizeExtraSmall),
-                                
+
                                 Text('here_is_what_you_might_like_to_test'.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor)),
                               ]),
                             ),
 
                             ArrowIconButton(
-                              onTap: () => Get.toNamed(RouteHelper.getPopularFoodRoute(true, fromIsRestaurantFood: true)),
+                              onTap: () => Get.toNamed(RouteHelper.getPopularFoodRoute(false, fromIsRestaurantFood: true, restaurantId: widget.restaurant!.id ?? Get.find<RestaurantController>().restaurant!.id!)),
                             ),
                           ]),
                         ),
@@ -196,7 +210,7 @@ class _RestaurantScreenState extends State<RestaurantScreen> {
                     Padding(
                       padding: const EdgeInsets.only(left: Dimensions.paddingSizeLarge, right: Dimensions.paddingSizeLarge, top: Dimensions.paddingSizeSmall),
                       child: Row(children: [
-                        Text('all_products'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault)),
+                        Text('all_food_items'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault)),
                         const Expanded(child: SizedBox()),
 
                         isDesktop ?  Container(
@@ -233,7 +247,7 @@ class _RestaurantScreenState extends State<RestaurantScreen> {
                                           restController.changeSearchStatus();
                                         }
                                       },
-                                      child: Icon(restController.isSearching ? Icons.clear : Icons.search, color: Theme.of(context).primaryColor.withOpacity(0.50)),
+                                      child: Icon(restController.isSearching ? Icons.clear : CupertinoIcons.search, color: Theme.of(context).primaryColor.withOpacity(0.50)),
                                     ),
                                   ),
                                   onSubmitted: (String? value) {
@@ -248,36 +262,15 @@ class _RestaurantScreenState extends State<RestaurantScreen> {
                               ),
                               const SizedBox(width: Dimensions.paddingSizeSmall),
 
-                              /*!storeController.isSearching ? CustomButton(
-                                radius: Dimensions.radiusSmall,
-                                height: 40,
-                                width: 74,
-                                buttonText: 'search'.tr,
-                                isBold: false,
-                                fontSize: Dimensions.fontSizeSmall,
-                                onPressed: () {
-                                  // storeController.getStoreSearchItemList(
-                                  //   _searchController.text.trim(), widget.store!.id.toString(), 1, storeController.type,
-                                  // );
-                                },
-                              ) : InkWell(onTap: () {
-                                _searchController.text = '';
-                                storeController.initSearchData();
-                                storeController.changeSearchStatus();
-                              },
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                      color: Theme.of(context).primaryColor,
-                                      borderRadius: BorderRadius.circular(Dimensions.radiusSmall)
-                                  ),
-                                  padding: const EdgeInsets.symmetric(vertical: 3, horizontal: Dimensions.paddingSizeSmall),
-                                  child: const Icon(Icons.clear, color: Colors.white),
-                                ),
-                              ),*/
                             ],
                           ),
                         ) : InkWell(
-                          onTap: ()=> Get.toNamed(RouteHelper.getSearchRestaurantProductRoute(restaurant!.id)),
+                          onTap: () async {
+                            await Get.toNamed(RouteHelper.getSearchRestaurantProductRoute(restaurant!.id));
+                            if(restController.isSearching) {
+                              restController.changeSearchStatus();
+                            }
+                          },
                           child: Container(
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
@@ -297,7 +290,7 @@ class _RestaurantScreenState extends State<RestaurantScreen> {
 
                       ]),
                     ),
-                    const SizedBox(height: Dimensions.paddingSizeSmall),
+                    const Divider(thickness: 0.2, height: 10),
 
                     SizedBox(
                       height: 30,
@@ -351,15 +344,15 @@ class _RestaurantScreenState extends State<RestaurantScreen> {
                       }
                     },
                     totalSize: restController.isSearching
-                        ? restController.restaurantSearchProductModel != null ? restController.restaurantSearchProductModel!.totalSize : null
+                        ? restController.restaurantSearchProductModel?.totalSize
                         : restController.restaurantProducts != null ? restController.foodPageSize : null,
                     offset: restController.isSearching
-                        ? restController.restaurantSearchProductModel != null ? restController.restaurantSearchProductModel!.offset : null
+                        ? restController.restaurantSearchProductModel?.offset
                         : restController.restaurantProducts != null ? restController.foodPageOffset : null,
                     productView: ProductView(
                       isRestaurant: false, restaurants: null,
                       products: restController.isSearching
-                          ? restController.restaurantSearchProductModel != null ? restController.restaurantSearchProductModel!.products : null
+                          ? restController.restaurantSearchProductModel?.products
                           : restController.categoryList!.isNotEmpty ? restController.restaurantProducts : null,
                       inRestaurantPage: true,
                       padding: const EdgeInsets.symmetric(
@@ -371,12 +364,12 @@ class _RestaurantScreenState extends State<RestaurantScreen> {
                 )),
               )),
             ],
-          ) : const Center(child: CircularProgressIndicator());
+          ) : const RestaurantScreenShimmerView();
         });
       }),
 
       bottomNavigationBar: GetBuilder<CartController>(builder: (cartController) {
-          return cartController.cartList.isNotEmpty && !isDesktop ? const BottomCartWidget() : const SizedBox();
+          return cartController.cartList.isNotEmpty && !isDesktop ? BottomCartWidget(restaurantId: widget.restaurant!.id!) : const SizedBox();
         })
     );
   }

@@ -68,6 +68,10 @@ class DateConverter {
     return DateFormat('dd MMM yyyy HH:mm a').format(isoStringToLocalDate(dateTime));
   }
 
+  static String dateTimeForCoupon(DateTime dateTime) {
+    return DateFormat('yyyy-MM-dd').format(dateTime);
+  }
+
   static String stringToLocalDateOnly(String dateTime) {
     return DateFormat('dd MMM yyyy').format(DateFormat('yyyy-MM-dd').parse(dateTime));
   }

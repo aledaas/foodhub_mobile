@@ -6,6 +6,7 @@ import 'package:efood_multivendor/view/base/footer_view.dart';
 import 'package:efood_multivendor/view/base/menu_drawer.dart';
 import 'package:efood_multivendor/view/base/paginated_list_view.dart';
 import 'package:efood_multivendor/view/base/product_view.dart';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 class CuisineRestaurantScreen extends StatefulWidget {
@@ -34,29 +35,30 @@ class _CuisineRestaurantScreenState extends State<CuisineRestaurantScreen> {
       endDrawer: const MenuDrawer(), endDrawerEnableOpenDragGesture: false,
       body: Scrollbar(
         child: SingleChildScrollView(
+          controller: _scrollController,
           child: FooterView(
             child: Center(
               child: SizedBox(
                 width: Dimensions.webMaxWidth,
                 child: GetBuilder<CuisineController>(
-                  builder: (cuisineController) {
-                    if(cuisineController.cuisineRestaurantsModel != null){
-                    }
-                    return PaginatedListView(
-                      scrollController: _scrollController,
-                      totalSize: cuisineController.cuisineRestaurantsModel != null ? cuisineController.cuisineRestaurantsModel!.totalSize : null,
-                      offset: cuisineController.cuisineRestaurantsModel != null ? int.parse(cuisineController.cuisineRestaurantsModel!.offset!) : null,
-                      onPaginate: (int? offset) async => await cuisineController.getCuisineRestaurantList(widget.cuisineId, offset!, false),
-                      productView: ProductView(
-                        isRestaurant: true, products: null,
-                        restaurants: cuisineController.cuisineRestaurantsModel != null ? cuisineController.cuisineRestaurantsModel!.restaurants : null,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: ResponsiveHelper.isDesktop(context) ? Dimensions.paddingSizeExtraSmall : Dimensions.paddingSizeSmall,
-                          vertical: ResponsiveHelper.isDesktop(context) ? Dimensions.paddingSizeExtraSmall : 0,
+                    builder: (cuisineController) {
+                      if(cuisineController.cuisineRestaurantsModel != null){
+                      }
+                      return PaginatedListView(
+                        scrollController: _scrollController,
+                        totalSize: cuisineController.cuisineRestaurantsModel != null ? cuisineController.cuisineRestaurantsModel!.totalSize : null,
+                        offset: cuisineController.cuisineRestaurantsModel != null ? int.parse(cuisineController.cuisineRestaurantsModel!.offset!) : null,
+                        onPaginate: (int? offset) async => await cuisineController.getCuisineRestaurantList(widget.cuisineId, offset!, false),
+                        productView: ProductView(
+                          isRestaurant: true, products: null,
+                          restaurants: cuisineController.cuisineRestaurantsModel != null ? cuisineController.cuisineRestaurantsModel!.restaurants : null,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: ResponsiveHelper.isDesktop(context) ? Dimensions.paddingSizeExtraSmall : Dimensions.paddingSizeSmall,
+                            vertical: ResponsiveHelper.isDesktop(context) ? Dimensions.paddingSizeExtraSmall : 0,
+                          ),
                         ),
-                      ),
-                    );
-                  }
+                      );
+                    }
                 ),
               ),
             ),

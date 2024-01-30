@@ -87,6 +87,7 @@ class OrderModel {
   double? partiallyPaidAmount;
   List<Payments>? payments;
   List<String>? orderProof;
+  OfflinePayment? offlinePayment;
 
   OrderModel(
       {this.id,
@@ -138,6 +139,7 @@ class OrderModel {
         this.partiallyPaidAmount,
         this.payments,
         this.orderProof,
+        this.offlinePayment,
       });
 
   OrderModel.fromJson(Map<String, dynamic> json) {
@@ -219,6 +221,9 @@ class OrderModel {
         orderProof!.add(json['order_proof'].toString());
       }
     }
+    offlinePayment = json['offline_payment'] != null
+        ? OfflinePayment.fromJson(json['offline_payment'])
+        : null;
   }
 
   Map<String, dynamic> toJson() {
@@ -281,6 +286,9 @@ class OrderModel {
       data['payments'] = payments!.map((v) => v.toJson()).toList();
     }
     data['order_proof'] = orderProof;
+    if (offlinePayment != null) {
+      data['offline_payment'] = offlinePayment!.toJson();
+    }
     return data;
   }
 }
@@ -391,6 +399,107 @@ class Payments {
     data['payment_method'] = paymentMethod;
     data['created_at'] = createdAt;
     data['updated_at'] = updatedAt;
+    return data;
+  }
+}
+
+class OfflinePayment {
+  List<Input>? input;
+  Data? data;
+  List<MethodFields>? methodFields;
+
+  OfflinePayment({this.input, this.data, this.methodFields});
+
+  OfflinePayment.fromJson(Map<String, dynamic> json) {
+    if (json['input'] != null) {
+      input = <Input>[];
+      json['input'].forEach((v) {
+        input!.add(Input.fromJson(v));
+      });
+    }
+    data = json['data'] != null ? Data.fromJson(json['data']) : null;
+    if (json['method_fields'] != null) {
+      methodFields = <MethodFields>[];
+      json['method_fields'].forEach((v) {
+        methodFields!.add(MethodFields.fromJson(v));
+      });
+    }
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    if (input != null) {
+      data['input'] = input!.map((v) => v.toJson()).toList();
+    }
+    if (this.data != null) {
+      data['data'] = this.data!.toJson();
+    }
+    if (methodFields != null) {
+      data['method_fields'] = input!.map((v) => v.toJson()).toList();
+    }
+    return data;
+  }
+}
+
+class Input {
+  String? userInput;
+  String? userData;
+
+  Input({this.userInput, this.userData});
+
+  Input.fromJson(Map<String, dynamic> json) {
+    userInput = json['user_input'].toString();
+    userData = json['user_data'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['user_input'] = userInput;
+    data['user_data'] = userData;
+    return data;
+  }
+}
+
+class Data {
+  String? status;
+  String? methodId;
+  String? methodName;
+  String? customerNote;
+
+  Data({this.status, this.methodId, this.methodName, this.customerNote});
+
+  Data.fromJson(Map<String, dynamic> json) {
+    status = json['status'];
+    methodId = json['method_id'].toString();
+    methodName = json['method_name'];
+    customerNote = json['customer_note'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['status'] = status;
+    data['method_id'] = methodId;
+    data['method_name'] = methodName;
+    data['customer_note'] = customerNote;
+    return data;
+  }
+}
+
+class MethodFields {
+  String? inputName;
+  String? inputData;
+
+  MethodFields({this.inputName, this.inputData});
+
+  MethodFields.fromJson(Map<String, dynamic> json) {
+    inputName = json['input_name'];
+    inputData = json['input_data'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['input_name'] = inputName;
+    data['input_data'] = inputData;
     return data;
   }
 }

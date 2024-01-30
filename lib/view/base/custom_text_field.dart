@@ -33,6 +33,7 @@ class CustomTextField extends StatefulWidget {
   final bool isPhone;
   final String? countryDialCode;
   final Function(CountryCode countryCode)? onCountryChanged;
+  final bool isRequired;
 
   const CustomTextField(
       {Key? key,
@@ -62,6 +63,7 @@ class CustomTextField extends StatefulWidget {
         this.isPhone = false,
         this.countryDialCode,
         this.onCountryChanged,
+        this.isRequired = false,
       }) : super(key: key);
 
   @override

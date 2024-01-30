@@ -29,7 +29,7 @@ class CustomDatePicker extends StatelessWidget {
                     maxWidth: ResponsiveHelper.isDesktop(context) ? 400.0 : context.width * 0.8,
                     maxHeight: ResponsiveHelper.isDesktop(context) ? context.height * 0.8 : context.height * 0.6,
                   ),
-                  child: child,
+                  child: SingleChildScrollView(child: child),
                 )
               ],
             );

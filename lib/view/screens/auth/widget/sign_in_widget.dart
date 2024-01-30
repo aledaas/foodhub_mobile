@@ -6,6 +6,7 @@ import 'package:efood_multivendor/controller/auth_controller.dart';
 import 'package:efood_multivendor/controller/localization_controller.dart';
 import 'package:efood_multivendor/controller/location_controller.dart';
 import 'package:efood_multivendor/controller/splash_controller.dart';
+import 'package:efood_multivendor/controller/user_controller.dart';
 import 'package:efood_multivendor/helper/custom_validator.dart';
 import 'package:efood_multivendor/helper/responsive_helper.dart';
 import 'package:efood_multivendor/helper/route_helper.dart';
@@ -118,12 +119,12 @@ class SignInWidgetState extends State<SignInWidget> {
         CustomButton(
           height: ResponsiveHelper.isDesktop(context) ? 45 : null,
           width:  ResponsiveHelper.isDesktop(context) ? 180 : null,
-          buttonText: ResponsiveHelper.isDesktop(context) ? 'login' : 'sign_in'.tr,
+          buttonText: ResponsiveHelper.isDesktop(context) ? 'login'.tr : 'sign_in'.tr,
           radius: ResponsiveHelper.isDesktop(context) ? Dimensions.radiusSmall : Dimensions.radiusDefault,
           isBold: ResponsiveHelper.isDesktop(context) ? false : true,
           isLoading: authController.isLoading,
           onPressed: authController.acceptTerms ? () => _login(authController, _countryDialCode!) : null,
-          fontSize: ResponsiveHelper.isDesktop(context) ? Dimensions.fontSizeExtraSmall : null,
+          // fontSize: ResponsiveHelper.isDesktop(context) ? Dimensions.fontSizeExtraSmall : null,
         ),
         const SizedBox(height: Dimensions.paddingSizeExtraLarge),
 
@@ -131,7 +132,7 @@ class SignInWidgetState extends State<SignInWidget> {
           Text('do_not_have_account'.tr, style: robotoRegular.copyWith(color: Theme.of(context).hintColor)),
 
           InkWell(
-            onTap: () {
+            onTap: authController.isLoading ? null : () {
               if(ResponsiveHelper.isDesktop(context)){
                 Get.back();
                 Get.dialog(const SignUpScreen());
@@ -150,7 +151,7 @@ class SignInWidgetState extends State<SignInWidget> {
 
         const SocialLoginWidget(),
 
-        const GuestButton(),
+        ResponsiveHelper.isDesktop(context) ? const SizedBox() : const GuestButton(),
 
       ]);
     });
@@ -169,7 +170,7 @@ class SignInWidgetState extends State<SignInWidget> {
       showCustomSnackBar('invalid_phone_number'.tr);
     }else if (password.isEmpty) {
       showCustomSnackBar('enter_password'.tr);
-    }else if (password.length < 6) {
+    }else if (password.length < 8) {
       showCustomSnackBar('password_should_be'.tr);
     }else {
       authController.login(numberWithCountryCode, password, alreadyInApp: widget.backFromThis).then((status) async {
@@ -186,7 +187,11 @@ class SignInWidgetState extends State<SignInWidget> {
             Get.toNamed(RouteHelper.getVerificationRoute(numberWithCountryCode, token, RouteHelper.signUp, data));
           }else {
             if(widget.backFromThis) {
-              Get.back();
+              if(ResponsiveHelper.isDesktop(context)){
+                Get.offAllNamed(RouteHelper.getInitialRoute(fromSplash: false));
+              } else {
+                Get.back();
+              }
             }else {
               Get.find<LocationController>().navigateToLocationScreen('sign-in', offNamed: true);
             }

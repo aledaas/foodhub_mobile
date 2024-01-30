@@ -4,8 +4,6 @@ import 'dart:convert';
 import 'package:efood_multivendor/controller/location_controller.dart';
 import 'package:efood_multivendor/data/api/api_client.dart';
 import 'package:efood_multivendor/data/model/body/business_plan_body.dart';
-import 'package:efood_multivendor/data/model/body/delivery_man_body.dart';
-import 'package:efood_multivendor/data/model/body/restaurant_body.dart';
 import 'package:efood_multivendor/data/model/body/signup_body.dart';
 import 'package:efood_multivendor/data/model/body/social_log_in_body.dart';
 import 'package:efood_multivendor/data/model/response/address_model.dart';
@@ -28,7 +26,15 @@ class AuthRepo {
   }
 
   Future<Response> login({String? phone, String? password}) async {
-    return await apiClient.postData(AppConstants.loginUri, {"phone": phone, "password": password});
+    String guestId = getGuestId();
+    Map<String, String> data = {
+      "phone": phone!,
+      "password": password!,
+    };
+    if(guestId.isNotEmpty) {
+      data.addAll({"guest_id": guestId});
+    }
+    return await apiClient.postData(AppConstants.loginUri, data);
   }
 
   Future<Response> loginWithSocialMedia(SocialLogInBody socialLogInBody) async {
@@ -143,6 +149,7 @@ class AuthRepo {
       apiClient.postData(AppConstants.tokenUri, {"_method": "put", "cm_firebase_token": '@'});
     }
     sharedPreferences.remove(AppConstants.token);
+    sharedPreferences.remove(AppConstants.guestId);
     sharedPreferences.setStringList(AppConstants.cartList, []);
     sharedPreferences.remove(AppConstants.userAddress);
     apiClient.token = null;
@@ -207,9 +214,9 @@ class AuthRepo {
     return await apiClient.getData(AppConstants.zoneListUri);
   }
 
-  Future<Response> registerRestaurant(RestaurantBody restaurant, XFile? logo, XFile? cover) async {
+  Future<Response> registerRestaurant(Map<String, String> data, XFile? logo, XFile? cover, List<MultipartDocument> additionalDocument) async {
     return apiClient.postMultipartData(
-      AppConstants.restaurantRegisterUri, restaurant.toJson(), [MultipartBody('logo', logo), MultipartBody('cover_photo', cover)],
+      AppConstants.restaurantRegisterUri, data, [MultipartBody('logo', logo), MultipartBody('cover_photo', cover)], additionalDocument,
     );
   }
 
@@ -232,8 +239,8 @@ class AuthRepo {
     return await apiClient.postData(AppConstants.businessPlanPaymentUri, {'id': id, 'payment_gateway': paymentName, 'callback': callback});
   }
 
-  Future<Response> registerDeliveryMan(DeliveryManBody deliveryManBody, List<MultipartBody> multiParts) async {
-    return apiClient.postMultipartData(AppConstants.dmRegisterUri, deliveryManBody.toJson(), multiParts);
+  Future<Response> registerDeliveryMan(Map<String, String> data, List<MultipartBody> multiParts, List<MultipartDocument> additionalDocument) async {
+    return apiClient.postMultipartData(AppConstants.dmRegisterUri, data, multiParts, additionalDocument);
   }
 
   Future<Response> getVehicleList() async {
@@ -246,6 +253,34 @@ class AuthRepo {
 
   String getDmTipIndex() {
     return sharedPreferences.getString(AppConstants.dmTipIndex) ?? "";
+  }
+
+  Future<Response> guestLogin() async {
+    return await apiClient.postData(AppConstants.guestLoginUri, {});
+  }
+
+  Future<bool> saveGuestId(String id) async {
+    return await sharedPreferences.setString(AppConstants.guestId, id);
+  }
+
+  String getGuestId() {
+    return sharedPreferences.getString(AppConstants.guestId) ?? "";
+  }
+
+  Future<bool> clearGuestId() async {
+    return await sharedPreferences.remove(AppConstants.guestId);
+  }
+
+  bool isGuestLoggedIn() {
+    return sharedPreferences.containsKey(AppConstants.guestId);
+  }
+
+  Future<bool> saveGuestContactNumber(String number) async {
+    return await sharedPreferences.setString(AppConstants.guestNumber, number);
+  }
+
+  String getGuestContactNumber() {
+    return sharedPreferences.getString(AppConstants.guestNumber) ?? "";
   }
 
 }

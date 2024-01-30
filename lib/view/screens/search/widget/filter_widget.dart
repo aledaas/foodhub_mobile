@@ -17,6 +17,7 @@ class FilterWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 600,
+      constraints: BoxConstraints(maxHeight: context.height*0.7, minHeight: context.height*0.5),
       decoration: ResponsiveHelper.isMobile(context)? BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: const BorderRadius.only(topLeft: Radius.circular(Dimensions.radiusLarge), topRight: Radius.circular(Dimensions.radiusLarge)),
@@ -49,146 +50,188 @@ class FilterWidget extends StatelessWidget {
 
           Flexible(
             child: SingleChildScrollView(
-              scrollDirection: Axis.vertical,
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('sort_by'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge)),
-                  const SizedBox(height: Dimensions.paddingSizeSmall),
-                  GridView.builder(
-                    itemCount: searchController.sortList.length,
-                    physics: const NeverScrollableScrollPhysics(),
+              child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('sort_by'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge)),
+                const SizedBox(height: Dimensions.paddingSizeSmall),
+                GridView.builder(
+                  itemCount: searchController.sortList.length,
+                  physics: const NeverScrollableScrollPhysics(),
+                  shrinkWrap: true,
+                  padding: EdgeInsets.zero,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: ResponsiveHelper.isDesktop(context) ? 4 : ResponsiveHelper.isTab(context) ? 3 : 2,
+                    childAspectRatio: 3, crossAxisSpacing: 10, mainAxisSpacing: 10,
+                  ),
+                  itemBuilder: (context, index) {
+                    return InkWell(
+                      onTap: () {
+                        if(isRestaurant) {
+                          searchController.setRestSortIndex(index);
+                        } else {
+                          searchController.setSortIndex(index);
+                        }
+                      },
+                      child: Container(
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: (isRestaurant ? searchController.restaurantSortIndex == index : searchController.sortIndex == index) ? Colors.transparent
+                              : Theme.of(context).disabledColor),
+                          borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+                          color: (isRestaurant ? searchController.restaurantSortIndex == index : searchController.sortIndex == index) ? Theme.of(context).primaryColor
+                              : Theme.of(context).disabledColor.withOpacity(0.1),
+                        ),
+                        child: Text(
+                          searchController.sortList[index],
+                          textAlign: TextAlign.center,
+                          style: robotoMedium.copyWith(
+                            color: (isRestaurant ? searchController.restaurantSortIndex == index : searchController.sortIndex == index) ? Colors.white : Theme.of(context).hintColor,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: Dimensions.paddingSizeLarge),
+              
+                Text('filter_by'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge)),
+                const SizedBox(height: Dimensions.paddingSizeSmall),
+                Get.find<SplashController>().configModel!.toggleVegNonVeg! ? CustomCheckBox(
+                  title: 'veg'.tr,
+                  value: isRestaurant ? searchController.restaurantVeg : searchController.veg,
+                  onClick: () {
+                    if(isRestaurant) {
+                      searchController.toggleResVeg();
+                    } else {
+                      searchController.toggleVeg();
+                    }
+                  },
+                ) : const SizedBox(),
+                Get.find<SplashController>().configModel!.toggleVegNonVeg! ? CustomCheckBox(
+                  title: 'non_veg'.tr,
+                  value: isRestaurant ? searchController.restaurantNonVeg : searchController.nonVeg,
+                  onClick: () {
+                    if(isRestaurant) {
+                      searchController.toggleResNonVeg();
+                    } else {
+                      searchController.toggleNonVeg();
+                    }
+                  },
+                ) : const SizedBox(),
+
+                CustomCheckBox(
+                  title: isRestaurant ? 'currently_opened_restaurants'.tr : 'currently_available_foods'.tr,
+                  value: isRestaurant ? searchController.isAvailableRestaurant : searchController.isAvailableFoods,
+                  onClick: () {
+                    if(isRestaurant) {
+                      searchController.toggleAvailableRestaurant();
+                    } else {
+                      searchController.toggleAvailableFoods();
+                    }
+                  },
+                ),
+                CustomCheckBox(
+                  title: isRestaurant ? 'discounted_restaurants'.tr : 'discounted_foods'.tr,
+                  value: isRestaurant ? searchController.isDiscountedRestaurant : searchController.isDiscountedFoods,
+                  onClick: () {
+                    if(isRestaurant) {
+                      searchController.toggleDiscountedRestaurant();
+                    } else {
+                      searchController.toggleDiscountedFoods();
+                    }
+                  },
+                ),
+                const SizedBox(height: Dimensions.paddingSizeLarge),
+              
+                isRestaurant ? const SizedBox() : Column(children: [
+                  Text('price'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge)),
+
+                  Builder(
+                    builder: (context) {
+                      return RangeSlider(
+                        values: RangeValues(searchController.lowerValue, searchController.upperValue),
+                        max: maxValue!.toInt().toDouble(),
+                        min: 0,
+                        divisions: maxValue!.toInt(),
+                        activeColor: Theme.of(context).primaryColor,
+                        inactiveColor: Theme.of(context).primaryColor.withOpacity(0.3),
+                        labels: RangeLabels(searchController.lowerValue.toString(), searchController.upperValue.toString()),
+                        onChanged: (RangeValues rangeValues) {
+                          searchController.setLowerAndUpperValue(rangeValues.start, rangeValues.end);
+                        },
+                      );
+                    }
+                  ),
+                  const SizedBox(height: Dimensions.paddingSizeLarge),
+                ]),
+              
+                Text('rating'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge)),
+                Container(
+                  height: 30, alignment: Alignment.center,
+                  child: ListView.builder(
+                    itemCount: 5,
                     shrinkWrap: true,
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: ResponsiveHelper.isDesktop(context) ? 4 : ResponsiveHelper.isTab(context) ? 3 : 2,
-                      childAspectRatio: 3, crossAxisSpacing: 10, mainAxisSpacing: 10,
-                    ),
+                    scrollDirection: Axis.horizontal,
+                    padding: EdgeInsets.zero,
                     itemBuilder: (context, index) {
                       return InkWell(
                         onTap: () {
-                          searchController.setSortIndex(index);
+                          if(isRestaurant) {
+                            searchController.setRestaurantRating(index + 1);
+                          } else {
+                            searchController.setRating(index + 1);
+                          }
                         },
-                        child: Container(
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            border: Border.all(color: searchController.sortIndex == index ? Colors.transparent
-                                : Theme.of(context).disabledColor),
-                            borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-                            color: searchController.sortIndex == index ? Theme.of(context).primaryColor
-                                : Theme.of(context).disabledColor.withOpacity(0.1),
-                          ),
-                          child: Text(
-                            searchController.sortList[index],
-                            textAlign: TextAlign.center,
-                            style: robotoMedium.copyWith(
-                              color: searchController.sortIndex == index ? Colors.white : Theme.of(context).hintColor,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                        child: Icon(
+                          (isRestaurant ? searchController.restaurantRating < (index + 1) : searchController.rating < (index + 1)) ? Icons.star_border : Icons.star,
+                          size: 30,
+                          color: (isRestaurant ? searchController.restaurantRating < (index + 1) : searchController.rating < (index + 1)) ? Theme.of(context).disabledColor
+                              : Theme.of(context).primaryColor,
                         ),
                       );
                     },
                   ),
-                  const SizedBox(height: Dimensions.paddingSizeLarge),
-
-                  Text('filter_by'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge)),
-                  const SizedBox(height: Dimensions.paddingSizeSmall),
-                  Get.find<SplashController>().configModel!.toggleVegNonVeg! ? CustomCheckBox(
-                    title: 'veg'.tr,
-                    value: searchController.veg,
-                    onClick: () => searchController.toggleVeg(),
-                  ) : const SizedBox(),
-                  Get.find<SplashController>().configModel!.toggleVegNonVeg! ? CustomCheckBox(
-                    title: 'non_veg'.tr,
-                    value: searchController.nonVeg,
-                    onClick: () => searchController.toggleNonVeg(),
-                  ) : const SizedBox(),
-                  CustomCheckBox(
-                    title: isRestaurant ? 'currently_opened_restaurants'.tr : 'currently_available_foods'.tr,
-                    value: searchController.isAvailableFoods,
-                    onClick: () {
-                      searchController.toggleAvailableFoods();
-                    },
-                  ),
-                  CustomCheckBox(
-                    title: isRestaurant ? 'discounted_restaurants'.tr : 'discounted_foods'.tr,
-                    value: searchController.isDiscountedFoods,
-                    onClick: () {
-                      searchController.toggleDiscountedFoods();
-                    },
-                  ),
-                  const SizedBox(height: Dimensions.paddingSizeLarge),
-
-                  isRestaurant ? const SizedBox() : Column(children: [
-                    Text('price'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge)),
-                    RangeSlider(
-                      values: RangeValues(searchController.lowerValue, searchController.upperValue),
-                      max: maxValue!.toInt().toDouble(),
-                      min: 0,
-                      divisions: maxValue!.toInt(),
-                      activeColor: Theme.of(context).primaryColor,
-                      inactiveColor: Theme.of(context).primaryColor.withOpacity(0.3),
-                      labels: RangeLabels(searchController.lowerValue.toString(), searchController.upperValue.toString()),
-                      onChanged: (RangeValues rangeValues) {
-                        searchController.setLowerAndUpperValue(rangeValues.start, rangeValues.end);
-                      },
-                    ),
-                    const SizedBox(height: Dimensions.paddingSizeLarge),
-                  ]),
-
-                  Text('rating'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge)),
-                  Container(
-                    height: 30, alignment: Alignment.center,
-                    child: ListView.builder(
-                      itemCount: 5,
-                      shrinkWrap: true,
-                      scrollDirection: Axis.horizontal,
-                      itemBuilder: (context, index) {
-                        return InkWell(
-                          onTap: () => searchController.setRating(index + 1),
-                          child: Icon(
-                            searchController.rating < (index + 1) ? Icons.star_border : Icons.star,
-                            size: 30,
-                            color: searchController.rating < (index + 1) ? Theme.of(context).disabledColor
-                                : Theme.of(context).primaryColor,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ]),
             ),
           ),
           const SizedBox(height: 30),
 
-          Row(children: [
-              Expanded(
-                flex: 1,
-                child:  CustomButton(
-                  color: Theme.of(context).disabledColor.withOpacity(0.5),
-                  textColor: Theme.of(context).textTheme.bodyLarge!.color,
-                  onPressed: () {
-                    searchController.resetFilter();
-                  },
-                  buttonText: 'reset'.tr,
-                )),
-              const SizedBox(width: Dimensions.paddingSizeSmall),
+          SafeArea(
+            child: Row(children: [
+                Expanded(
+                  flex: 1,
+                  child:  CustomButton(
+                    color: Theme.of(context).disabledColor.withOpacity(0.5),
+                    textColor: Theme.of(context).textTheme.bodyLarge!.color,
+                    onPressed: () {
+                      if(isRestaurant) {
+                        searchController.resetRestaurantFilter();
+                      } else {
+                        searchController.resetFilter();
+                      }
+                    },
+                    buttonText: 'reset'.tr,
+                  )),
+                const SizedBox(width: Dimensions.paddingSizeSmall),
 
-              Expanded(
-                flex: 2,
-                child: CustomButton(
-                  buttonText: 'apply'.tr,
-                  onPressed: () {
-                    if(isRestaurant) {
-                      searchController.sortRestSearchList();
-                    }else {
-                      searchController.sortFoodSearchList();
-                    }
-                    Get.back();
-                  },
+                Expanded(
+                  flex: 2,
+                  child: CustomButton(
+                    buttonText: 'apply'.tr,
+                    onPressed: () {
+                      if(isRestaurant) {
+                        searchController.sortRestSearchList();
+                      }else {
+                        searchController.sortFoodSearchList();
+                      }
+                      Get.back();
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ]);
       }),

@@ -14,6 +14,7 @@ import 'package:efood_multivendor/view/base/custom_snackbar.dart';
 import 'package:efood_multivendor/view/base/footer_view.dart';
 import 'package:efood_multivendor/view/base/not_logged_in_screen.dart';
 import 'package:efood_multivendor/view/base/paginated_list_view.dart';
+
 import 'package:efood_multivendor/view/base/web_page_title_widget.dart';
 import 'package:efood_multivendor/view/base/web_search_field.dart';
 import 'package:efood_multivendor/view/screens/chat/widget/chatting_shimmer.dart';
@@ -100,7 +101,7 @@ class _WebChatViewState extends State<WebChatView> with TickerProviderStateMixin
 
                         /// Search
                         (Get.find<AuthController>().isLoggedIn() && widget.conversation != null && widget.conversation?.conversations != null
-                        && widget.chatController.conversationModel!.conversations!.isNotEmpty) ? Center(child: SizedBox(width: Dimensions.webMaxWidth, child: WebSearchField(
+                            && widget.chatController.conversationModel!.conversations!.isNotEmpty) ? Center(child: SizedBox(width: Dimensions.webMaxWidth, child: WebSearchField(
                           prefixWidget: widget.chatController.searchConversationModel != null ? null: Padding(
                             padding: const EdgeInsets.only(right: Dimensions.paddingSizeDefault, left: Dimensions.paddingSizeSmall),
                             child: Image.asset(Images.searchIcon, height: 18, width: 18,),
@@ -130,142 +131,142 @@ class _WebChatViewState extends State<WebChatView> with TickerProviderStateMixin
                           },
                         ))) : const SizedBox(),
 
-                      Expanded(
-                        child: Scrollbar(
-                          controller: _scrollController,
-                          child: SingleChildScrollView(
+                        Expanded(
+                          child: Scrollbar(
                             controller: _scrollController,
-                            physics: const BouncingScrollPhysics(),
-                            child: Column(
-                              children: [
-                                /// admin conversationList
+                            child: SingleChildScrollView(
+                              controller: _scrollController,
+                              physics: const BouncingScrollPhysics(),
+                              child: Column(
+                                children: [
+                                  /// admin conversationList
 
-                                InkWell(
-                                  onTap: () {
-                                    Get.find<ChatController>().getMessages(1, NotificationBody(
-                                      type: 'admin',
-                                      notificationType: NotificationType.message,
-                                      adminId: 0,
-                                      restaurantId: null,
-                                      deliverymanId: null,
-                                    ), user, 0, firstLoad: true);
-                                    if(Get.find<UserController>().userInfoModel == null || Get.find<UserController>().userInfoModel!.userInfo == null) {
-                                      Get.find<UserController>().getUserInfo();
-                                    }
-                                    widget.chatController.setNotificationBody(
-                                      NotificationBody(
+                                  InkWell(
+                                    onTap: () {
+                                      Get.find<ChatController>().getMessages(1, NotificationBody(
                                         type: 'admin',
                                         notificationType: NotificationType.message,
                                         adminId: 0,
                                         restaurantId: null,
                                         deliverymanId: null,
-                                        conversationId: 0,
-                                        image: '${Get.find<SplashController>().configModel!.baseUrls!.businessLogoUrl}/${Get.find<SplashController>().configModel!.logo}',
-                                        name: '${Get.find<SplashController>().configModel!.businessName}',
-                                        receiverType: 'admin',
-                                      ),
-                                    );
-
-                                    widget.chatController.setSelectedIndex(-1);
-                                  },
-                                  child: Builder(
-                                    builder: (context) {
-                                      return Container(
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                                          color: widget.chatController.selectedIndex == -1 ? Theme.of(context).primaryColor.withOpacity(0.10) : Theme.of(context).cardColor,
-                                        ),
-                                        margin: const EdgeInsets.only(top: Dimensions.paddingSizeSmall),
-                                        child: Column(children: [
-                                          Padding(
-                                            padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
-                                            child: Row(children: [
-                                              ClipOval(child: CustomImage(
-                                                height: 50, width: 50,
-                                                image: '${Get.find<SplashController>().configModel!.baseUrls!.businessLogoUrl}/${Get.find<SplashController>().configModel!.logo}',
-                                              )),
-                                              const SizedBox(width: Dimensions.paddingSizeSmall),
-
-                                              Expanded(child: Column(mainAxisAlignment: MainAxisAlignment.start, crossAxisAlignment: CrossAxisAlignment.start, children: [
-
-                                                Text(
-                                                  '${Get.find<SplashController>().configModel!.businessName}', style: robotoMedium,
-                                                ),
-                                                const SizedBox(height: Dimensions.paddingSizeExtraSmall),
-
-                                              ])),
-                                            ]),
-                                          ),
-                                        ]),
-                                      );
-                                    }
-                                  ),
-                                ),
-                                Divider(color: Theme.of(context).disabledColor.withOpacity(.5)),
-
-                                /// TabBar
-                                Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: TabBar(
-                                    controller: _tabController,
-                                    isScrollable: true,
-                                    indicatorColor: Theme.of(context).primaryColor,
-                                    labelColor: Theme.of(context).primaryColor,
-                                    unselectedLabelColor: Theme.of(context).disabledColor,
-                                    indicatorSize: TabBarIndicatorSize.label,
-                                    labelStyle: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault),
-                                    unselectedLabelStyle: robotoRegular.copyWith(fontSize: Dimensions.fontSizeDefault),
-                                    tabs: [
-                                      Tab(text: 'vendor'.tr),
-                                      Tab(text: 'delivery_man'.tr),
-                                    ],
-                                    onTap: (int index){
-                                      if(index == 0){
-                                        widget.chatController.setType('vendor');
-                                        widget.chatController.setTabSelect();
-                                      } else {
-                                        widget.chatController.setType('delivery_man');
-                                        widget.chatController.setTabSelect();
+                                      ), user, 0, firstLoad: true);
+                                      if(Get.find<UserController>().userInfoModel == null || Get.find<UserController>().userInfoModel!.userInfo == null) {
+                                        Get.find<UserController>().getUserInfo();
                                       }
+                                      widget.chatController.setNotificationBody(
+                                        NotificationBody(
+                                          type: 'admin',
+                                          notificationType: NotificationType.message,
+                                          adminId: 0,
+                                          restaurantId: null,
+                                          deliverymanId: null,
+                                          conversationId: 0,
+                                          image: '${Get.find<SplashController>().configModel!.baseUrls!.businessLogoUrl}/${Get.find<SplashController>().configModel!.logo}',
+                                          name: '${Get.find<SplashController>().configModel!.businessName}',
+                                          receiverType: 'admin',
+                                        ),
+                                      );
+
+                                      widget.chatController.setSelectedIndex(-1);
                                     },
+                                    child: Builder(
+                                        builder: (context) {
+                                          return Container(
+                                            decoration: BoxDecoration(
+                                              borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                                              color: widget.chatController.selectedIndex == -1 ? Theme.of(context).primaryColor.withOpacity(0.10) : Theme.of(context).cardColor,
+                                            ),
+                                            margin: const EdgeInsets.only(top: Dimensions.paddingSizeSmall),
+                                            child: Column(children: [
+                                              Padding(
+                                                padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
+                                                child: Row(children: [
+                                                  ClipOval(child: CustomImage(
+                                                    height: 50, width: 50,
+                                                    image: '${Get.find<SplashController>().configModel!.baseUrls!.businessLogoUrl}/${Get.find<SplashController>().configModel!.logo}',
+                                                  )),
+                                                  const SizedBox(width: Dimensions.paddingSizeSmall),
+
+                                                  Expanded(child: Column(mainAxisAlignment: MainAxisAlignment.start, crossAxisAlignment: CrossAxisAlignment.start, children: [
+
+                                                    Text(
+                                                      '${Get.find<SplashController>().configModel!.businessName}', style: robotoMedium,
+                                                    ),
+                                                    const SizedBox(height: Dimensions.paddingSizeExtraSmall),
+
+                                                  ])),
+                                                ]),
+                                              ),
+                                            ]),
+                                          );
+                                        }
+                                    ),
                                   ),
-                                ),
+                                  Divider(color: Theme.of(context).disabledColor.withOpacity(.5)),
 
-
-                                /// TabBarView
-                                SizedBox(
-                                  height: MediaQuery.of(context).size.height * 0.5,
-                                  child: TabBarView(
-                                    controller: _tabController,
-                                    physics: const NeverScrollableScrollPhysics(),
-                                    children: [
-
-                                      // Todo: have to modify according to modified api [api is not ready yet]
-                                      /// Store
-                                      WebConversationListView(
-                                        chatController: widget.chatController,
-                                        conversation: widget.conversation,
-                                        scrollController: _scrollController1,
-                                        type: 'vendor',
-                                      ),
-
-                                      /// Delivery Man
-                                      WebConversationListView(
-                                        chatController: widget.chatController,
-                                        conversation: widget.conversation,
-                                        scrollController: _scrollController1,
-                                        type: 'delivery_man',
-                                      ),
-
-                                    ],
+                                  /// TabBar
+                                  Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: TabBar(
+                                      controller: _tabController,
+                                      isScrollable: true,
+                                      indicatorColor: Theme.of(context).primaryColor,
+                                      labelColor: Theme.of(context).primaryColor,
+                                      unselectedLabelColor: Theme.of(context).disabledColor,
+                                      indicatorSize: TabBarIndicatorSize.label,
+                                      labelStyle: robotoBold.copyWith(fontSize: Dimensions.fontSizeDefault),
+                                      unselectedLabelStyle: robotoRegular.copyWith(fontSize: Dimensions.fontSizeDefault),
+                                      tabs: [
+                                        Tab(text: 'vendor'.tr),
+                                        Tab(text: 'delivery_man'.tr),
+                                      ],
+                                      onTap: (int index){
+                                        if(index == 0){
+                                          widget.chatController.setType('vendor');
+                                          widget.chatController.setTabSelect();
+                                        } else {
+                                          widget.chatController.setType('delivery_man');
+                                          widget.chatController.setTabSelect();
+                                        }
+                                      },
+                                    ),
                                   ),
-                                ),
-                              ],
 
+
+                                  /// TabBarView
+                                  SizedBox(
+                                    height: MediaQuery.of(context).size.height * 0.5,
+                                    child: TabBarView(
+                                      controller: _tabController,
+                                      physics: const NeverScrollableScrollPhysics(),
+                                      children: [
+
+                                        // Todo: have to modify according to modified api [api is not ready yet]
+                                        /// Store
+                                        WebConversationListView(
+                                          chatController: widget.chatController,
+                                          conversation: widget.conversation,
+                                          scrollController: _scrollController1,
+                                          type: 'vendor',
+                                        ),
+
+                                        /// Delivery Man
+                                        WebConversationListView(
+                                          chatController: widget.chatController,
+                                          conversation: widget.conversation,
+                                          scrollController: _scrollController1,
+                                          type: 'delivery_man',
+                                        ),
+
+                                      ],
+                                    ),
+                                  ),
+                                ],
+
+                              ),
                             ),
                           ),
                         ),
-                      ),
 
                       ],
                     ),
@@ -296,8 +297,8 @@ class _WebChatViewState extends State<WebChatView> with TickerProviderStateMixin
                       child: Column(children: [
 
                         /// Header
-                       if(widget.chatController.notificationBody != null) Container(
-                         padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeSmall),
+                        if(widget.chatController.notificationBody != null) Container(
+                          padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeSmall),
                           child: Column(
                             children: [
 

@@ -1,3 +1,4 @@
+import 'package:efood_multivendor/controller/auth_controller.dart';
 import 'package:efood_multivendor/controller/order_controller.dart';
 import 'package:efood_multivendor/controller/splash_controller.dart';
 import 'package:efood_multivendor/controller/user_controller.dart';
@@ -131,16 +132,21 @@ class _DeliveryManTipsSectionState extends State<DeliveryManTipsSection> {
                     if(value.isNotEmpty){
                       try{
                         if(double.parse(value) >= 0){
-                          total = total - widget.orderController.tips;
-                          await widget.orderController.addTips(double.parse(value));
-                          total = total + widget.orderController.tips;
-                          widget.onTotalChange(total);
-                          if(Get.find<UserController>().userInfoModel!.walletBalance! < total && widget.orderController.paymentMethodIndex == 1){
-                            widget.orderController.checkBalanceStatus(total);
-                            canCheckSmall = true;
-                          } else if(Get.find<UserController>().userInfoModel!.walletBalance! > total && canCheckSmall && widget.orderController.isPartialPay){
-                            widget.orderController.checkBalanceStatus(total);
+                          if(Get.find<AuthController>().isLoggedIn()) {
+                            total = total - widget.orderController.tips;
+                            await widget.orderController.addTips(double.parse(value));
+                            total = total + widget.orderController.tips;
+                            widget.onTotalChange(total);
+                            if(Get.find<UserController>().userInfoModel!.walletBalance! < total && widget.orderController.paymentMethodIndex == 1){
+                              widget.orderController.checkBalanceStatus(total);
+                              canCheckSmall = true;
+                            } else if(Get.find<UserController>().userInfoModel!.walletBalance! > total && canCheckSmall && widget.orderController.isPartialPay){
+                              widget.orderController.checkBalanceStatus(total);
+                            }
+                          } else {
+                            widget.orderController.addTips(double.parse(value));
                           }
+
                         }else{
                           showCustomSnackBar('tips_can_not_be_negative'.tr);
                         }
@@ -159,16 +165,21 @@ class _DeliveryManTipsSectionState extends State<DeliveryManTipsSection> {
                     if(value.isNotEmpty){
                       try{
                         if(double.parse(value) >= 0){
-                          total = total - widget.orderController.tips;
-                          await widget.orderController.addTips(double.parse(value));
-                          total = total + widget.orderController.tips;
-                          widget.onTotalChange(total);
-                          if(Get.find<UserController>().userInfoModel!.walletBalance! < total && widget.orderController.paymentMethodIndex == 1){
-                            widget.orderController.checkBalanceStatus(total);
-                            canCheckSmall = true;
-                          } else if(Get.find<UserController>().userInfoModel!.walletBalance! > total && canCheckSmall && widget.orderController.isPartialPay){
-                            widget.orderController.checkBalanceStatus(total);
+                          if(Get.find<AuthController>().isLoggedIn()) {
+                            total = total - widget.orderController.tips;
+                            await widget.orderController.addTips(double.parse(value));
+                            total = total + widget.orderController.tips;
+                            widget.onTotalChange(total);
+                            if(Get.find<UserController>().userInfoModel!.walletBalance! < total && widget.orderController.paymentMethodIndex == 1){
+                              widget.orderController.checkBalanceStatus(total);
+                              canCheckSmall = true;
+                            } else if(Get.find<UserController>().userInfoModel!.walletBalance! > total && canCheckSmall && widget.orderController.isPartialPay){
+                              widget.orderController.checkBalanceStatus(total);
+                            }
+                          } else {
+                            widget.orderController.addTips(double.parse(value));
                           }
+
                         }else{
                           showCustomSnackBar('tips_can_not_be_negative'.tr);
                         }

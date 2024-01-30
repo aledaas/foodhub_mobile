@@ -23,12 +23,19 @@ class HtmlViewerScreen extends StatefulWidget {
 }
 
 class _HtmlViewerScreenState extends State<HtmlViewerScreen> {
+  final ScrollController scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
 
     Get.find<SplashController>().getHtmlText(widget.htmlType);
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    scrollController.dispose();
   }
 
   @override
@@ -42,53 +49,55 @@ class _HtmlViewerScreenState extends State<HtmlViewerScreen> {
       endDrawer: const MenuDrawer(), endDrawerEnableOpenDragGesture: false,
       body: GetBuilder<SplashController>(builder: (splashController) {
         return Center(
-            child: splashController.htmlText != null ? Container(
-              height: MediaQuery.of(context).size.height,
-              color: Theme.of(context).cardColor,
-              child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(horizontal: ResponsiveHelper.isDesktop(context) ? 0 : Dimensions.paddingSizeLarge),
-                child: FooterView(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: ResponsiveHelper.isDesktop(context) ?  Dimensions.paddingSizeLarge : 0),
-                    child: Column(mainAxisAlignment: MainAxisAlignment.start, children: [
+          child: splashController.htmlText != null ? Container(
+            height: MediaQuery.of(context).size.height,
+            width: Dimensions.webMaxWidth,
+            color: Theme.of(context).cardColor,
+            child: SingleChildScrollView(
+              controller: scrollController,
+              padding: EdgeInsets.symmetric(horizontal: ResponsiveHelper.isDesktop(context) ? 0 : Dimensions.paddingSizeLarge),
+              child: FooterView(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: ResponsiveHelper.isDesktop(context) ?  Dimensions.paddingSizeLarge : 0),
+                  child: Column(mainAxisAlignment: MainAxisAlignment.start, children: [
 
-                      ResponsiveHelper.isDesktop(context) ? Container(
-                        height: 50, alignment: Alignment.center, color: Theme.of(context).cardColor, width: Dimensions.webMaxWidth,
-                        child: SelectableText(widget.htmlType == HtmlType.termsAndCondition ? 'terms_conditions'.tr
-                            : widget.htmlType == HtmlType.aboutUs ? 'about_us'.tr : widget.htmlType == HtmlType.privacyPolicy
-                            ? 'privacy_policy'.tr : widget.htmlType == HtmlType.shippingPolicy ? 'shipping_policy'.tr
-                            : widget.htmlType == HtmlType.refund ? 'refund_policy'.tr :  widget.htmlType == HtmlType.cancellation
-                            ? 'cancellation_policy'.tr : 'no_data_found'.tr,
-                          style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge, color: Theme.of(context).hintColor),
-                        ),
-                      ) : const SizedBox(),
-
-                      (splashController.htmlText!.contains('<ol>') || splashController.htmlText!.contains('<ul>')) ? HtmlWidget(
-                        splashController.htmlText ?? '',
-                        key: Key(widget.htmlType.toString()),
-                        isSelectable: true,
-                        onTapUrl: (String url) {
-                          return launchUrlString(url, mode: LaunchMode.externalApplication);
-                        },
-                      ) : SelectableHtml(
-                        data: splashController.htmlText, shrinkWrap: true,
-                        onLinkTap: (String? url, RenderContext context, Map<String, String> attributes, element) {
-                          if(url!.startsWith('www.')) {
-                            url = 'https://$url';
-                          }
-                          if (kDebugMode) {
-                            print('Redirect to url: $url');
-                          }
-                          html.window.open(url, "_blank");
-                        },
+                    ResponsiveHelper.isDesktop(context) ? Container(
+                      height: 50, alignment: Alignment.center, color: Theme.of(context).cardColor, width: Dimensions.webMaxWidth,
+                      child: SelectableText(widget.htmlType == HtmlType.termsAndCondition ? 'terms_conditions'.tr
+                          : widget.htmlType == HtmlType.aboutUs ? 'about_us'.tr : widget.htmlType == HtmlType.privacyPolicy
+                          ? 'privacy_policy'.tr : widget.htmlType == HtmlType.shippingPolicy ? 'shipping_policy'.tr
+                          : widget.htmlType == HtmlType.refund ? 'refund_policy'.tr :  widget.htmlType == HtmlType.cancellation
+                          ? 'cancellation_policy'.tr : 'no_data_found'.tr,
+                        style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge, color: Theme.of(context).hintColor),
                       ),
+                    ) : const SizedBox(),
 
-                    ]),
-                  ),
+                    (splashController.htmlText!.contains('<ol>') || splashController.htmlText!.contains('<ul>')) ? HtmlWidget(
+                      splashController.htmlText ?? '',
+                      key: Key(widget.htmlType.toString()),
+                      isSelectable: true,
+                      onTapUrl: (String url) {
+                        return launchUrlString(url, mode: LaunchMode.externalApplication);
+                      },
+                    ) : SelectableHtml(
+                      data: splashController.htmlText, shrinkWrap: true,
+                      onLinkTap: (String? url, RenderContext context, Map<String, String> attributes, element) {
+                        if(url!.startsWith('www.')) {
+                          url = 'https://$url';
+                        }
+                        if (kDebugMode) {
+                          print('Redirect to url: $url');
+                        }
+                        html.window.open(url, "_blank");
+                      },
+                    ),
+
+                  ]),
                 ),
               ),
-            ) : const CircularProgressIndicator(),
-          );
+            ),
+          ) : const CircularProgressIndicator(),
+        );
       }),
     );
   }

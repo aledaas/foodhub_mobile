@@ -250,9 +250,10 @@ class _MenuScreenNewState extends State<MenuScreenNew> {
                   ]),
 
                   InkWell(
-                    onTap: (){
+                    onTap: () async {
                       if(Get.find<AuthController>().isLoggedIn()) {
                         Get.dialog(ConfirmationDialog(icon: Images.support, description: 'are_you_sure_to_logout'.tr, isLogOut: true, onYesPressed: () {
+                          Get.find<UserController>().setForceFullyUserEmpty();
                           Get.find<AuthController>().clearSharedData();
                           Get.find<AuthController>().socialLogout();
                           Get.find<CartController>().clearCartList();
@@ -261,9 +262,13 @@ class _MenuScreenNewState extends State<MenuScreenNew> {
                         }), useSafeArea: false);
                       }else {
                         Get.find<WishListController>().removeWishes();
-                        Get.toNamed(RouteHelper.getSignInRoute(Get.currentRoute))?.then((value) {
-                          userController.getUserInfo();
-                        });
+                        await Get.toNamed(RouteHelper.getSignInRoute(Get.currentRoute));
+                        userController.getUserInfo();
+                        // Get.toNamed(RouteHelper.getSignInRoute(Get.currentRoute))?.then((success) {
+                        //   if(success) {
+                        //     userController.getUserInfo();
+                        //   }
+                        // });
                       }
                     },
                     child: Padding(

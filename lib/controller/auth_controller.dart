@@ -1,14 +1,15 @@
 import 'dart:async';
 
+import 'package:efood_multivendor/controller/cart_controller.dart';
 import 'package:efood_multivendor/controller/location_controller.dart';
 import 'package:efood_multivendor/controller/splash_controller.dart';
+import 'package:efood_multivendor/controller/user_controller.dart';
 import 'package:efood_multivendor/data/api/api_checker.dart';
 import 'package:efood_multivendor/data/api/api_client.dart';
 import 'package:efood_multivendor/data/model/body/business_plan_body.dart';
-import 'package:efood_multivendor/data/model/body/delivery_man_body.dart';
-import 'package:efood_multivendor/data/model/body/restaurant_body.dart';
 import 'package:efood_multivendor/data/model/body/signup_body.dart';
 import 'package:efood_multivendor/data/model/body/social_log_in_body.dart';
+import 'package:efood_multivendor/data/model/response/config_model.dart';
 import 'package:efood_multivendor/data/model/response/order_model.dart';
 import 'package:efood_multivendor/data/model/response/package_model.dart';
 import 'package:efood_multivendor/data/model/response/response_model.dart';
@@ -22,6 +23,7 @@ import 'package:efood_multivendor/util/images.dart';
 import 'package:efood_multivendor/view/base/confirmation_dialog.dart';
 import 'package:efood_multivendor/view/base/custom_snackbar.dart';
 import 'package:efood_multivendor/view/screens/checkout/widget/payment_method_bottom_sheet.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:get/get.dart';
@@ -33,10 +35,11 @@ import 'package:universal_html/html.dart' as html;
 class AuthController extends GetxController implements GetxService {
   final AuthRepo authRepo;
   AuthController({required this.authRepo}) {
-   _notification = authRepo.isNotificationActive();
+    _notification = authRepo.isNotificationActive();
   }
 
   bool _isLoading = false;
+  bool _guestLoading = false;
   bool _notification = true;
   bool _acceptTerms = true;
   XFile? _pickedLogo;
@@ -75,8 +78,11 @@ class AuthController extends GetxController implements GetxService {
   bool _showPassView = false;
   String? _restaurantAddress;
   String? _digitalPaymentName;
+  List<DataModel>? _dataList;
+  List<dynamic>? _additionalList;
 
   bool get isLoading => _isLoading;
+  bool get guestLoading => _guestLoading;
   bool get notification => _notification;
   bool get acceptTerms => _acceptTerms;
   XFile? get pickedLogo => _pickedLogo;
@@ -112,6 +118,142 @@ class AuthController extends GetxController implements GetxService {
   bool get showPassView => _showPassView;
   String? get restaurantAddress => _restaurantAddress;
   String? get digitalPaymentName => _digitalPaymentName;
+  List<DataModel>? get dataList => _dataList;
+  List<dynamic>? get additionalList => _additionalList;
+
+
+  void setRestaurantAdditionalJoinUsPageData({bool isUpdate = true}){
+    _dataList = [];
+    _additionalList = [];
+    if(Get.find<SplashController>().configModel!.restaurantAdditionalJoinUsPageData != null) {
+      for (var data in Get.find<SplashController>().configModel!.restaurantAdditionalJoinUsPageData!.data!) {
+        int index = Get.find<SplashController>().configModel!.restaurantAdditionalJoinUsPageData!.data!.indexOf(data);
+        _dataList!.add(data);
+        if(data.fieldType == 'text' || data.fieldType == 'number' || data.fieldType == 'email' || data.fieldType == 'phone'){
+          _additionalList!.add(TextEditingController());
+        } else if(data.fieldType == 'date') {
+          _additionalList!.add(null);
+        } else if(data.fieldType == 'check_box') {
+          _additionalList!.add([]);
+          if(data.checkData != null) {
+            for (var element in data.checkData!) {
+              _additionalList![index].add(0);
+            }
+          }
+        } else if(data.fieldType == 'file') {
+          _additionalList!.add([]);
+        }
+
+      }
+    }
+
+    if(isUpdate) {
+      update();
+    }
+  }
+
+  void setDeliverymanAdditionalJoinUsPageData({bool isUpdate = true}){
+    _dataList = [];
+    _additionalList = [];
+    if(Get.find<SplashController>().configModel!.deliverymanAdditionalJoinUsPageData != null) {
+      for (var data in Get.find<SplashController>().configModel!.deliverymanAdditionalJoinUsPageData!.data!) {
+        int index = Get.find<SplashController>().configModel!.deliverymanAdditionalJoinUsPageData!.data!.indexOf(data);
+        _dataList!.add(data);
+        if(data.fieldType == 'text' || data.fieldType == 'number' || data.fieldType == 'email' || data.fieldType == 'phone'){
+          _additionalList!.add(TextEditingController());
+        } else if(data.fieldType == 'date') {
+          _additionalList!.add(null);
+        } else if(data.fieldType == 'check_box') {
+          _additionalList!.add([]);
+          if(data.checkData != null) {
+            for (var element in data.checkData!) {
+              _additionalList![index].add(0);
+            }
+          }
+        } else if(data.fieldType == 'file') {
+          _additionalList!.add([]);
+        }
+      }
+    }
+
+    if(isUpdate) {
+      update();
+    }
+  }
+
+  void setAdditionalDate(int index, String date) {
+    _additionalList![index] = date;
+    update();
+  }
+
+  void setAdditionalCheckData(int index, int i, String date) {
+    if(_additionalList![index][i] == date){
+      _additionalList![index][i] = 0;
+    } else {
+      _additionalList![index][i] = date;
+    }
+    update();
+  }
+
+  Future<void> pickFile(int index, MediaData mediaData) async {
+
+    List<String> permission = [];
+    if(mediaData.image == 1) {
+      permission.add('jpg');
+    }
+    if(mediaData.pdf == 1) {
+      permission.add('pdf');
+    }
+    if(mediaData.docs == 1) {
+      permission.add('doc');
+    }
+
+    FilePickerResult? result;
+
+    if(GetPlatform.isWeb){
+      result = await FilePicker.platform.pickFiles(
+        // type:  FileType.any,
+        // allowMultiple: false,
+        withReadStream: true,
+      );
+    }else{
+      result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: permission,
+        allowMultiple: false,
+      );
+    }
+    if(result != null && result.files.isNotEmpty) {
+      if(result.files.single.size > 2000000) {
+        showCustomSnackBar('please_upload_lower_size_file'.tr);
+      } else {
+        _additionalList![index].add(result);
+      }
+    }
+    update();
+  }
+
+  void removeAdditionalFile(int index, int subIndex) {
+    _additionalList![index].removeAt(subIndex);
+    update();
+  }
+
+  Future<ResponseModel> guestLogin() async {
+    _guestLoading = true;
+    update();
+    Response response = await authRepo.guestLogin();
+    ResponseModel responseModel;
+    if (response.statusCode == 200) {
+      authRepo.saveGuestId(response.body['guest_id'].toString());
+
+      responseModel = ResponseModel(true, '${response.body['guest_id']}');
+    } else {
+      responseModel = ResponseModel(false, response.statusText);
+    }
+    _guestLoading = false;
+    update();
+    return responseModel;
+  }
 
   void changeDigitalPaymentName(String? name, {bool canUpdate = true}){
     _digitalPaymentName = name;
@@ -212,19 +354,18 @@ class AuthController extends GetxController implements GetxService {
           int? packageId = _packageModel!.packages![_activeSubscriptionIndex].id;
           String payment = _paymentIndex == 0 ? 'free_trial' : 'paying_now';
 
-          print('=====hhhh===> $paymentIndex');
           if(_paymentIndex == 1 && digitalPaymentName == null) {
             if(ResponsiveHelper.isDesktop(Get.context)) {
               Get.dialog(const Dialog(backgroundColor: Colors.transparent, child: PaymentMethodBottomSheet(
                 isCashOnDeliveryActive: false, isWalletActive: false, isDigitalPaymentActive: true,
-                isSubscriptionPackage: true, totalPrice: 0,
+                isSubscriptionPackage: true, totalPrice: 0, isOfflinePaymentActive: false,
               )));
             } else {
               showModalBottomSheet(
                 context: Get.context!, isScrollControlled: true, backgroundColor: Colors.transparent,
                 builder: (con) => const PaymentMethodBottomSheet(
                   isCashOnDeliveryActive: false, isWalletActive: false, isDigitalPaymentActive: true,
-                  isSubscriptionPackage: true, totalPrice: 0,
+                  isSubscriptionPackage: true, totalPrice: 0, isOfflinePaymentActive: false,
                 ),
               );
             }
@@ -287,7 +428,7 @@ class AuthController extends GetxController implements GetxService {
         html.window.open(redirectUrl,"_self");
 
       } else{
-        Get.toNamed(RouteHelper.getPaymentRoute(OrderModel(), digitalPaymentName, subscriptionUrl: redirectUrl));
+        Get.toNamed(RouteHelper.getPaymentRoute(OrderModel(), digitalPaymentName, subscriptionUrl: redirectUrl, guestId: Get.find<AuthController>().getGuestId(),));
       }
       responseModel = ResponseModel(true, response.body.toString());
     } else {
@@ -330,6 +471,8 @@ class AuthController extends GetxController implements GetxService {
       if(!Get.find<SplashController>().configModel!.customerVerification!) {
         authRepo.saveUserToken(response.body["token"]);
         await authRepo.updateToken();
+        authRepo.clearGuestId();
+        Get.find<UserController>().getUserInfo();
       }
       responseModel = ResponseModel(true, response.body["token"]);
     } else {
@@ -351,6 +494,9 @@ class AuthController extends GetxController implements GetxService {
       }else {
         authRepo.saveUserToken(response.body['token'], alreadyInApp: alreadyInApp);
         await authRepo.updateToken();
+        await authRepo.clearGuestId();
+        Get.find<UserController>().getUserInfo();
+        Get.find<CartController>().getCartDataOnline();
       }
       responseModel = ResponseModel(true, '${response.body['is_phone_verified']}${response.body['token']}');
     } else {
@@ -373,6 +519,7 @@ class AuthController extends GetxController implements GetxService {
         }else {
           authRepo.saveUserToken(response.body['token']);
           await authRepo.updateToken();
+          authRepo.clearGuestId();
           Get.toNamed(RouteHelper.getAccessLocationRoute('sign-in'));
         }
       }else {
@@ -398,6 +545,7 @@ class AuthController extends GetxController implements GetxService {
       }else {
         authRepo.saveUserToken(response.body['token']);
         await authRepo.updateToken();
+        authRepo.clearGuestId();
         Get.toNamed(RouteHelper.getAccessLocationRoute('sign-in'));
       }
     } else {
@@ -480,6 +628,8 @@ class AuthController extends GetxController implements GetxService {
     if (response.statusCode == 200) {
       authRepo.saveUserToken(token);
       await authRepo.updateToken();
+      authRepo.clearGuestId();
+      Get.find<UserController>().getUserInfo();
       responseModel = ResponseModel(true, response.body["message"]);
     } else {
       responseModel = ResponseModel(false, response.statusText);
@@ -497,6 +647,8 @@ class AuthController extends GetxController implements GetxService {
     if (response.statusCode == 200) {
       authRepo.saveUserToken(token!);
       await authRepo.updateToken();
+      authRepo.clearGuestId();
+      Get.find<UserController>().getUserInfo();
       responseModel = ResponseModel(true, response.body["message"]);
     } else {
       responseModel = ResponseModel(false, response.statusText);
@@ -543,6 +695,14 @@ class AuthController extends GetxController implements GetxService {
 
   bool isLoggedIn() {
     return authRepo.isLoggedIn();
+  }
+
+  bool isGuestLoggedIn() {
+    return authRepo.isGuestLoggedIn() && !authRepo.isLoggedIn();
+  }
+
+  String getGuestId() {
+    return authRepo.getGuestId();
   }
 
   bool clearSharedData() {
@@ -604,9 +764,27 @@ class AuthController extends GetxController implements GetxService {
       _pickedCover = null;
     }else {
       if (isLogo) {
-        _pickedLogo = await ImagePicker().pickImage(source: ImageSource.gallery);
+        XFile? pickLogo = await ImagePicker().pickImage(source: ImageSource.gallery);
+        if(pickLogo != null) {
+          pickLogo.length().then((value) {
+            if (value > 2000000) {
+              showCustomSnackBar('please_upload_lower_size_file'.tr);
+            } else {
+              _pickedLogo = pickLogo;
+            }
+          });
+        }
       } else {
-        _pickedCover = await ImagePicker().pickImage(source: ImageSource.gallery);
+        XFile? pickCover = await ImagePicker().pickImage(source: ImageSource.gallery);
+        if(pickCover != null) {
+          pickCover.length().then((value) {
+            if (value > 2000000) {
+              showCustomSnackBar('please_upload_lower_size_file'.tr);
+            } else {
+              _pickedCover = pickCover;
+            }
+          });
+        }
       }
       update();
     }
@@ -664,10 +842,19 @@ class AuthController extends GetxController implements GetxService {
     update();
   }
 
-  Future<void> registerRestaurant(RestaurantBody restaurantBody) async {
+  Future<void> registerRestaurant(Map<String, String> data, List<FilePickerResult> additionalDocuments, List<String> inputTypeList) async {
     _isLoading = true;
     update();
-    Response response = await authRepo.registerRestaurant(restaurantBody, _pickedLogo, _pickedCover);
+    List<MultipartDocument> multiPartsDocuments = [];
+    List<String> dataName = [];
+    for(String data in inputTypeList) {
+      dataName.add('additional_documents[$data]');
+    }
+    for(FilePickerResult file in additionalDocuments) {
+      int index = additionalDocuments.indexOf(file);
+      multiPartsDocuments.add(MultipartDocument('${dataName[index]}[]', file));
+    }
+    Response response = await authRepo.registerRestaurant(data, _pickedLogo, _pickedCover, multiPartsDocuments);
     if(response.statusCode == 200) {
       int? restaurantId = response.body['restaurant_id'];
       Get.offAllNamed(RouteHelper.getBusinessPlanRoute(restaurantId));
@@ -740,11 +927,26 @@ class AuthController extends GetxController implements GetxService {
       _pickedIdentities = [];
     }else {
       if (isLogo) {
-        _pickedImage = await ImagePicker().pickImage(source: ImageSource.gallery);
+        XFile? pickLogo = await ImagePicker().pickImage(source: ImageSource.gallery);
+        if(pickLogo != null) {
+          pickLogo.length().then((value) {
+            if(value > 2000000) {
+              showCustomSnackBar('please_upload_lower_size_file'.tr);
+            }else {
+              _pickedImage = pickLogo;
+            }
+          });
+        }
       } else {
         XFile? xFile = await ImagePicker().pickImage(source: ImageSource.gallery);
         if(xFile != null) {
-          _pickedIdentities.add(xFile);
+          xFile.length().then((value) {
+            if(value > 2000000) {
+              showCustomSnackBar('please_upload_lower_size_file'.tr);
+            } else {
+              _pickedIdentities.add(xFile);
+            }
+          });
         }
       }
       update();
@@ -756,7 +958,7 @@ class AuthController extends GetxController implements GetxService {
     update();
   }
 
-  Future<void> registerDeliveryMan(DeliveryManBody deliveryManBody) async {
+  Future<void> registerDeliveryMan(Map<String, String> data, List<FilePickerResult> additionalDocuments, List<String> inputTypeList) async {
     _isLoading = true;
     update();
     List<MultipartBody> multiParts = [];
@@ -764,7 +966,18 @@ class AuthController extends GetxController implements GetxService {
     for(XFile file in _pickedIdentities) {
       multiParts.add(MultipartBody('identity_image[]', file));
     }
-    Response response = await authRepo.registerDeliveryMan(deliveryManBody, multiParts);
+
+    List<MultipartDocument> multiPartsDocuments = [];
+    List<String> dataName = [];
+    for(String data in inputTypeList) {
+      dataName.add('additional_documents[$data]');
+    }
+    for(FilePickerResult file in additionalDocuments) {
+      int index = additionalDocuments.indexOf(file);
+      multiPartsDocuments.add(MultipartDocument('${dataName[index]}[]', file));
+    }
+
+    Response response = await authRepo.registerDeliveryMan(data, multiParts, multiPartsDocuments);
     if (response.statusCode == 200) {
       Get.offAllNamed(RouteHelper.getInitialRoute());
       showCustomSnackBar('delivery_man_registration_successful'.tr, isError: false);
@@ -843,6 +1056,14 @@ class AuthController extends GetxController implements GetxService {
     _storeMaxTime = '--';
     _storeTimeUnit = 'minute';
     update();
+  }
+
+  Future<void> saveGuestNumber(String number) async {
+    authRepo.saveGuestContactNumber(number);
+  }
+
+  String getGuestNumber() {
+    return authRepo.getGuestContactNumber();
   }
 
 

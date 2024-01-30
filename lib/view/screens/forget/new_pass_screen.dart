@@ -10,6 +10,7 @@ import 'package:efood_multivendor/view/base/custom_app_bar.dart';
 import 'package:efood_multivendor/view/base/custom_button.dart';
 import 'package:efood_multivendor/view/base/custom_snackbar.dart';
 import 'package:efood_multivendor/view/base/custom_text_field.dart';
+import 'package:efood_multivendor/view/screens/auth/sign_in_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -29,19 +30,20 @@ class _NewPassScreenState extends State<NewPassScreen> {
   final TextEditingController _confirmPasswordController = TextEditingController();
   final FocusNode _newPasswordFocus = FocusNode();
   final FocusNode _confirmPasswordFocus = FocusNode();
+  final ScrollController _scrollController = ScrollController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: ResponsiveHelper.isDesktop(context) ? Colors.transparent : Theme.of(context).cardColor,
       appBar:  widget.fromDialog ? null : CustomAppBar(title: widget.fromPasswordChange ? 'reset_password'.tr : 'reset_password'.tr),
-      body: SafeArea(child: Center(child: Scrollbar(child: SingleChildScrollView(
+      body:  SafeArea(child: Center(child: Scrollbar(controller: _scrollController, child: SingleChildScrollView(
+        controller: _scrollController,
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
         child: Center(child: Container(
           height: widget.fromDialog ? 516 : null,
           width: widget.fromDialog ? 475 : context.width > 700 ? 700 : context.width,
-          //padding: widget.fromDialog ? const EdgeInsets.all(Dimensions.paddingSizeOverLarge) : context.width > 700 ? const EdgeInsets.all(Dimensions.paddingSizeDefault) : null,
           margin: const EdgeInsets.all(Dimensions.paddingSizeDefault),
           decoration: context.width > 700 ? BoxDecoration(
             color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
@@ -130,16 +132,21 @@ class _NewPassScreenState extends State<NewPassScreen> {
         Get.find<UserController>().changePassword(user).then((response) {
           if(response.isSuccess) {
             showCustomSnackBar('password_updated_successfully'.tr, isError: false);
+            Get.back();
           }else {
             showCustomSnackBar(response.message);
           }
         });
       }else {
-        Get.find<AuthController>().resetPassword(widget.resetToken, '+${widget.number!.trim()}', password, confirmPassword).then((value) {
+        Get.find<AuthController>().resetPassword(widget.resetToken, '${GetPlatform.isWeb ? '' : '+'}${widget.number!.trim()}', password, confirmPassword).then((value) {
           if (value.isSuccess) {
-            Get.find<AuthController>().login('+${widget.number!.trim()}', password).then((value) async {
-              Get.offAllNamed(RouteHelper.getAccessLocationRoute('reset-password'));
-            });
+            if(!ResponsiveHelper.isDesktop(context)) {
+              Get.offAllNamed(RouteHelper.getSignInRoute(RouteHelper.splash));
+            }else{
+              Get.offAllNamed(RouteHelper.getInitialRoute(fromSplash: false))?.then((value) {
+                Get.dialog(const SignInScreen(exitFromApp: true, backFromThis: false));
+              });
+            }
           } else {
             showCustomSnackBar(value.message);
           }

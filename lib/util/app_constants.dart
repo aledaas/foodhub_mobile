@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 
 class AppConstants {
   static const String appName = 'Foods Hub';
-  static const double appVersion = 7.1;
+  static const double appVersion = 7.2;
 
   static const String fontFamily = 'Roboto';
   static const bool payInWevView = false;
@@ -114,6 +114,18 @@ class AppConstants {
   static const String mostTipsUri = '/api/v1/most-tips';
   static const String orderAgainUri = '/api/v1/customer/order-again';
   static const String businessPlanPaymentUri = '/api/v1/auth/vendor/subscription/payment/api';
+  static const String guestLoginUri = '/api/v1/auth/guest/request';
+  static const String offlineMethodListUri = '/api/v1/offline_payment_method_list';
+  static const String offlinePaymentSaveInfoUri = '/api/v1/customer/order/offline-payment';
+  static const String offlinePaymentUpdateInfoUri = '/api/v1/customer/order/offline-payment-update';
+
+  /// Cart
+  static const String getCartListUri = '/api/v1/customer/cart/list';
+  static const String addCartUri = '/api/v1/customer/cart/add';
+  static const String updateCartUri = '/api/v1/customer/cart/update';
+  static const String removeAllCartUri = '/api/v1/customer/cart/remove';
+  static const String removeItemCartUri = '/api/v1/customer/cart/remove-item';
+  static const String addMultipleItemCartUri = '/api/v1/customer/cart/add-multiple';
 
   /// Shared Key
   static const String theme = 'theme';
@@ -140,6 +152,8 @@ class AppConstants {
   static const String cookiesManagement = 'cookies_management';
   static const String dmTipIndex = 'stackfood_dm_tip_index';
   static const String walletAccessToken = '6ammart_wallet_access_token';
+  static const String guestId = 'stackfood_guest_id';
+  static const String guestNumber = 'stackfood_guest_number';
 
 
 
@@ -168,6 +182,7 @@ class AppConstants {
   static const String pickedUp = 'picked_up';
   static const String delivered = 'delivered';
   static const String cancelled = 'canceled';
+  static const String refundRequested = 'refund_requested';
 
   /// Delivery Type
   static const String delivery = 'delivery';

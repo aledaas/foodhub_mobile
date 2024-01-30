@@ -158,7 +158,7 @@ class OrderView extends StatelessWidget {
                                     ) : const SizedBox(),
 
                                     InkWell(
-                                      onTap: () => Get.toNamed(RouteHelper.getOrderTrackingRoute(orderList![index].id)),
+                                      onTap: () => Get.toNamed(RouteHelper.getOrderTrackingRoute(orderList![index].id, null)),
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall, vertical: Dimensions.paddingSizeExtraSmall),
                                         decoration: BoxDecoration(

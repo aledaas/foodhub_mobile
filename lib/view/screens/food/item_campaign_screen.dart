@@ -3,6 +3,7 @@ import 'package:efood_multivendor/util/dimensions.dart';
 import 'package:efood_multivendor/view/base/custom_app_bar.dart';
 import 'package:efood_multivendor/view/base/menu_drawer.dart';
 import 'package:efood_multivendor/view/base/product_view.dart';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -14,6 +15,8 @@ class ItemCampaignScreen extends StatefulWidget {
 }
 
 class _ItemCampaignScreenState extends State<ItemCampaignScreen> {
+
+  final ScrollController scrollController = ScrollController();
 
   @override
   void initState() {
@@ -27,7 +30,7 @@ class _ItemCampaignScreenState extends State<ItemCampaignScreen> {
     return Scaffold(
       appBar: CustomAppBar(title: 'trending_food_offers'.tr),
       endDrawer: const MenuDrawer(), endDrawerEnableOpenDragGesture: false,
-      body: Scrollbar(child: SingleChildScrollView(child: Center(child: SizedBox(
+      body: Scrollbar(controller: scrollController, child: SingleChildScrollView(controller: scrollController, child: Center(child: SizedBox(
         width: Dimensions.webMaxWidth,
         child: GetBuilder<CampaignController>(builder: (campController) {
           return ProductView(

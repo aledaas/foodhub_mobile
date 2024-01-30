@@ -7,6 +7,7 @@ import 'package:efood_multivendor/util/images.dart';
 import 'package:efood_multivendor/util/styles.dart';
 import 'package:efood_multivendor/view/base/custom_button.dart';
 import 'package:efood_multivendor/view/base/custom_snackbar.dart';
+
 import 'package:efood_multivendor/view/base/web_menu_bar.dart';
 import 'package:efood_multivendor/view/screens/location/widget/location_search_dialog.dart';
 import 'package:efood_multivendor/view/screens/location/widget/permission_dialog.dart';
@@ -56,8 +57,8 @@ class _PickMapScreenState extends State<PickMapScreen> {
         width: Dimensions.webMaxWidth,
         child: GetBuilder<LocationController>(builder: (locationController) {
           /*print('--------------${'${locationController.pickPlaceMark.name ?? ''} '
-              '${locationController.pickPlaceMark.locality ?? ''} '
-              '${locationController.pickPlaceMark.postalCode ?? ''} ${locationController.pickPlaceMark.country ?? ''}'}');*/
+                '${locationController.pickPlaceMark.locality ?? ''} '
+                '${locationController.pickPlaceMark.postalCode ?? ''} ${locationController.pickPlaceMark.country ?? ''}'}');*/
 
           return Stack(children: [
 

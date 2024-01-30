@@ -39,6 +39,11 @@ class UserController extends GetxController implements GetxService {
     return responseModel;
   }
 
+  void setForceFullyUserEmpty() {
+    _userInfoModel = null;
+    update();
+  }
+
   /*Future<ResponseModel> updateUserInfo(UserInfoModel updateUserModel, String password) async {
     _isLoading = true;
     update();
@@ -97,7 +102,16 @@ class UserController extends GetxController implements GetxService {
   }
 
   void pickImage() async {
-    _pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+    XFile? pickLogo = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if(pickLogo != null) {
+      pickLogo.length().then((value) {
+        if(value > 2000000) {
+          showCustomSnackBar('please_upload_lower_size_file'.tr);
+        }else {
+          _pickedFile = pickLogo;
+        }
+      });
+    }
     update();
   }
 

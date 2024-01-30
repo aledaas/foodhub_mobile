@@ -14,7 +14,8 @@ class PaymentFailedDialog extends StatelessWidget {
   final String? orderID;
   final double? orderAmount;
   final double? maxCodOrderAmount;
-  const PaymentFailedDialog({Key? key, required this.orderID, required this.maxCodOrderAmount, required this.orderAmount}) : super(key: key);
+  final String? contactPersonNumber;
+  const PaymentFailedDialog({Key? key, required this.orderID, required this.maxCodOrderAmount, required this.orderAmount, this.contactPersonNumber}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +56,7 @@ class PaymentFailedDialog extends StatelessWidget {
                 onPressed: () {
                   if(maxCodOrderAmount == null || orderAmount! < maxCodOrderAmount!){
                     double total = ((orderAmount! / 100) * Get.find<SplashController>().configModel!.loyaltyPointItemPurchasePoint!);
-                    orderController.switchToCOD(orderID, points: total);
+                    orderController.switchToCOD(orderID, contactPersonNumber, points: total);
                   }else{
                     if(Get.isDialogOpen!) {
                       Get.back();

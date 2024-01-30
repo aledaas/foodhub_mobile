@@ -18,11 +18,14 @@ import 'package:efood_multivendor/view/base/custom_snackbar.dart';
 import 'package:efood_multivendor/view/base/custom_text_field.dart';
 import 'package:efood_multivendor/view/base/footer_view.dart';
 import 'package:efood_multivendor/view/base/menu_drawer.dart';
+
 import 'package:efood_multivendor/view/base/web_page_title_widget.dart';
+import 'package:efood_multivendor/view/screens/auth/widget/additional_data_section.dart';
 import 'package:efood_multivendor/view/screens/auth/widget/custom_time_picker.dart';
 import 'package:efood_multivendor/view/screens/auth/widget/pass_view.dart';
 import 'package:efood_multivendor/view/screens/auth/widget/registration_stepper_widget.dart';
 import 'package:efood_multivendor/view/screens/auth/widget/select_location_view.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -57,9 +60,9 @@ class _RestaurantRegistrationScreenState extends State<RestaurantRegistrationScr
   final List<Language>? _languageList = Get.find<SplashController>().configModel!.language;
   TabController? _tabController;
   final List<Tab> _tabs =[];
-
   bool firstTime = true;
   String? _countryDialCode;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -75,6 +78,7 @@ class _RestaurantRegistrationScreenState extends State<RestaurantRegistrationScr
       _nameFocus.add(FocusNode());
       _addressFocus.add(FocusNode());
     }
+    Get.find<AuthController>().setRestaurantAdditionalJoinUsPageData(isUpdate: false);
     Get.find<AuthController>().storeStatusChange(0.4, isUpdate: false);
     Get.find<AuthController>().getZoneList();
     Get.find<CuisineController>().getCuisineList();
@@ -120,349 +124,354 @@ class _RestaurantRegistrationScreenState extends State<RestaurantRegistrationScr
                   }
 
                   return Center(
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      WebScreenTitleWidget( title: 'join_as_a_restaurant'.tr ),
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        WebScreenTitleWidget( title: 'join_as_a_restaurant'.tr ),
 
-                      ResponsiveHelper.isDesktop(context) ? const Center(child: SizedBox(
+                        ResponsiveHelper.isDesktop(context) ? const Center(child: SizedBox(
                           width: Dimensions.webMaxWidth,
                           child: Padding(
                             padding: EdgeInsets.only(top: Dimensions.paddingSizeSmall),
                             child: RegistrationStepperWidget(status: ''),
                           ),
                         )) : Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge, vertical:  Dimensions.paddingSizeSmall),
-                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          Text(
-                            authController.storeStatus == 0.4 ? 'provide_store_information_to_proceed_next'.tr : 'provide_owner_information_to_confirm'.tr,
-                            style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).hintColor),
-                          ),
-
-                          const SizedBox(height: Dimensions.paddingSizeSmall),
-
-                          LinearProgressIndicator(
-                            backgroundColor: Theme.of(context).disabledColor, minHeight: 2,
-                            value: authController.storeStatus,
-                          ),
-                        ]),
-                      ),
-
-                      Expanded(
-                        child: SingleChildScrollView(
-                          padding: ResponsiveHelper.isDesktop(context) ? EdgeInsets.zero : const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall, horizontal: Dimensions.paddingSizeDefault),
-                          child: FooterView(
-                            child: SizedBox(
-                              width: Dimensions.webMaxWidth,
-                              child: ResponsiveHelper.isDesktop(context) ? webView(authController) : Column(children: [
-                                Visibility(
-                                  visible: authController.storeStatus == 0.4,
-                                  child: Column(children: [
-
-                                    Row(children: [
-                                      Expanded(flex: 4, child:  Align(alignment: Alignment.center, child: Stack(children: [
-                                        Padding(
-                                          padding: const EdgeInsets.all(5.0),
-                                          child: ClipRRect(
-                                            borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-                                            child: authController.pickedLogo != null ? GetPlatform.isWeb ? Image.network(
-                                              authController.pickedLogo!.path, width: 150, height: 120, fit: BoxFit.cover,
-                                            ) : Image.file(
-                                              File(authController.pickedLogo!.path), width: 150, height: 120, fit: BoxFit.cover,
-                                            ) : SizedBox(
-                                              width: 150, height: 120,
-                                              child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-
-                                                Icon(Icons.camera_alt, size: 38, color: Theme.of(context).disabledColor),
-                                                const SizedBox(height: Dimensions.paddingSizeSmall),
-
-                                                Text(
-                                                  'upload_store_logo'.tr,
-                                                  style: robotoMedium.copyWith(color: Theme.of(context).disabledColor), textAlign: TextAlign.center,
-                                                ),
-                                              ]),
-                                            ),
-                                          ),
-                                        ),
-                                        Positioned(
-                                          bottom: 0, right: 0, top: 0, left: 0,
-                                          child: InkWell(
-                                            onTap: () => authController.pickImage(true, false),
-                                            child: DottedBorder(
-                                              color: Theme.of(context).primaryColor,
-                                              strokeWidth: 1,
-                                              strokeCap: StrokeCap.butt,
-                                              dashPattern: const [5, 5],
-                                              padding: const EdgeInsets.all(0),
-                                              borderType: BorderType.RRect,
-                                              radius: const Radius.circular(Dimensions.radiusDefault),
-                                              child: Center(
-                                                child: Visibility(
-                                                  visible: authController.pickedLogo != null,
-                                                  child: Container(
-                                                    padding: const EdgeInsets.all(25),
-                                                    decoration: BoxDecoration(
-                                                      border: Border.all(width: 2, color: Colors.white),
-                                                      shape: BoxShape.circle,
-                                                    ),
-                                                    child: const Icon(Icons.camera_alt, color: Colors.white),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ])),),
-                                      const SizedBox(width: Dimensions.paddingSizeSmall),
-
-                                      Expanded(flex: 6, child: Stack(children: [
-                                        Padding(
-                                          padding: const EdgeInsets.all(5.0),
-                                          child: ClipRRect(
-                                            borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-                                            child: authController.pickedCover != null ? GetPlatform.isWeb ? Image.network(
-                                              authController.pickedCover!.path, width: context.width, height: 120, fit: BoxFit.cover,
-                                            ) : Image.file(
-                                              File(authController.pickedCover!.path), width: context.width, height: 120, fit: BoxFit.cover,
-                                            ) : SizedBox(
-                                              width: context.width, height: 120,
-                                              child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-
-                                                Icon(Icons.camera_alt, size: 38, color: Theme.of(context).disabledColor),
-                                                const SizedBox(height: Dimensions.paddingSizeSmall),
-
-                                                Text(
-                                                  'upload_store_cover'.tr,
-                                                  style: robotoMedium.copyWith(color: Theme.of(context).disabledColor), textAlign: TextAlign.center,
-                                                ),
-                                              ]),
-                                            ),
-                                          ),
-                                        ),
-
-
-                                        Positioned(
-                                          bottom: 0, right: 0, top: 0, left: 0,
-                                          child: InkWell(
-                                            onTap: () => authController.pickImage(false, false),
-                                            child: DottedBorder(
-                                              color: Theme.of(context).primaryColor,
-                                              strokeWidth: 1,
-                                              strokeCap: StrokeCap.butt,
-                                              dashPattern: const [5, 5],
-                                              padding: const EdgeInsets.all(0),
-                                              borderType: BorderType.RRect,
-                                              radius: const Radius.circular(Dimensions.radiusDefault),
-                                              child: Center(
-                                                child: Visibility(
-                                                  visible: authController.pickedCover != null,
-                                                  child: Container(
-                                                    padding: const EdgeInsets.all(25),
-                                                    decoration: BoxDecoration(
-                                                      border: Border.all(width: 3, color: Colors.white),
-                                                      shape: BoxShape.circle,
-                                                    ),
-                                                    child: const Icon(Icons.camera_alt, color: Colors.white, size: 50),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ]),),
-                                    ]),
-                                    const SizedBox(height: Dimensions.paddingSizeExtraLarge),
-
-                                    ListView.builder(
-                                        itemCount: _languageList!.length,
-                                        shrinkWrap: true,
-                                        physics: const NeverScrollableScrollPhysics(),
-                                        itemBuilder: (context, index) {
-                                          return Padding(
-                                            padding: const EdgeInsets.only(bottom: Dimensions.paddingSizeExtraLarge),
-                                            child: CustomTextField(
-                                              hintText: '${'restaurant_name'.tr} (${_languageList![index].value!})',
-                                              controller: _nameController[index],
-                                              focusNode: _nameFocus[index],
-                                              nextFocus: index != _languageList!.length-1 ? _nameFocus[index+1] : _addressFocus[0],
-                                              inputType: TextInputType.name,
-                                              capitalization: TextCapitalization.words,
-                                            ),
-                                          );
-                                        }
-                                    ),
-                                    // CustomTextField(
-                                    //   titleText: 'store_name'.tr,
-                                    //   controller: _nameController,
-                                    //   focusNode: _nameFocus,
-                                    //   nextFocus: _addressFocus,
-                                    //   inputType: TextInputType.name,
-                                    //   capitalization: TextCapitalization.words,
-                                    // ),
-                                    // const SizedBox(height: Dimensions.paddingSizeExtraLarge),
-
-                                    authController.zoneList != null ? const SelectLocationView(fromView: true) : const Center(child: CircularProgressIndicator()),
-                                    const SizedBox(height: Dimensions.paddingSizeLarge),
-
-                                    ListView.builder(
-                                        itemCount: _languageList!.length,
-                                        shrinkWrap: true,
-                                        physics: const NeverScrollableScrollPhysics(),
-                                        itemBuilder: (context, index) {
-                                          return Padding(
-                                            padding: const EdgeInsets.only(bottom: Dimensions.paddingSizeExtraLarge),
-                                            child: CustomTextField(
-                                              hintText: '${'restaurant_address'.tr} (${_languageList![index].value!})',
-                                              controller: _addressController[index],
-                                              focusNode: _addressFocus[index],
-                                              nextFocus: index != _languageList!.length-1 ? _addressFocus[index+1] : _vatFocus,
-                                              inputType: TextInputType.text,
-                                              capitalization: TextCapitalization.sentences,
-                                              maxLines: 3,
-                                            ),
-                                          );
-                                        }
-                                    ),
-                                    // CustomTextField(
-                                    //   titleText: 'store_address'.tr,
-                                    //   controller: _addressController,
-                                    //   focusNode: _addressFocus,
-                                    //   nextFocus: _vatFocus,
-                                    //   inputType: TextInputType.text,
-                                    //   capitalization: TextCapitalization.sentences,
-                                    //   maxLines: 3,
-                                    //   inputAction: TextInputAction.done,
-                                    // ),
-                                    // const SizedBox(height: Dimensions.paddingSizeLarge),
-
-                                    CustomTextField(
-                                      titleText: 'vat_tax'.tr,
-                                      controller: _vatController,
-                                      focusNode: _vatFocus,
-                                      inputAction: TextInputAction.done,
-                                      inputType: TextInputType.number,
-                                      isAmount: true,
-                                    ),
-                                    const SizedBox(height: Dimensions.paddingSizeExtraLarge),
-
-                                    InkWell(
-                                      onTap: () {
-                                        Get.dialog(const CustomTimePicker());
-                                      },
-                                      child: Container(
-                                        height: 50,
-                                        decoration: BoxDecoration(
-                                          color: Theme.of(context).cardColor,
-                                          borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                                          border: Border.all(color: Theme.of(context).primaryColor, width: 0.5),
-                                        ),
-                                        padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge),
-                                        child: Row(children: [
-                                          Expanded(child: Text(
-                                            '${authController.storeMinTime} : ${authController.storeMaxTime} ${authController.storeTimeUnit}',
-                                            style: robotoMedium,
-                                          )),
-                                          Icon(Icons.access_time_filled, color: Theme.of(context).primaryColor,)
-                                        ]),
-                                      ),
-                                    )
-
-                                  ]),
-                                ),
-
-                                Visibility(
-                                  visible: authController.storeStatus != 0.4,
-                                  child: Column(mainAxisAlignment: MainAxisAlignment.start, children: [
-
-                                    Row(children: [
-                                      Expanded(child: CustomTextField(
-                                        titleText: 'first_name'.tr,
-                                        controller: _fNameController,
-                                        focusNode: _fNameFocus,
-                                        nextFocus: _lNameFocus,
-                                        inputType: TextInputType.name,
-                                        capitalization: TextCapitalization.words,
-                                      )),
-                                      const SizedBox(width: Dimensions.paddingSizeSmall),
-
-                                      Expanded(child: CustomTextField(
-                                        titleText: 'last_name'.tr,
-                                        controller: _lNameController,
-                                        focusNode: _lNameFocus,
-                                        nextFocus: _phoneFocus,
-                                        inputType: TextInputType.name,
-                                        capitalization: TextCapitalization.words,
-                                      )),
-                                    ]),
-
-                                    const SizedBox(height: Dimensions.paddingSizeExtraLarge),
-
-                                    CustomTextField(
-                                      titleText: ResponsiveHelper.isDesktop(context) ? 'phone'.tr : 'enter_phone_number'.tr,
-                                      controller: _phoneController,
-                                      focusNode: _phoneFocus,
-                                      nextFocus: _emailFocus,
-                                      inputType: TextInputType.phone,
-                                      isPhone: true,
-                                      showTitle: ResponsiveHelper.isDesktop(context),
-                                      onCountryChanged: (CountryCode countryCode) {
-                                        _countryDialCode = countryCode.dialCode;
-                                      },
-                                      countryDialCode: _countryDialCode != null ? CountryCode.fromCountryCode(Get.find<SplashController>().configModel!.country!).code
-                                          : Get.find<LocalizationController>().locale.countryCode,
-                                    ),
-                                    const SizedBox(height: Dimensions.paddingSizeExtraLarge),
-
-                                    CustomTextField(
-                                      titleText: 'email'.tr,
-                                      controller: _emailController,
-                                      focusNode: _emailFocus,
-                                      nextFocus: _passwordFocus,
-                                      inputType: TextInputType.emailAddress,
-                                    ),
-                                    const SizedBox(height: Dimensions.paddingSizeExtraLarge),
-
-                                    CustomTextField(
-                                      titleText: 'password'.tr,
-                                      controller: _passwordController,
-                                      focusNode: _passwordFocus,
-                                      nextFocus: _confirmPasswordFocus,
-                                      inputType: TextInputType.visiblePassword,
-                                      isPassword: true,
-                                      onChanged: (value){
-                                        if(value != null && value.isNotEmpty){
-                                          if(!authController.showPassView){
-                                            authController.showHidePass();
-                                          }
-                                          authController.validPassCheck(value);
-                                        }else{
-                                          if(authController.showPassView){
-                                            authController.showHidePass();
-                                          }
-                                        }
-                                      },
-                                    ),
-                                    authController.showPassView ? const PassView() : const SizedBox(),
-
-                                    const SizedBox(height: Dimensions.paddingSizeExtraLarge),
-
-                                    CustomTextField(
-                                      titleText: 'confirm_password'.tr,
-                                      controller: _confirmPasswordController,
-                                      focusNode: _confirmPasswordFocus,
-                                      inputType: TextInputType.visiblePassword,
-                                      inputAction: TextInputAction.done,
-                                      isPassword: true,
-                                    ),
-                                  ]),
-                                ),
-                              ]),
+                          padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge, vertical:  Dimensions.paddingSizeSmall),
+                          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                            Text(
+                              authController.storeStatus == 0.4 ? 'provide_store_information_to_proceed_next'.tr : 'provide_owner_information_to_confirm'.tr,
+                              style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).hintColor),
                             ),
-                          ),
-                        )
-                      ),
 
-                      ResponsiveHelper.isDesktop(context) ? const SizedBox() : buttonView(),
+                            const SizedBox(height: Dimensions.paddingSizeSmall),
 
-                    ])
+                            LinearProgressIndicator(
+                              backgroundColor: Theme.of(context).disabledColor, minHeight: 2,
+                              value: authController.storeStatus,
+                            ),
+                          ]),
+                        ),
+
+                        Expanded(
+                            child: SingleChildScrollView(
+                              controller: _scrollController,
+                              padding: ResponsiveHelper.isDesktop(context) ? EdgeInsets.zero : const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall, horizontal: Dimensions.paddingSizeDefault),
+                              child: FooterView(
+                                child: SizedBox(
+                                  width: Dimensions.webMaxWidth,
+                                  child: ResponsiveHelper.isDesktop(context) ? webView(authController) : Column(children: [
+                                    Visibility(
+                                      visible: authController.storeStatus == 0.4,
+                                      child: Column(children: [
+
+                                        Row(children: [
+                                          Expanded(flex: 4, child:  Align(alignment: Alignment.center, child: Stack(children: [
+                                            Padding(
+                                              padding: const EdgeInsets.all(5.0),
+                                              child: ClipRRect(
+                                                borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+                                                child: authController.pickedLogo != null ? GetPlatform.isWeb ? Image.network(
+                                                  authController.pickedLogo!.path, width: 150, height: 120, fit: BoxFit.cover,
+                                                ) : Image.file(
+                                                  File(authController.pickedLogo!.path), width: 150, height: 120, fit: BoxFit.cover,
+                                                ) : SizedBox(
+                                                  width: 150, height: 120,
+                                                  child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+
+                                                    Icon(Icons.camera_alt, size: 38, color: Theme.of(context).disabledColor),
+                                                    const SizedBox(height: Dimensions.paddingSizeSmall),
+
+                                                    Text(
+                                                      'upload_store_logo'.tr,
+                                                      style: robotoMedium.copyWith(color: Theme.of(context).disabledColor), textAlign: TextAlign.center,
+                                                    ),
+                                                  ]),
+                                                ),
+                                              ),
+                                            ),
+                                            Positioned(
+                                              bottom: 0, right: 0, top: 0, left: 0,
+                                              child: InkWell(
+                                                onTap: () => authController.pickImage(true, false),
+                                                child: DottedBorder(
+                                                  color: Theme.of(context).primaryColor,
+                                                  strokeWidth: 1,
+                                                  strokeCap: StrokeCap.butt,
+                                                  dashPattern: const [5, 5],
+                                                  padding: const EdgeInsets.all(0),
+                                                  borderType: BorderType.RRect,
+                                                  radius: const Radius.circular(Dimensions.radiusDefault),
+                                                  child: Center(
+                                                    child: Visibility(
+                                                      visible: authController.pickedLogo != null,
+                                                      child: Container(
+                                                        padding: const EdgeInsets.all(25),
+                                                        decoration: BoxDecoration(
+                                                          border: Border.all(width: 2, color: Colors.white),
+                                                          shape: BoxShape.circle,
+                                                        ),
+                                                        child: const Icon(Icons.camera_alt, color: Colors.white),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ])),),
+                                          const SizedBox(width: Dimensions.paddingSizeSmall),
+
+                                          Expanded(flex: 6, child: Stack(children: [
+                                            Padding(
+                                              padding: const EdgeInsets.all(5.0),
+                                              child: ClipRRect(
+                                                borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+                                                child: authController.pickedCover != null ? GetPlatform.isWeb ? Image.network(
+                                                  authController.pickedCover!.path, width: context.width, height: 120, fit: BoxFit.cover,
+                                                ) : Image.file(
+                                                  File(authController.pickedCover!.path), width: context.width, height: 120, fit: BoxFit.cover,
+                                                ) : SizedBox(
+                                                  width: context.width, height: 120,
+                                                  child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+
+                                                    Icon(Icons.camera_alt, size: 38, color: Theme.of(context).disabledColor),
+                                                    const SizedBox(height: Dimensions.paddingSizeSmall),
+
+                                                    Text(
+                                                      'upload_store_cover'.tr,
+                                                      style: robotoMedium.copyWith(color: Theme.of(context).disabledColor), textAlign: TextAlign.center,
+                                                    ),
+                                                  ]),
+                                                ),
+                                              ),
+                                            ),
+
+
+                                            Positioned(
+                                              bottom: 0, right: 0, top: 0, left: 0,
+                                              child: InkWell(
+                                                onTap: () => authController.pickImage(false, false),
+                                                child: DottedBorder(
+                                                  color: Theme.of(context).primaryColor,
+                                                  strokeWidth: 1,
+                                                  strokeCap: StrokeCap.butt,
+                                                  dashPattern: const [5, 5],
+                                                  padding: const EdgeInsets.all(0),
+                                                  borderType: BorderType.RRect,
+                                                  radius: const Radius.circular(Dimensions.radiusDefault),
+                                                  child: Center(
+                                                    child: Visibility(
+                                                      visible: authController.pickedCover != null,
+                                                      child: Container(
+                                                        padding: const EdgeInsets.all(25),
+                                                        decoration: BoxDecoration(
+                                                          border: Border.all(width: 3, color: Colors.white),
+                                                          shape: BoxShape.circle,
+                                                        ),
+                                                        child: const Icon(Icons.camera_alt, color: Colors.white, size: 50),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ]),),
+                                        ]),
+                                        const SizedBox(height: Dimensions.paddingSizeExtraLarge),
+
+                                        ListView.builder(
+                                            itemCount: _languageList!.length,
+                                            shrinkWrap: true,
+                                            physics: const NeverScrollableScrollPhysics(),
+                                            itemBuilder: (context, index) {
+                                              return Padding(
+                                                padding: const EdgeInsets.only(bottom: Dimensions.paddingSizeExtraLarge),
+                                                child: CustomTextField(
+                                                  hintText: '${'restaurant_name'.tr} (${_languageList![index].value!})',
+                                                  controller: _nameController[index],
+                                                  focusNode: _nameFocus[index],
+                                                  nextFocus: index != _languageList!.length-1 ? _nameFocus[index+1] : _addressFocus[0],
+                                                  inputType: TextInputType.name,
+                                                  capitalization: TextCapitalization.words,
+                                                ),
+                                              );
+                                            }
+                                        ),
+                                        // CustomTextField(
+                                        //   titleText: 'store_name'.tr,
+                                        //   controller: _nameController,
+                                        //   focusNode: _nameFocus,
+                                        //   nextFocus: _addressFocus,
+                                        //   inputType: TextInputType.name,
+                                        //   capitalization: TextCapitalization.words,
+                                        // ),
+                                        // const SizedBox(height: Dimensions.paddingSizeExtraLarge),
+
+                                        authController.zoneList != null ? const SelectLocationView(fromView: true) : const Center(child: CircularProgressIndicator()),
+                                        const SizedBox(height: Dimensions.paddingSizeLarge),
+
+                                        ListView.builder(
+                                            itemCount: _languageList!.length,
+                                            shrinkWrap: true,
+                                            physics: const NeverScrollableScrollPhysics(),
+                                            itemBuilder: (context, index) {
+                                              return Padding(
+                                                padding: const EdgeInsets.only(bottom: Dimensions.paddingSizeExtraLarge),
+                                                child: CustomTextField(
+                                                  hintText: '${'restaurant_address'.tr} (${_languageList![index].value!})',
+                                                  controller: _addressController[index],
+                                                  focusNode: _addressFocus[index],
+                                                  nextFocus: index != _languageList!.length-1 ? _addressFocus[index+1] : _vatFocus,
+                                                  inputType: TextInputType.text,
+                                                  capitalization: TextCapitalization.sentences,
+                                                  maxLines: 3,
+                                                ),
+                                              );
+                                            }
+                                        ),
+                                        // CustomTextField(
+                                        //   titleText: 'store_address'.tr,
+                                        //   controller: _addressController,
+                                        //   focusNode: _addressFocus,
+                                        //   nextFocus: _vatFocus,
+                                        //   inputType: TextInputType.text,
+                                        //   capitalization: TextCapitalization.sentences,
+                                        //   maxLines: 3,
+                                        //   inputAction: TextInputAction.done,
+                                        // ),
+                                        // const SizedBox(height: Dimensions.paddingSizeLarge),
+
+                                        CustomTextField(
+                                          titleText: 'vat_tax'.tr,
+                                          controller: _vatController,
+                                          focusNode: _vatFocus,
+                                          inputAction: TextInputAction.done,
+                                          inputType: TextInputType.number,
+                                          isAmount: true,
+                                        ),
+                                        const SizedBox(height: Dimensions.paddingSizeExtraLarge),
+
+                                        InkWell(
+                                          onTap: () {
+                                            Get.dialog(const CustomTimePicker());
+                                          },
+                                          child: Container(
+                                            height: 50,
+                                            decoration: BoxDecoration(
+                                              color: Theme.of(context).cardColor,
+                                              borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                                              border: Border.all(color: Theme.of(context).primaryColor, width: 0.5),
+                                            ),
+                                            padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge),
+                                            child: Row(children: [
+                                              Expanded(child: Text(
+                                                '${authController.storeMinTime} : ${authController.storeMaxTime} ${authController.storeTimeUnit}',
+                                                style: robotoMedium,
+                                              )),
+                                              Icon(Icons.access_time_filled, color: Theme.of(context).primaryColor,)
+                                            ]),
+                                          ),
+                                        )
+
+                                      ]),
+                                    ),
+
+                                    Visibility(
+                                      visible: authController.storeStatus != 0.4,
+                                      child: Column(mainAxisAlignment: MainAxisAlignment.start, children: [
+
+                                        Row(children: [
+                                          Expanded(child: CustomTextField(
+                                            titleText: 'first_name'.tr,
+                                            controller: _fNameController,
+                                            focusNode: _fNameFocus,
+                                            nextFocus: _lNameFocus,
+                                            inputType: TextInputType.name,
+                                            capitalization: TextCapitalization.words,
+                                          )),
+                                          const SizedBox(width: Dimensions.paddingSizeSmall),
+
+                                          Expanded(child: CustomTextField(
+                                            titleText: 'last_name'.tr,
+                                            controller: _lNameController,
+                                            focusNode: _lNameFocus,
+                                            nextFocus: _phoneFocus,
+                                            inputType: TextInputType.name,
+                                            capitalization: TextCapitalization.words,
+                                          )),
+                                        ]),
+
+                                        const SizedBox(height: Dimensions.paddingSizeExtraLarge),
+
+                                        CustomTextField(
+                                          titleText: ResponsiveHelper.isDesktop(context) ? 'phone'.tr : 'enter_phone_number'.tr,
+                                          controller: _phoneController,
+                                          focusNode: _phoneFocus,
+                                          nextFocus: _emailFocus,
+                                          inputType: TextInputType.phone,
+                                          isPhone: true,
+                                          showTitle: ResponsiveHelper.isDesktop(context),
+                                          onCountryChanged: (CountryCode countryCode) {
+                                            _countryDialCode = countryCode.dialCode;
+                                          },
+                                          countryDialCode: _countryDialCode != null ? CountryCode.fromCountryCode(Get.find<SplashController>().configModel!.country!).code
+                                              : Get.find<LocalizationController>().locale.countryCode,
+                                        ),
+                                        const SizedBox(height: Dimensions.paddingSizeExtraLarge),
+
+                                        CustomTextField(
+                                          titleText: 'email'.tr,
+                                          controller: _emailController,
+                                          focusNode: _emailFocus,
+                                          nextFocus: _passwordFocus,
+                                          inputType: TextInputType.emailAddress,
+                                        ),
+                                        const SizedBox(height: Dimensions.paddingSizeExtraLarge),
+
+                                        CustomTextField(
+                                          titleText: 'password'.tr,
+                                          controller: _passwordController,
+                                          focusNode: _passwordFocus,
+                                          nextFocus: _confirmPasswordFocus,
+                                          inputType: TextInputType.visiblePassword,
+                                          isPassword: true,
+                                          onChanged: (value){
+                                            if(value != null && value.isNotEmpty){
+                                              if(!authController.showPassView){
+                                                authController.showHidePass();
+                                              }
+                                              authController.validPassCheck(value);
+                                            }else{
+                                              if(authController.showPassView){
+                                                authController.showHidePass();
+                                              }
+                                            }
+                                          },
+                                        ),
+                                        authController.showPassView ? const PassView() : const SizedBox(),
+
+                                        const SizedBox(height: Dimensions.paddingSizeExtraLarge),
+
+                                        CustomTextField(
+                                          titleText: 'confirm_password'.tr,
+                                          controller: _confirmPasswordController,
+                                          focusNode: _confirmPasswordFocus,
+                                          inputType: TextInputType.visiblePassword,
+                                          inputAction: TextInputAction.done,
+                                          isPassword: true,
+                                        ),
+                                        const SizedBox(height: Dimensions.paddingSizeExtraLarge),
+
+                                        AdditionalDataSection(authController: authController, scrollController: _scrollController),
+
+                                      ]),
+                                    ),
+                                  ]),
+                                ),
+                              ),
+                            )
+                        ),
+
+                        ResponsiveHelper.isDesktop(context) ? const SizedBox() : buttonView(),
+
+                      ])
                   );
                 }),
               ),
@@ -872,6 +881,27 @@ class _RestaurantRegistrationScreenState extends State<RestaurantRegistrationScr
           ]),
         ),
 
+        Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+            boxShadow: const [BoxShadow(color: Colors.black12, spreadRadius: 1, blurRadius: 5)],
+          ),
+          padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
+          margin: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall),
+          child: Column(children: [
+            Row(children: [
+              const Icon(Icons.person),
+              Text('additional_information'.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall))
+            ]),
+            const Divider(),
+            const SizedBox(height: Dimensions.paddingSizeLarge),
+
+            AdditionalDataSection(authController: authController, scrollController: _scrollController),
+
+          ]),
+        ),
+
         Row(mainAxisAlignment: MainAxisAlignment.end, children: [
           Container(
             decoration: BoxDecoration(
@@ -900,7 +930,7 @@ class _RestaurantRegistrationScreenState extends State<RestaurantRegistrationScr
                 }
                 authController.resetRestaurantRegistration();
 
-                //userController.initData(isUpdate: true);
+                authController.setRestaurantAdditionalJoinUsPageData(isUpdate: true);
               },
               buttonText: 'reset'.tr,
               isBold: false,
@@ -925,6 +955,7 @@ class _RestaurantRegistrationScreenState extends State<RestaurantRegistrationScr
         onPressed: () {
           bool defaultNameNull = false;
           bool defaultAddressNull = false;
+          bool customFieldEmpty = false;
           for(int index=0; index<_languageList!.length; index++) {
             if(_languageList![index].key == 'en') {
               if (_nameController[index].text.trim().isEmpty) {
@@ -936,6 +967,85 @@ class _RestaurantRegistrationScreenState extends State<RestaurantRegistrationScr
               break;
             }
           }
+
+          Map<String, dynamic> additionalData = {};
+          List<FilePickerResult> additionalDocuments = [];
+          List<String> additionalDocumentsInputType = [];
+
+          if(authController.storeStatus != 0.4) {
+            for (DataModel data in authController.dataList!) {
+              bool isTextField = data.fieldType == 'text' || data.fieldType == 'number' || data.fieldType == 'email' || data.fieldType == 'phone';
+              bool isDate = data.fieldType == 'date';
+              bool isCheckBox = data.fieldType == 'check_box';
+              bool isFile = data.fieldType == 'file';
+              int index = authController.dataList!.indexOf(data);
+              bool isRequired = data.isRequired == 1;
+
+              if(isTextField) {
+                if (kDebugMode) {
+                  print('=====check text field : ${authController.additionalList![index].text == ''}');
+                }
+                if(authController.additionalList![index].text != '') {
+                  additionalData.addAll({data.inputData! : authController.additionalList![index].text});
+                } else {
+                  if(isRequired) {
+                    customFieldEmpty = true;
+                    showCustomSnackBar('${data.placeholderData} ${'can_not_be_empty'.tr}');
+                    break;
+                  }
+                }
+              } else if(isDate) {
+                if (kDebugMode) {
+                  print('---check date : ${authController.additionalList![index]}');
+                }
+                if(authController.additionalList![index] != null) {
+                  additionalData.addAll({data.inputData! : authController.additionalList![index]});
+                } else {
+                  if(isRequired) {
+                    customFieldEmpty = true;
+                    showCustomSnackBar('${data.placeholderData} ${'can_not_be_empty'.tr}');
+                    break;
+                  }
+                }
+              } else if(isCheckBox) {
+                List<String> checkData = [];
+                bool noNeedToGoElse = false;
+                for(var e in authController.additionalList![index]) {
+                  if(e != 0) {
+                    checkData.add(e);
+                    customFieldEmpty = false;
+                    noNeedToGoElse = true;
+                  } else if(!noNeedToGoElse) {
+                    customFieldEmpty = true;
+                  }
+                }
+                if(customFieldEmpty && isRequired) {
+                  showCustomSnackBar( '${'please_set_data_in'.tr} ${authController.dataList![index].inputData!.replaceAll('_', ' ')} ${'field'.tr}');
+                  break;
+                } else {
+                  additionalData.addAll({data.inputData! : checkData});
+                }
+
+              } else if(isFile) {
+                if (kDebugMode) {
+                  print('---check file : ${authController.additionalList![index]}');
+                }
+                if(authController.additionalList![index].length == 0 && isRequired) {
+                  customFieldEmpty = true;
+                  showCustomSnackBar('${'please_add'.tr} ${authController.dataList![index].inputData!.replaceAll('_', ' ')}');
+                  break;
+                } else {
+                  authController.additionalList![index].forEach((file) {
+                    additionalDocuments.add(file);
+                    additionalDocumentsInputType.add(authController.dataList![index].inputData!);
+                  });
+
+                }
+              }
+
+            }
+          }
+
           String vat = _vatController.text.trim();
           String minTime = authController.storeMinTime;
           String maxTime = authController.storeMaxTime;
@@ -964,7 +1074,7 @@ class _RestaurantRegistrationScreenState extends State<RestaurantRegistrationScr
             }else if(defaultAddressNull) {
               showCustomSnackBar('enter_restaurant_address'.tr);
             }else if(authController.selectedZoneIndex == 0) {
-              showCustomSnackBar('please_select_zone_for_the_deliveryman'.tr);
+              showCustomSnackBar('please_select_zone_for_the_restaurant'.tr);
             }else if(vat.isEmpty) {
               showCustomSnackBar('enter_vat_amount'.tr);
             }else if(minTime.isEmpty) {
@@ -1023,6 +1133,10 @@ class _RestaurantRegistrationScreenState extends State<RestaurantRegistrationScr
               showCustomSnackBar('password_should_be'.tr);
             }else if(password != confirmPassword) {
               showCustomSnackBar('confirm_password_does_not_matched'.tr);
+            }else if(customFieldEmpty) {
+              if (kDebugMode) {
+                print('not provide addition data');
+              }
             }else {
               List<Translation> translation = [];
               for(int index=0; index<_languageList!.length; index++) {
@@ -1043,17 +1157,35 @@ class _RestaurantRegistrationScreenState extends State<RestaurantRegistrationScr
                 cuisines.add(Get.find<CuisineController>().cuisineModel!.cuisines![index].id.toString());
               }
 
-              authController.registerRestaurant(RestaurantBody(
+              Map<String, String> data = {};
+
+              data.addAll(RestaurantBody(
                 deliveryTimeType: authController.storeTimeUnit,
                 translation: jsonEncode(translation), vat: vat, minDeliveryTime: minTime,
                 maxDeliveryTime: maxTime, lat: authController.restaurantLocation!.latitude.toString(), email: email,
                 lng: authController.restaurantLocation!.longitude.toString(), fName: fName, lName: lName, phone: phone,
                 password: password, zoneId: authController.zoneList![authController.selectedZoneIndex!].id.toString(),
                 cuisineId: cuisines,
-              ));
+              ).toJson());
+
+              data.addAll({
+                'additional_data': jsonEncode(additionalData),
+              });
+
+              if (kDebugMode) {
+                print('-------final data-- :  $data');
+              }
+              if (kDebugMode) {
+                print('-------additional document-- :  $additionalDocuments');
+              }
+              if (kDebugMode) {
+                print('-------additional document type-- :  $additionalDocumentsInputType');
+              }
+
+              authController.registerRestaurant(data, additionalDocuments, additionalDocumentsInputType);
+
             }
           }
-
         },
       );
     });

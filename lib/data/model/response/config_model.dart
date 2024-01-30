@@ -77,6 +77,15 @@ class ConfigModel {
   String? additionalChargeName;
   double? additionCharge;
   BannerData? bannerData;
+  bool? offlinePaymentStatus;
+  bool? freeDeliveryDistanceStatus;
+  double? freeDeliveryDistance;
+  bool? instantOrder;
+  bool? customerDateOrderStatus;
+  int? customerOrderDate;
+  RestaurantAdditionalJoinUsPageData? restaurantAdditionalJoinUsPageData;
+  DeliverymanAdditionalJoinUsPageData? deliverymanAdditionalJoinUsPageData;
+  bool? guestCheckoutStatus;
 
   ConfigModel(
       {this.businessName,
@@ -157,6 +166,15 @@ class ConfigModel {
         this.additionalChargeName,
         this.additionCharge,
         this.bannerData,
+        this.offlinePaymentStatus,
+        this.freeDeliveryDistanceStatus,
+        this.freeDeliveryDistance,
+        this.instantOrder,
+        this.customerDateOrderStatus,
+        this.customerOrderDate,
+        this.restaurantAdditionalJoinUsPageData,
+        this.deliverymanAdditionalJoinUsPageData,
+        this.guestCheckoutStatus,
       });
 
   ConfigModel.fromJson(Map<String, dynamic> json) {
@@ -263,6 +281,15 @@ class ConfigModel {
     additionalChargeName = json['additional_charge_name'];
     additionCharge = json['additional_charge']?.toDouble() ?? 0;
     bannerData = json['banner_data'] != null && json['banner_data'] != 'null' ? BannerData.fromJson(json['banner_data']) : null;
+    offlinePaymentStatus = json['offline_payment_status'] == 1;
+    freeDeliveryDistanceStatus = json['free_delivery_distance_status'];
+    freeDeliveryDistance = json['free_delivery_distance'] != null ? double.parse(json['free_delivery_distance'].toString()) : null;
+    instantOrder = json['instant_order'];
+    customerDateOrderStatus = json['customer_date_order_sratus'];
+    customerOrderDate = json['customer_order_date'];
+    restaurantAdditionalJoinUsPageData = json['restaurant_additional_join_us_page_data'] != null ? RestaurantAdditionalJoinUsPageData.fromJson(json['restaurant_additional_join_us_page_data']) : null;
+    deliverymanAdditionalJoinUsPageData = json['deliveryman_additional_join_us_page_data'] != null ? DeliverymanAdditionalJoinUsPageData.fromJson(json['deliveryman_additional_join_us_page_data']) : null;
+    guestCheckoutStatus = json['guest_checkout_status'] == 1;
   }
 
   Map<String, dynamic> toJson() {
@@ -352,6 +379,18 @@ class ConfigModel {
     data['additional_charge_status'] = additionalChargeStatus;
     data['additional_charge_name'] = additionalChargeName;
     data['additional_charge'] = additionCharge;
+    data['offline_payment_status'] = offlinePaymentStatus;
+    data['free_delivery_distance'] = freeDeliveryDistance;
+    data['instant_order'] = instantOrder;
+    data['customer_date_order_sratus'] = customerDateOrderStatus;
+    data['customer_order_date'] = customerOrderDate;
+    if (restaurantAdditionalJoinUsPageData != null) {
+      data['restaurant_additional_join_us_page_data'] = restaurantAdditionalJoinUsPageData!.toJson();
+    }
+    if (deliverymanAdditionalJoinUsPageData != null) {
+      data['deliveryman_additional_join_us_page_data'] = deliverymanAdditionalJoinUsPageData!.toJson();
+    }
+    data['guest_checkout_status'] = guestCheckoutStatus;
     return data;
   }
 }
@@ -632,6 +671,122 @@ class BannerData {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['promotional_banner_title'] = promotionalBannerTitle;
     data['promotional_banner_image'] = promotionalBannerImage;
+    return data;
+  }
+}
+
+class RestaurantAdditionalJoinUsPageData {
+  List<DataModel>? data;
+
+  RestaurantAdditionalJoinUsPageData({this.data});
+
+  RestaurantAdditionalJoinUsPageData.fromJson(Map<String, dynamic> json) {
+    if (json['data'] != null) {
+      data = <DataModel>[];
+      json['data'].forEach((v) {
+        data!.add(DataModel.fromJson(v));
+      });
+    }
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    if (this.data != null) {
+      data['data'] = this.data!.map((v) => v.toJson()).toList();
+    }
+    return data;
+  }
+}
+
+class DeliverymanAdditionalJoinUsPageData {
+  List<DataModel>? data;
+
+  DeliverymanAdditionalJoinUsPageData({this.data});
+
+  DeliverymanAdditionalJoinUsPageData.fromJson(Map<String, dynamic> json) {
+    if (json['data'] != null) {
+      data = <DataModel>[];
+      json['data'].forEach((v) {
+        data!.add(DataModel.fromJson(v));
+      });
+    }
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    if (this.data != null) {
+      data['data'] = this.data!.map((v) => v.toJson()).toList();
+    }
+    return data;
+  }
+}
+
+class DataModel {
+  String? fieldType;
+  String? inputData;
+  List<String>? checkData;
+  MediaData? mediaData;
+  String? placeholderData;
+  int? isRequired;
+
+  DataModel({this.fieldType,
+    this.inputData,
+    this.checkData,
+    this.mediaData,
+    this.placeholderData,
+    this.isRequired});
+
+  DataModel.fromJson(Map<String, dynamic> json) {
+    fieldType = json['field_type'];
+    inputData = json['input_data'];
+    // checkData = json['check_data'].cast<String>();
+
+    if(json['check_data'] != null) {
+      checkData = [];
+      json['check_data'].forEach((e) => checkData!.add(e));
+    }
+    mediaData = json['media_data'] != null
+        ? MediaData.fromJson(json['media_data'])
+        : null;
+    placeholderData = json['placeholder_data'];
+    isRequired = json['is_required'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['field_type'] = fieldType;
+    data['input_data'] = inputData;
+    data['check_data'] = checkData;
+    if (mediaData != null) {
+      data['media_data'] = mediaData!.toJson();
+    }
+    data['placeholder_data'] = placeholderData;
+    data['is_required'] = isRequired;
+    return data;
+  }
+}
+
+class MediaData {
+  int? uploadMultipleFiles;
+  int? image;
+  int? pdf;
+  int? docs;
+
+  MediaData({this.uploadMultipleFiles, this.image, this.pdf, this.docs});
+
+  MediaData.fromJson(Map<String, dynamic> json) {
+    uploadMultipleFiles = json['upload_multiple_files'];
+    image = json['image'];
+    pdf = json['pdf'];
+    docs = json['docs'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['upload_multiple_files'] = uploadMultipleFiles;
+    data['image'] = image;
+    data['pdf'] = pdf;
+    data['docs'] = docs;
     return data;
   }
 }

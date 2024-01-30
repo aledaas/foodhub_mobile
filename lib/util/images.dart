@@ -190,4 +190,17 @@ class Images {
   static const String walletPay = 'assets/image/wallet_pay.png';
   static const String emptyFood = 'assets/image/no_food.png';
   static const String emptyRestaurant = 'assets/image/no_restaurants.png';
+  static const String editDelivery = 'assets/image/edit_delivery.png';
+  static const String orders = 'assets/image/orders.png';
+  static const String bankInfoIcon = 'assets/image/bank_info.png';
+  static const String offlinePaymentIcon = 'assets/image/offline_payment_icon.png';
+  static const String announcement = 'assets/image/announcement.png';
+  static const String trackOrderPlace = 'assets/image/track_order_place.png';
+  static const String trackOrderAccept = 'assets/image/track_order_accept.png';
+  static const String trackOrderPreparing = 'assets/image/track_order_preparing.png';
+  static const String trackOrderOnTheWay = 'assets/image/track_on_the_way.png';
+  static const String trackOrderDelivered = 'assets/image/track_delivered.png';
+  static const String documentIcon = 'assets/image/documents.png';
+  static const String pdfIcon = 'assets/image/pdf.png';
+  static const String orderMenuIcon = 'assets/image/order_menu_icon.png';
 }

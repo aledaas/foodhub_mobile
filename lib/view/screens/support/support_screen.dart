@@ -8,6 +8,7 @@ import 'package:efood_multivendor/view/base/custom_app_bar.dart';
 import 'package:efood_multivendor/view/base/custom_snackbar.dart';
 import 'package:efood_multivendor/view/base/footer_view.dart';
 import 'package:efood_multivendor/view/base/menu_drawer.dart';
+
 import 'package:efood_multivendor/view/screens/support/widget/web_support_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -29,8 +30,8 @@ class _SupportScreenState extends State<SupportScreen> {
       appBar: CustomAppBar(title: 'help_support'.tr, bgColor: Theme.of(context).primaryColor),
       endDrawer: const MenuDrawer(), endDrawerEnableOpenDragGesture: false,
       body: Center(
-        child: ResponsiveHelper.isDesktop(context) ? const SingleChildScrollView(child: FooterView(child: SizedBox( width: double.infinity, height: 650, child: WebSupportScreen())))
-         : SizedBox(
+        child: ResponsiveHelper.isDesktop(context) ? SingleChildScrollView(controller: scrollController, child: const FooterView(child: SizedBox( width: double.infinity, height: 650, child: WebSupportScreen())))
+            : SizedBox(
           width: Dimensions.webMaxWidth,
           child: Stack(
             children: [
@@ -61,59 +62,59 @@ class _SupportScreenState extends State<SupportScreen> {
 
                       Stack(clipBehavior: Clip.none, children: [
                         Container(
-                            height: size.height * 0.35,
-                            width: double.infinity,
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).cardColor,
-                              borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-                              boxShadow: [BoxShadow(
-                                color: Colors.grey[Get.find<ThemeController>().darkTheme ? 700 : 300]!,
-                                blurRadius: 5, spreadRadius: 1,
-                              )],
-                            ),
+                          height: size.height * 0.35,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).cardColor,
+                            borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                            boxShadow: [BoxShadow(
+                              color: Colors.grey[Get.find<ThemeController>().darkTheme ? 700 : 300]!,
+                              blurRadius: 5, spreadRadius: 1,
+                            )],
                           ),
+                        ),
 
                         Positioned(
                           top: -20, left: 20, right: 20,
                           child: Column(
                             children: [
                               customCard(context,
-                                child: element(context,
-                                  image: Images.helpAddress,
-                                  title: 'address'.tr,
-                                  subTitle: Get.find<SplashController>().configModel!.address!,
-                                  onTap: (){},
-                                )
+                                  child: element(context,
+                                    image: Images.helpAddress,
+                                    title: 'address'.tr,
+                                    subTitle: Get.find<SplashController>().configModel!.address!,
+                                    onTap: (){},
+                                  )
                               ),
                               const SizedBox(height: Dimensions.paddingSizeLarge),
 
                               Row(children: [
                                 Expanded(child: customCard(context,
                                   child: element(context,
-                                    image: Images.helpPhone, title: 'call'.tr,
-                                    subTitle: Get.find<SplashController>().configModel!.phone!,
-                                    onTap: ()async {
-                                      if(await canLaunchUrlString('tel:${Get.find<SplashController>().configModel!.phone}')) {
-                                        launchUrlString('tel:${Get.find<SplashController>().configModel!.phone}', mode: LaunchMode.externalApplication);
-                                      }else {
-                                        showCustomSnackBar('${'can_not_launch'.tr} ${Get.find<SplashController>().configModel!.phone}');
+                                      image: Images.helpPhone, title: 'call'.tr,
+                                      subTitle: Get.find<SplashController>().configModel!.phone!,
+                                      onTap: ()async {
+                                        if(await canLaunchUrlString('tel:${Get.find<SplashController>().configModel!.phone}')) {
+                                          launchUrlString('tel:${Get.find<SplashController>().configModel!.phone}', mode: LaunchMode.externalApplication);
+                                        }else {
+                                          showCustomSnackBar('${'can_not_launch'.tr} ${Get.find<SplashController>().configModel!.phone}');
+                                        }
                                       }
-                                    }
                                   ),
                                 )),
                                 const SizedBox(width: Dimensions.paddingSizeLarge),
 
                                 Expanded(child: customCard(context,
                                   child: element(context,
-                                      image: Images.helpEmail, title: 'email_us'.tr,
-                                      subTitle: Get.find<SplashController>().configModel!.email!,
-                                      onTap: () {
-                                        final Uri emailLaunchUri = Uri(
-                                          scheme: 'mailto',
-                                          path: Get.find<SplashController>().configModel!.email,
-                                        );
-                                        launchUrlString(emailLaunchUri.toString(), mode: LaunchMode.externalApplication);
-                                      },
+                                    image: Images.helpEmail, title: 'email_us'.tr,
+                                    subTitle: Get.find<SplashController>().configModel!.email!,
+                                    onTap: () {
+                                      final Uri emailLaunchUri = Uri(
+                                        scheme: 'mailto',
+                                        path: Get.find<SplashController>().configModel!.email,
+                                      );
+                                      launchUrlString(emailLaunchUri.toString(), mode: LaunchMode.externalApplication);
+                                    },
                                   ),
                                 )),
                               ])

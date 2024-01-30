@@ -5,7 +5,8 @@ import 'package:efood_multivendor/util/dimensions.dart';
 import 'package:efood_multivendor/util/styles.dart';
 import 'package:efood_multivendor/view/base/custom_app_bar.dart';
 import 'package:efood_multivendor/view/base/menu_drawer.dart';
-import 'package:efood_multivendor/view/base/not_logged_in_screen.dart';
+
+import 'package:efood_multivendor/view/screens/order/guest_track_order_input_view.dart';
 import 'package:efood_multivendor/view/screens/order/widget/order_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -51,13 +52,13 @@ class OrderScreenState extends State<OrderScreen> with TickerProviderStateMixin 
               color: ResponsiveHelper.isDesktop(context) ? Theme.of(context).primaryColor.withOpacity(0.1) : Colors.transparent,
               child: Column(children: [
 
-                  ResponsiveHelper.isDesktop(context) ? Center(child: Padding(
-                    padding: const EdgeInsets.only(top: Dimensions.paddingSizeSmall),
-                    child: Text('my_orders'.tr, style: robotoMedium),
-                  )) : const SizedBox(),
+                ResponsiveHelper.isDesktop(context) ? Center(child: Padding(
+                  padding: const EdgeInsets.only(top: Dimensions.paddingSizeSmall),
+                  child: Text('my_orders'.tr, style: robotoMedium),
+                )) : const SizedBox(),
 
-                  Center(
-                    child: SizedBox(
+                Center(
+                  child: SizedBox(
                     width: Dimensions.webMaxWidth,
                     child: Align(
                       alignment: ResponsiveHelper.isDesktop(context) ? Alignment.centerLeft : Alignment.center,
@@ -81,8 +82,8 @@ class OrderScreenState extends State<OrderScreen> with TickerProviderStateMixin 
                       ),
                     ),
                   ),
-                  ),
-                ],
+                ),
+              ],
               ),
             ),
 
@@ -97,10 +98,7 @@ class OrderScreenState extends State<OrderScreen> with TickerProviderStateMixin 
 
           ]);
         },
-      ) : NotLoggedInScreen(callBack: (value){
-        initCall();
-        setState(() {});
-      }),
+      ) : const GuestTrackOrderInputView(),
     );
   }
 }

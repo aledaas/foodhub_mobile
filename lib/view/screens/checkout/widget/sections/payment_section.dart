@@ -11,9 +11,11 @@ class PaymentSection extends StatelessWidget {
   final bool isCashOnDeliveryActive;
   final bool isDigitalPaymentActive;
   final bool isWalletActive;
+  final bool isOfflinePaymentActive;
   final double total;
   final OrderController orderController;
-  const PaymentSection({Key? key, required this.isCashOnDeliveryActive, required this.isDigitalPaymentActive, required this.isWalletActive, required this.total, required this.orderController, }) : super(key: key);
+  const PaymentSection({Key? key, required this.isCashOnDeliveryActive, required this.isDigitalPaymentActive,
+    required this.isWalletActive, required this.total, required this.orderController, required this.isOfflinePaymentActive, }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -27,34 +29,54 @@ class PaymentSection extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge, vertical: Dimensions.paddingSizeDefault),
       child: Column(children: [
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Text('choose_payment_method'.tr, style: robotoMedium),
+          Text('payment_method'.tr, style: robotoMedium),
 
-          !ResponsiveHelper.isDesktop(context) ? InkWell(
+          InkWell(
             onTap: (){
-              showModalBottomSheet(
-                context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
-                builder: (con) => PaymentMethodBottomSheet(
+              if(ResponsiveHelper.isDesktop(context)){
+                Get.dialog(Dialog(backgroundColor: Colors.transparent, child: PaymentMethodBottomSheet(
                   isCashOnDeliveryActive: isCashOnDeliveryActive, isDigitalPaymentActive: isDigitalPaymentActive,
-                  isWalletActive: isWalletActive, totalPrice: total,
-                ),
-              );
+                  isWalletActive: isWalletActive, totalPrice: total, isOfflinePaymentActive: isOfflinePaymentActive,
+                )));
+              }else {
+                showModalBottomSheet(
+                  context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
+                  builder: (con) => PaymentMethodBottomSheet(
+                    isCashOnDeliveryActive: isCashOnDeliveryActive, isDigitalPaymentActive: isDigitalPaymentActive,
+                    isWalletActive: isWalletActive, totalPrice: total, isOfflinePaymentActive: isOfflinePaymentActive,
+                  ),
+                );
+              }
             },
             child: Image.asset(Images.paymentSelect, height: 24, width: 24),
-          ) : const SizedBox(),
+          ),
         ]),
 
         const Divider(),
 
-        InkWell(
-          onTap: () {
-            if(ResponsiveHelper.isDesktop(context)){
-              Get.dialog(Dialog(backgroundColor: Colors.transparent, child: PaymentMethodBottomSheet(
-                isCashOnDeliveryActive: isCashOnDeliveryActive, isDigitalPaymentActive: isDigitalPaymentActive,
-                isWalletActive: isWalletActive, totalPrice: total,
-              )));
-            }
-          },
-          child: Row(children: [
+        Container(
+          decoration: ResponsiveHelper.isDesktop(context) ? BoxDecoration(
+            borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+            color: Theme.of(context).cardColor,
+            border: Border.all(color: Theme.of(context).disabledColor.withOpacity(0.3), width: 1),
+          ) : const BoxDecoration(),
+          padding: ResponsiveHelper.isDesktop(context) ? const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall, horizontal: Dimensions.radiusDefault) : EdgeInsets.zero,
+          child: orderController.paymentMethodIndex == 0 ? Row(children: [
+            Image.asset(Images.cash , width: 20, height: 20,
+              color: Theme.of(context).textTheme.bodyMedium!.color,
+            ),
+            const SizedBox(width: Dimensions.paddingSizeSmall),
+
+            Expanded(child: Text('cash_on_delivery'.tr,
+              style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor),
+            )),
+
+            Text(
+              PriceConverter.convertPrice(total), textDirection: TextDirection.ltr,
+              style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, color: Theme.of(context).primaryColor),
+            )
+
+          ]) : Row(children: [
             orderController.paymentMethodIndex != -1 ? Image.asset(
               orderController.paymentMethodIndex == 0 ? Images.cash
                   : orderController.paymentMethodIndex == 1 ? Images.wallet
@@ -65,23 +87,21 @@ class PaymentSection extends StatelessWidget {
             const SizedBox(width: Dimensions.paddingSizeSmall),
 
             Expanded(
-              child: Row(children: [
-                Text(
-                  orderController.paymentMethodIndex == 0 ? 'cash_on_delivery'.tr
-                      : orderController.paymentMethodIndex == 1 ? 'wallet_payment'.tr
-                      : orderController.paymentMethodIndex == 2 ? 'digital_payment'.tr
-                      : 'select_payment_method'.tr,
-                  style: robotoRegular.copyWith(
-                    fontSize: Dimensions.fontSizeSmall,
-                    color: Theme.of(context).disabledColor,
+                child: Row(children: [
+                  Text(
+                    orderController.paymentMethodIndex == 0 ? 'cash_on_delivery'.tr
+                        : orderController.paymentMethodIndex == 1 ? 'wallet_payment'.tr
+                        : orderController.paymentMethodIndex == 2 ? 'digital_payment'.tr
+                        : orderController.paymentMethodIndex == 3 ? '${'offline_payment'.tr} (${orderController.offlineMethodList![orderController.selectedOfflineBankIndex].methodName})'
+                        : 'select_payment_method'.tr,
+                    style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor),
                   ),
-                ),
 
-                orderController.paymentMethodIndex == -1 ? Padding(
-                  padding: const EdgeInsets.only(left: Dimensions.paddingSizeExtraSmall),
-                  child: Icon(Icons.error, size: 16, color: Theme.of(context).colorScheme.error),
-                ) : const SizedBox(),
-              ])
+                  orderController.paymentMethodIndex == -1 ? Padding(
+                    padding: const EdgeInsets.only(left: Dimensions.paddingSizeExtraSmall),
+                    child: Icon(Icons.error, size: 16, color: Theme.of(context).colorScheme.error),
+                  ) : const SizedBox(),
+                ])
             ),
             !ResponsiveHelper.isDesktop(context) ? PriceConverter.convertAnimationPrice(
               total,

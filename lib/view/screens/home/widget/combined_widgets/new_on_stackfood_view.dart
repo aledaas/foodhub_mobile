@@ -29,7 +29,7 @@ class NewOnStackFoodView extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.all(Dimensions.paddingSizeDefault),
                   child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                    Text('new_on_stackFood'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
+                    Text('${'new_on'.tr} ${AppConstants.appName}', style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
 
                     ArrowIconButton(
                       onTap: () => Get.toNamed(RouteHelper.getAllRestaurantRoute(isLatest ? 'latest' : '')),

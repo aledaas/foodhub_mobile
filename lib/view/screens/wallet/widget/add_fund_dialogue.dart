@@ -135,7 +135,7 @@ class _AddFundDialogueState extends State<AddFundDialogue> {
 
                                     CustomImage(
                                       height: 20, fit: BoxFit.contain,
-                                      image: '${Get.find<SplashController>().configModel!.baseUrls!.gatewayImageUrl}/${Get.find<SplashController>().configModel!.activePaymentMethodList![index].getWayImage!}',
+                                      image: '${Get.find<SplashController>().configModel!.baseUrls!.gatewayImageUrl}/${Get.find<SplashController>().configModel!.activePaymentMethodList![index].getWayImage}',
                                     ),
                                     const SizedBox(width: Dimensions.paddingSizeSmall),
 

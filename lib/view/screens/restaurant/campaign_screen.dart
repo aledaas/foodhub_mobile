@@ -10,6 +10,7 @@ import 'package:efood_multivendor/view/base/custom_image.dart';
 import 'package:efood_multivendor/view/base/footer_view.dart';
 import 'package:efood_multivendor/view/base/menu_drawer.dart';
 import 'package:efood_multivendor/view/base/product_view.dart';
+
 import 'package:efood_multivendor/view/base/web_menu_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -23,6 +24,8 @@ class CampaignScreen extends StatefulWidget {
 }
 
 class _CampaignScreenState extends State<CampaignScreen> {
+
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -40,6 +43,7 @@ class _CampaignScreenState extends State<CampaignScreen> {
       backgroundColor: Theme.of(context).cardColor,
       body: GetBuilder<CampaignController>(builder: (campaignController) {
         return CustomScrollView(
+          controller: _scrollController,
           slivers: [
 
             ResponsiveHelper.isDesktop(context) ? SliverToBoxAdapter(

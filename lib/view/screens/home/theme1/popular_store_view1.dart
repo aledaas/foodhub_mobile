@@ -21,20 +21,26 @@ import 'package:get/get.dart';
 class PopularStoreView1 extends StatelessWidget {
   final bool isPopular;
   final bool isRecentlyViewed;
-  const PopularStoreView1({Key? key, required this.isPopular, this.isRecentlyViewed = false}) : super(key: key);
+  final bool isOrderAgainViewed;
+  const PopularStoreView1({Key? key, required this.isPopular, this.isRecentlyViewed = false, this.isOrderAgainViewed = false}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return GetBuilder<RestaurantController>(builder: (restaurantController) {
-      List<Restaurant>? restaurant = isPopular ? restaurantController.popularRestaurantList : isRecentlyViewed ? restaurantController.recentlyViewedRestaurantList : restaurantController.latestRestaurantList;
+      List<Restaurant>? restaurant = isPopular ? restaurantController.popularRestaurantList
+          : isRecentlyViewed ? restaurantController.recentlyViewedRestaurantList
+          : isOrderAgainViewed ? restaurantController.orderAgainRestaurantList
+          : restaurantController.latestRestaurantList;
 
       return (restaurant != null && restaurant.isEmpty) ? const SizedBox() : Column(
         children: [
           Padding(
             padding: EdgeInsets.fromLTRB(10, isPopular ? 15 : 15, 10, 10),
             child: TitleWidget(
-              title: isPopular ? 'popular_restaurants'.tr : isRecentlyViewed ? 'recently_viewed_restaurants'.tr : '${'new_on'.tr} ${AppConstants.appName}',
-              onTap: () => Get.toNamed(RouteHelper.getAllRestaurantRoute(isPopular ? 'popular' : isRecentlyViewed ? 'recently_viewed' : 'latest')),
+              title: isPopular ? 'popular_restaurants'.tr
+                  : isRecentlyViewed ? 'recently_viewed_restaurants'.tr
+                  : isOrderAgainViewed ? 'order_again'.tr : '${'new_on'.tr} ${AppConstants.appName}',
+              onTap: () => Get.toNamed(RouteHelper.getAllRestaurantRoute(isPopular ? 'popular' : isRecentlyViewed ? 'recently_viewed' : isOrderAgainViewed ? 'order_again' : 'latest')),
             ),
           ),
 

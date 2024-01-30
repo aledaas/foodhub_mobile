@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:efood_multivendor/data/model/response/product_model.dart';
 
 class PlaceOrderBody {
-  List<Cart>? _cart;
+  List<OnlineCart>? _cart;
   double? _couponDiscountAmount;
   String? _couponDiscountTitle;
   double? _orderAmount;
@@ -36,9 +36,12 @@ class PlaceOrderBody {
   String? _unavailableItemNote;
   String? _deliveryInstruction;
   int? _partialPayment;
+  int? _guestId;
+  int? _isBuyNow;
+  String? _guestEmail;
 
   PlaceOrderBody(
-      {required List<Cart> cart,
+      {required List<OnlineCart> cart,
         required double? couponDiscountAmount,
         required String? couponDiscountTitle,
         required String? couponCode,
@@ -71,6 +74,9 @@ class PlaceOrderBody {
         required String unavailableItemNote,
         required String deliveryInstruction,
         required int partialPayment,
+        required int? guestId,
+        required int isBuyNow,
+        required String? guestEmail,
       }) {
     _cart = cart;
     _couponDiscountAmount = couponDiscountAmount;
@@ -105,9 +111,12 @@ class PlaceOrderBody {
     _unavailableItemNote = unavailableItemNote;
     _deliveryInstruction = deliveryInstruction;
     _partialPayment = partialPayment;
+    _guestId = guestId;
+    _isBuyNow = isBuyNow;
+    _guestEmail = guestEmail;
   }
 
-  List<Cart>? get cart => _cart;
+  List<OnlineCart>? get cart => _cart;
   double? get couponDiscountAmount => _couponDiscountAmount;
   String? get couponDiscountTitle => _couponDiscountTitle;
   double? get orderAmount => _orderAmount;
@@ -139,12 +148,15 @@ class PlaceOrderBody {
   String? get unavailableItemNote => _unavailableItemNote;
   String? get deliveryInstruction => _deliveryInstruction;
   int? get partialPayment => _partialPayment;
+  int? get guestId => _guestId;
+  int? get isBuyNow => _isBuyNow;
+  String? get guestEmail => _guestEmail;
 
   PlaceOrderBody.fromJson(Map<String, dynamic> json) {
     if (json['cart'] != null) {
       _cart = [];
       json['cart'].forEach((v) {
-        _cart!.add(Cart.fromJson(v));
+        _cart!.add(OnlineCart.fromJson(v));
       });
     }
     _couponDiscountAmount = json['coupon_discount_amount'];
@@ -172,18 +184,27 @@ class PlaceOrderBody {
     _subscriptionOrder = json['subscription_order'];
     _subscriptionType = json['subscription_type'];
     if (json['subscription_days'] != null) {
-      _subscriptionDays = <SubscriptionDays>[];
+      _subscriptionDays = [];
+        if(json['subscription_days'] is String){
+          jsonDecode(json['subscription_days']).forEach((v) {
+            _subscriptionDays!.add(SubscriptionDays.fromJson(v));
+          });
+      } else {
       json['subscription_days'].forEach((v) {
         _subscriptionDays!.add(SubscriptionDays.fromJson(v));
       });
     }
+      }
     _subscriptionQuantity = json['subscription_quantity'];
     _subscriptionStartAt = json['subscription_start_at'];
     _subscriptionEndAt = json['subscription_end_at'];
-    _cutlery = json['cutlery'];
+    _cutlery = int.parse(json['cutlery'].toString());
     _unavailableItemNote = json['unavailable_item_note'];
     _deliveryInstruction = json['delivery_instruction'];
-    _partialPayment = json['partial_payment'];
+    _partialPayment = int.parse(json['partial_payment'].toString());
+    _guestId = json['guest_id'] != null ? int.parse(json['guest_id'].toString()) : null;
+    _isBuyNow = int.parse(json['is_buy_now'].toString());
+    _guestEmail = json['contact_person_email'];
   }
 
   Map<String, dynamic> toJson() {
@@ -227,6 +248,13 @@ class PlaceOrderBody {
       data['cutlery'] = _cutlery.toString();
     }
     data['partial_payment'] = _partialPayment.toString();
+    if(_guestId != 0) {
+      data['guest_id'] = _guestId.toString();
+    }
+    data['is_buy_now'] = _isBuyNow.toString();
+    if(_guestEmail != null) {
+      data['contact_person_email'] = _guestEmail!;
+    }
     return data;
   }
 }
@@ -322,8 +350,7 @@ class OrderVariation {
 
   OrderVariation.fromJson(Map<String, dynamic> json) {
     name = json['name'];
-    values =
-    json['values'] != null ? OrderVariationValue.fromJson(json['values']) : null;
+    values = json['values'] != null ? OrderVariationValue.fromJson(json['values']) : null;
   }
 
   Map<String, dynamic> toJson() {
@@ -377,6 +404,106 @@ class SubscriptionDays {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['day'] = _day;
     data['time'] = _time;
+    return data;
+  }
+}
+
+class OnlineCart {
+  int? _cartId;
+  int? _itemId;
+  int? _itemCampaignId;
+  String? _price;
+  List<OrderVariation>? _variations;
+  int? _quantity;
+  List<int?>? _addOnIds;
+  List<AddOns>? _addOns;
+  List<int?>? _addOnQtys;
+  String? _model;
+  String? _itemType;
+
+  OnlineCart(
+      int? cartId,
+      int? itemId,
+      int? itemCampaignId,
+      String price,
+      List<OrderVariation>? variations,
+      int? quantity,
+      List<int?> addOnIds,
+      List<AddOns>? addOns,
+      List<int?> addOnQtys,
+      String model,
+      {String? itemType}
+      ) {
+    _cartId = cartId;
+    _itemId = itemId;
+    _itemCampaignId = itemCampaignId;
+    _price = price;
+    _variations = variations;
+    _quantity = quantity;
+    _addOnIds = addOnIds;
+    _addOns = addOns;
+    _addOnQtys = addOnQtys;
+    _model = model;
+    _itemType = itemType;
+  }
+
+  int? get cartId => _cartId;
+  int? get itemId => _itemId;
+  int? get itemCampaignId => _itemCampaignId;
+  String? get price => _price;
+  List<OrderVariation>? get variation => _variations;
+  int? get quantity => _quantity;
+  List<int?>? get addOnIds => _addOnIds;
+  List<AddOns>? get addOns => _addOns;
+  List<int?>? get addOnQtys => _addOnQtys;
+  String? get model => _model;
+  String? get itemType => _itemType;
+
+  OnlineCart.fromJson(Map<String, dynamic> json) {
+    _cartId = json['cart_id'];
+    _itemId = json['item_id'];
+    _itemCampaignId = json['item_campaign_id'];
+    _price = json['price'];
+    if (json['variations'] != null) {
+      _variations = [];
+      json['variations'].forEach((v) {
+        _variations!.add(OrderVariation.fromJson(v));
+      });
+    }
+    _quantity = json['quantity'];
+    _addOnIds = json['add_on_ids'].cast<int>();
+    if (json['add_ons'] != null) {
+      _addOns = [];
+      json['add_ons'].forEach((v) {
+        _addOns!.add(AddOns.fromJson(v));
+      });
+    }
+    _addOnQtys = json['add_on_qtys'].cast<int>();
+    _model = json['model'];
+    if(json['item_type'] != null && json['item_type'] != 'null') {
+      _itemType = json['item_type'];
+    }
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['item_id'] = _itemId;
+    data['cart_id'] = _cartId;
+    data['item_campaign_id'] = _itemCampaignId;
+    data['price'] = _price;
+    if(_variations != null) {
+      data['variations'] = _variations!.map((v) => v.toJson()).toList();
+    }
+    data['quantity'] = _quantity;
+    data['add_on_ids'] = _addOnIds;
+    if (_addOns != null) {
+      data['add_ons'] = _addOns!.map((v) => v.toJson()).toList();
+    }
+    data['add_on_qtys'] = _addOnQtys;
+    data['model'] = _model;
+    if(_itemType != null) {
+      data['item_type'] = _itemType;
+    }
     return data;
   }
 }

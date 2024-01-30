@@ -8,9 +8,12 @@ import 'package:efood_multivendor/helper/responsive_helper.dart';
 import 'package:efood_multivendor/helper/route_helper.dart';
 import 'package:efood_multivendor/util/dimensions.dart';
 import 'package:efood_multivendor/view/base/custom_app_bar.dart';
+import 'package:efood_multivendor/view/base/custom_dialog.dart';
 import 'package:efood_multivendor/view/base/footer_view.dart';
 import 'package:efood_multivendor/view/base/menu_drawer.dart';
+
 import 'package:efood_multivendor/view/base/web_page_title_widget.dart';
+import 'package:efood_multivendor/view/screens/checkout/widget/offline_success_dialog.dart';
 import 'package:efood_multivendor/view/screens/order/widget/bottom_view_widget.dart';
 import 'package:efood_multivendor/view/screens/order/widget/order_info_section.dart';
 import 'package:efood_multivendor/view/screens/order/widget/order_pricing_section.dart';
@@ -20,7 +23,10 @@ import 'package:get/get.dart';
 class OrderDetailsScreen extends StatefulWidget {
   final OrderModel? orderModel;
   final int? orderId;
-  const OrderDetailsScreen({Key? key, required this.orderModel, required this.orderId}) : super(key: key);
+  final bool fromOfflinePayment;
+  final String? contactNumber;
+  final bool fromGuestTrack;
+  const OrderDetailsScreen({Key? key, required this.orderModel, required this.orderId, this.contactNumber, this.fromOfflinePayment = false, this.fromGuestTrack = false}) : super(key: key);
 
   @override
   OrderDetailsScreenState createState() => OrderDetailsScreenState();
@@ -30,15 +36,19 @@ class OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBind
 
   final ScrollController scrollController = ScrollController();
 
-  void _loadData() async {
-    await Get.find<OrderController>().trackOrder(widget.orderId.toString(), widget.orderModel, false);
+  void _loadData(BuildContext context) async {
+    await Get.find<OrderController>().trackOrder(widget.orderId.toString(), widget.orderModel, false, contactNumber: widget.contactNumber).then((value) {
+      if(widget.fromOfflinePayment) {
+        Future.delayed(const Duration(seconds: 2), () => showAnimatedDialog(context, OfflineSuccessDialog(orderId: widget.orderId)));
+      }
+    });
     if(widget.orderModel == null) {
       await Get.find<SplashController>().getConfigData();
     }
     Get.find<OrderController>().getOrderCancelReasons();
     Get.find<OrderController>().getOrderDetails(widget.orderId.toString());
     if(Get.find<OrderController>().trackModel != null){
-      Get.find<OrderController>().callTrackOrderApi(orderModel: Get.find<OrderController>().trackModel!, orderId: widget.orderId.toString());
+      Get.find<OrderController>().callTrackOrderApi(orderModel: Get.find<OrderController>().trackModel!, orderId: widget.orderId.toString(), contactNumber: widget.contactNumber);
     }
   }
 
@@ -47,13 +57,13 @@ class OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBind
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    _loadData();
+    _loadData(context);
   }
 
   @override
   void didChangeAppLifecycleState(final AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      Get.find<OrderController>().callTrackOrderApi(orderModel: Get.find<OrderController>().trackModel!, orderId: widget.orderId.toString());
+      Get.find<OrderController>().callTrackOrderApi(orderModel: Get.find<OrderController>().trackModel!, orderId: widget.orderId.toString(), contactNumber: widget.contactNumber);
     }else if(state == AppLifecycleState.paused){
       Get.find<OrderController>().cancelTimer();
     }
@@ -71,10 +81,13 @@ class OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBind
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        if (widget.orderModel == null) {
+        if ((widget.orderModel == null|| widget.fromOfflinePayment) && !widget.fromGuestTrack) {
           Get.offAllNamed(RouteHelper.getInitialRoute());
           return true;
-        } else {
+        } else if(widget.fromGuestTrack){
+          Get.back();
+          return true;
+        } else{
           Get.back();
           return true;
         }
@@ -141,9 +154,11 @@ class OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBind
 
         return Scaffold(
             appBar: CustomAppBar(title: subscription ? 'subscription_details'.tr : 'order_details'.tr, onBackPressed: () {
-              if(widget.orderModel == null) {
+              if((widget.orderModel == null || widget.fromOfflinePayment) && !widget.fromGuestTrack) {
                 Get.offAllNamed(RouteHelper.getInitialRoute());
-              }else {
+              } else if(widget.fromGuestTrack){
+                Get.back();
+              } else {
                 Get.back();
               }
             }),
@@ -161,35 +176,35 @@ class OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBind
                       padding: const EdgeInsets.only(top: Dimensions.paddingSizeLarge),
                       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
-                        Expanded(flex: 6, child: OrderInfoSection(order: order, orderController: orderController, schedules: schedules, showChatPermission: showChatPermission)),
+                        Expanded(flex: 6, child: OrderInfoSection(order: order, orderController: orderController, schedules: schedules, showChatPermission: showChatPermission, contactNumber: widget.contactNumber,)),
                         const SizedBox(width: Dimensions.paddingSizeLarge),
 
                         Expanded(flex: 4,child: OrderPricingSection(
                           itemsPrice: itemsPrice, addOns: addOns, order: order, subTotal: subTotal, discount: discount,
                           couponDiscount: couponDiscount, tax: tax!, dmTips: dmTips, deliveryCharge: deliveryCharge,
-                          total: total, orderController: orderController, orderId: widget.orderId,
+                          total: total, orderController: orderController, orderId: widget.orderId, contactNumber: widget.contactNumber,
                         ))
 
                       ]),
                     ) : Column(children: [
 
-                      OrderInfoSection(order: order, orderController: orderController, schedules: schedules, showChatPermission: showChatPermission),
+                      OrderInfoSection(order: order, orderController: orderController, schedules: schedules, showChatPermission: showChatPermission, contactNumber: widget.contactNumber,),
 
                       OrderPricingSection(
                         itemsPrice: itemsPrice, addOns: addOns, order: order, subTotal: subTotal, discount: discount,
                         couponDiscount: couponDiscount, tax: tax!, dmTips: dmTips, deliveryCharge: deliveryCharge,
-                        total: total, orderController: orderController, orderId: widget.orderId,
+                        total: total, orderController: orderController, orderId: widget.orderId, contactNumber: widget.contactNumber,
                       ),
 
                     ]),
                   )),
                 ))),
 
-                !ResponsiveHelper.isDesktop(context) ? BottomViewWidget(orderController: orderController, order: order, orderId: widget.orderId, total: total) : const SizedBox(),
+                !ResponsiveHelper.isDesktop(context) ? BottomViewWidget(orderController: orderController, order: order, orderId: widget.orderId, total: total, contactNumber: widget.contactNumber) : const SizedBox(),
 
 
               ]) : const Center(child: CircularProgressIndicator()),
-            )
+            ),
 
         );
       }),

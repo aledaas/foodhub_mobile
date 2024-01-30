@@ -49,10 +49,10 @@ class CouponController extends GetxController implements GetxService {
   }
 
   Future<void> getRestaurantCouponList({required int restaurantId}) async {
+    _couponList = [];
+    _toolTipController = [];
     Response response = await couponRepo.getRestaurantCouponList(restaurantId);
     if (response.statusCode == 200) {
-      _couponList = [];
-      _toolTipController = [];
       response.body.forEach((category) {
         _couponList!.add(CouponModel.fromJson(category));
         _toolTipController!.add(JustTheController());

@@ -1,4 +1,6 @@
 import 'package:efood_multivendor/controller/cart_controller.dart';
+import 'package:efood_multivendor/controller/restaurant_controller.dart';
+import 'package:efood_multivendor/data/model/response/restaurant_model.dart';
 import 'package:efood_multivendor/helper/price_converter.dart';
 import 'package:efood_multivendor/helper/route_helper.dart';
 import 'package:efood_multivendor/util/dimensions.dart';
@@ -8,7 +10,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class BottomCartWidget extends StatelessWidget {
-  const BottomCartWidget({Key? key}) : super(key: key);
+  final int? restaurantId;
+  const BottomCartWidget({Key? key, this.restaurantId}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +35,13 @@ class BottomCartWidget extends StatelessWidget {
                 ),
               ]),
 
-              CustomButton(buttonText: 'view_cart'.tr, width: 130, height: 45, onPressed: () => Get.toNamed(RouteHelper.getCartRoute()))
+              CustomButton(buttonText: 'view_cart'.tr, width: 130, height: 45, onPressed: () async {
+                await Get.toNamed(RouteHelper.getCartRoute());
+                Get.find<RestaurantController>().makeEmptyRestaurant();
+                if(restaurantId != null) {
+                  Get.find<RestaurantController>().getRestaurantDetails(Restaurant(id: restaurantId));
+                }
+              })
             ]),
           ),
         );

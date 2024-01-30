@@ -8,6 +8,7 @@ import 'package:efood_multivendor/controller/order_controller.dart';
 import 'package:efood_multivendor/data/model/body/notification_body.dart';
 import 'package:efood_multivendor/helper/route_helper.dart';
 import 'package:efood_multivendor/helper/user_type.dart';
+import 'package:efood_multivendor/view/screens/dashboard/dashboard_screen.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -29,7 +30,11 @@ class NotificationHelper {
         if(response.payload!.isNotEmpty) {
           payload = NotificationBody.fromJson(jsonDecode(response.payload!));
           if(payload.notificationType == NotificationType.order) {
-            Get.toNamed(RouteHelper.getOrderDetailsRoute(int.parse(payload.orderId.toString())));
+            if(Get.find<AuthController>().isGuestLoggedIn()){
+              Get.to(()=> const DashboardScreen(pageIndex: 3, fromSplash: false));
+            } else {
+              Get.toNamed(RouteHelper.getOrderDetailsRoute(int.parse(payload.orderId.toString())));
+            }
           } else if(payload.notificationType == NotificationType.general) {
             Get.toNamed(RouteHelper.getNotificationRoute(fromNotification: true));
           } else{

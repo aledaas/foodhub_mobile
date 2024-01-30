@@ -15,6 +15,7 @@ class WebLanguageWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
+      hoverColor: Colors.transparent,
       onTap: () {
         localizationController.setLanguage(Locale(
           AppConstants.languages[index].languageCode!,

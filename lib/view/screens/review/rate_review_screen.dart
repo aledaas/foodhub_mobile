@@ -5,6 +5,7 @@ import 'package:efood_multivendor/util/dimensions.dart';
 import 'package:efood_multivendor/util/styles.dart';
 import 'package:efood_multivendor/view/base/custom_app_bar.dart';
 import 'package:efood_multivendor/view/base/menu_drawer.dart';
+
 import 'package:efood_multivendor/view/screens/review/widget/deliver_man_review_widget.dart';
 import 'package:efood_multivendor/view/screens/review/widget/product_review_widget.dart';
 import 'package:flutter/material.dart';
@@ -21,6 +22,7 @@ class RateReviewScreen extends StatefulWidget {
 
 class RateReviewScreenState extends State<RateReviewScreen> with TickerProviderStateMixin {
   TabController? _tabController;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {

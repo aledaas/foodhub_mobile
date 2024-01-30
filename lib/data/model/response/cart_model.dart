@@ -1,6 +1,7 @@
 import 'package:efood_multivendor/data/model/response/product_model.dart';
 
 class CartModel {
+  int? _id;
   double? _price;
   double? _discountedPrice;
   List<List<bool?>>? _variations;
@@ -10,17 +11,21 @@ class CartModel {
   List<AddOns>? _addOns;
   bool? _isCampaign;
   Product? _product;
+  int? _quantityLimit;
 
   CartModel(
-        double price,
-        double? discountedPrice,
-        double discountAmount,
-        int? quantity,
-        List<AddOn> addOnIds,
-        List<AddOns> addOns,
-        bool isCampaign,
-        Product? product,
-      List<List<bool?>> variations) {
+      int? id,
+      double price,
+      double? discountedPrice,
+      double discountAmount,
+      int? quantity,
+      List<AddOn> addOnIds,
+      List<AddOns> addOns,
+      bool isCampaign,
+      Product? product,
+      List<List<bool?>> variations,
+      int? quantityLimit) {
+    _id = id;
     _price = price;
     _discountedPrice = discountedPrice;
     _discountAmount = discountAmount;
@@ -30,8 +35,10 @@ class CartModel {
     _isCampaign = isCampaign;
     _product = product;
     _variations = variations;
+    _quantityLimit = quantityLimit;
   }
 
+  int? get id => _id;
   double? get price => _price;
   double? get discountedPrice => _discountedPrice;
   double? get discountAmount => _discountAmount;
@@ -44,11 +51,13 @@ class CartModel {
   bool? get isCampaign => _isCampaign;
   Product? get product => _product;
   List<List<bool?>>? get variations => _variations;
+  int? get quantityLimit => _quantityLimit;
 
   CartModel.fromJson(Map<String, dynamic> json) {
+    _id = json['cart_id'];
     _price = json['price'].toDouble();
-    _discountedPrice = json['discounted_price'].toDouble();
-    _discountAmount = json['discount_amount'].toDouble();
+    _discountedPrice = json['discounted_price']?.toDouble();
+    _discountAmount = json['discount_amount']?.toDouble();
     _quantity = json['quantity'];
     if (json['add_on_ids'] != null) {
       _addOnIds = [];
@@ -75,6 +84,9 @@ class CartModel {
         }
       }
     }
+    if(json['quantity_limit'] != null) {
+      _quantityLimit = int.parse(json['quantity_limit']);
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -92,6 +104,7 @@ class CartModel {
     data['is_campaign'] = _isCampaign;
     data['product'] = _product!.toJson();
     data['variations'] = _variations;
+    data['quantity_limit'] = _quantityLimit?.toString();
     return data;
   }
 }

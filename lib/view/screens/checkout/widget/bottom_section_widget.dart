@@ -1,3 +1,4 @@
+import 'package:efood_multivendor/controller/auth_controller.dart';
 import 'package:efood_multivendor/controller/coupon_controller.dart';
 import 'package:efood_multivendor/controller/location_controller.dart';
 import 'package:efood_multivendor/controller/order_controller.dart';
@@ -20,6 +21,7 @@ import 'package:get/get.dart';
 class BottomSectionWidget extends StatelessWidget {
   final bool isCashOnDeliveryActive;
   final bool isDigitalPaymentActive;
+  final bool isOfflinePaymentActive;
   final bool isWalletActive;
   final OrderController orderController;
   final double total;
@@ -42,6 +44,11 @@ class BottomSectionWidget extends StatelessWidget {
   final List<CartModel> cartList;
   final double price;
   final double addOns;
+  final TextEditingController guestNameTextEditingController;
+  final TextEditingController guestNumberTextEditingController;
+  final TextEditingController guestEmailController;
+  final FocusNode guestNumberNode;
+  final FocusNode guestEmailNode;
   const BottomSectionWidget({
     Key? key, required this.isCashOnDeliveryActive, required this.isDigitalPaymentActive,
     required this.isWalletActive, required this.orderController, required this.total,
@@ -49,11 +56,14 @@ class BottomSectionWidget extends StatelessWidget {
     required this.taxIncluded, required this.tax, required this.deliveryCharge, required this.restaurantController,
     required this.locationController, required this.todayClosed, required this.tomorrowClosed,
     required this.orderAmount, this.maxCodOrderAmount, required this.subscriptionQty, required this.taxPercent,
-    required this.fromCart, required this.cartList, required this.price, required this.addOns, required this.charge,
+    required this.fromCart, required this.cartList, required this.price, required this.addOns, required this.charge, required this.guestNameTextEditingController,
+    required this.guestNumberTextEditingController, required this.guestNumberNode, required this.isOfflinePaymentActive, required this.guestEmailController, required this.guestEmailNode,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    bool isDesktop = ResponsiveHelper.isDesktop(context);
+    bool isGuestLoggedIn = Get.find<AuthController>().isGuestLoggedIn();
     return Container(
       decoration: ResponsiveHelper.isDesktop(context) ? BoxDecoration(
         color: Theme.of(context).cardColor,
@@ -66,7 +76,7 @@ class BottomSectionWidget extends StatelessWidget {
 
         !ResponsiveHelper.isDesktop(context) ? PaymentSection(
           isCashOnDeliveryActive: isCashOnDeliveryActive, isDigitalPaymentActive: isDigitalPaymentActive,
-          isWalletActive: isWalletActive, total: total, orderController: orderController,
+          isWalletActive: isWalletActive, total: total, orderController: orderController, isOfflinePaymentActive: isOfflinePaymentActive,
         ) : const SizedBox(),
         const SizedBox(height: Dimensions.paddingSizeSmall),
 
@@ -77,13 +87,13 @@ class BottomSectionWidget extends StatelessWidget {
         ) : const SizedBox(),
 
         /// Coupon
-        ResponsiveHelper.isDesktop(context) ? CouponSection(
+        ResponsiveHelper.isDesktop(context) && !isGuestLoggedIn ? CouponSection(
           orderController: orderController, price: price, charge: charge,
           discount: discount, addOns: addOns, deliveryCharge: deliveryCharge, total: total,
         ) : const SizedBox(),
         SizedBox(height: !ResponsiveHelper.isDesktop(context) ? Dimensions.paddingSizeExtraSmall : 0),
 
-        PartialPayView(totalPrice: total),
+        isDesktop && !isGuestLoggedIn ? PartialPayView(totalPrice: total) : const SizedBox(),
 
         ResponsiveHelper.isDesktop(context) ? Padding(
           padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge, vertical: Dimensions.paddingSizeSmall),
@@ -144,7 +154,10 @@ class BottomSectionWidget extends StatelessWidget {
                 todayClosed: todayClosed, tomorrowClosed: tomorrowClosed, orderAmount: orderAmount, deliveryCharge: deliveryCharge,
                 tax: tax, discount: discount, total: total, maxCodOrderAmount: maxCodOrderAmount, subscriptionQty: subscriptionQty,
                 cartList: cartList, isCashOnDeliveryActive: isCashOnDeliveryActive, isDigitalPaymentActive: isDigitalPaymentActive,
-                isWalletActive: isWalletActive, fromCart: fromCart,
+                isWalletActive: isWalletActive, fromCart: fromCart, guestNumberTextEditingController: guestNumberTextEditingController,
+                guestNameTextEditingController: guestNameTextEditingController, guestNumberNode: guestNumberNode, isOfflinePaymentActive: isOfflinePaymentActive,
+                guestEmailController: guestEmailController, guestEmailNode: guestEmailNode,
+                couponController: couponController, subTotal: subTotal, taxIncluded: taxIncluded, taxPercent: taxPercent,
               ),
             ],
           ),
@@ -170,7 +183,7 @@ class BottomSectionWidget extends StatelessWidget {
         !ResponsiveHelper.isDesktop(context) ? Column(children: [
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Text('order_summary'.tr, style: robotoMedium),
-            const Icon(Icons.arrow_drop_down_outlined, size: 28)
+            const SizedBox(height: 24),
           ]),
 
           Divider(thickness: 1, color: Theme.of(context).hintColor.withOpacity(0.5)),
@@ -277,23 +290,12 @@ class BottomSectionWidget extends StatelessWidget {
           const SizedBox(height: Dimensions.paddingSizeSmall),
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Text('subscription_order_count'.tr, style: robotoMedium),
-            Text(/*subscriptionQty > 0 ? */subscriptionQty.toString()/* : 'calculating'.tr*/, style: robotoMedium),
+            Text(subscriptionQty.toString(), style: robotoMedium),
           ]),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall),
             child: Divider(thickness: 1, color: Theme.of(context).hintColor.withOpacity(0.5)),
           ),
-          // Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          //   Text(
-          //     'total_amount'.tr,
-          //     style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, color: Theme.of(context).primaryColor),
-          //   ),
-          //   Text(
-          //     /*subscriptionQty > 0 ?*/ PriceConverter.convertPrice(total * (subscriptionQty == 0 ? 1 : subscriptionQty))/* : 'calculating'.tr*/,
-          //     style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, color: Theme.of(context).primaryColor),
-          //   ),
-          // ]),
-
 
         ]) : const SizedBox(),
         SizedBox(height: orderController.isPartialPay ? Dimensions.paddingSizeSmall : 0),
@@ -324,3 +326,4 @@ class BottomSectionWidget extends StatelessWidget {
     );
   }
 }
+

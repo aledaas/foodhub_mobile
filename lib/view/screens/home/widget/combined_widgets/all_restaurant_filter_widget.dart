@@ -47,9 +47,12 @@ class AllRestaurantFilterWidget extends StatelessWidget {
 
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                 Text('all_restaurants'.tr, style: robotoBold.copyWith(fontSize: Dimensions.fontSizeLarge)),
-                Text(
-                  '${restaurantController.restaurantModel != null ? restaurantController.restaurantModel!.totalSize : 0} ${'restaurants_near_you'.tr}',
-                  style: robotoRegular.copyWith(color: Theme.of(context).disabledColor, fontSize: Dimensions.fontSizeSmall),
+                Flexible(
+                  child: Text(
+                    '${restaurantController.restaurantModel != null ? restaurantController.restaurantModel!.totalSize : 0} ${'restaurants_near_you'.tr}',
+                    maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: robotoRegular.copyWith(color: Theme.of(context).disabledColor, fontSize: Dimensions.fontSizeSmall),
+                  ),
                 ),
               ]),
               const SizedBox(height: Dimensions.paddingSizeSmall),

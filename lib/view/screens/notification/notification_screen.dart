@@ -12,6 +12,7 @@ import 'package:efood_multivendor/view/base/footer_view.dart';
 import 'package:efood_multivendor/view/base/menu_drawer.dart';
 import 'package:efood_multivendor/view/base/no_data_screen.dart';
 import 'package:efood_multivendor/view/base/not_logged_in_screen.dart';
+
 import 'package:efood_multivendor/view/base/web_page_title_widget.dart';
 import 'package:efood_multivendor/view/screens/notification/widget/notification_dialog.dart';
 import 'package:flutter/material.dart';
@@ -26,6 +27,8 @@ class NotificationScreen extends StatefulWidget {
 }
 
 class _NotificationScreenState extends State<NotificationScreen> {
+  final ScrollController scrollController = ScrollController();
+
   void _loadData() async {
     Get.find<NotificationController>().clearNotification();
     if(Get.find<SplashController>().configModel == null) {
@@ -73,94 +76,99 @@ class _NotificationScreenState extends State<NotificationScreen> {
             onRefresh: () async {
               await notificationController.getNotificationList(true);
             },
-            child: Scrollbar(child: SingleChildScrollView(
+            child: Scrollbar(controller: scrollController, child: SingleChildScrollView(
+              controller: scrollController,
               physics: const AlwaysScrollableScrollPhysics(),
               child: FooterView(
                 child: Column(children: [
-                    WebScreenTitleWidget(title: 'notification'.tr),
+                  WebScreenTitleWidget(title: 'notification'.tr),
 
-                    Center(child: SizedBox(width: Dimensions.webMaxWidth, child: ListView.builder(
-                      itemCount: notificationController.notificationList!.length,
-                      physics: const NeverScrollableScrollPhysics(),
-                      shrinkWrap: true,
-                      itemBuilder: (context, index) {
-                        DateTime originalDateTime = DateConverter.dateTimeStringToDate(notificationController.notificationList![index].createdAt!);
-                        DateTime convertedDate = DateTime(originalDateTime.year, originalDateTime.month, originalDateTime.day);
-                        bool addTitle = false;
-                        if(!dateTimeList.contains(convertedDate)) {
-                          addTitle = true;
-                          dateTimeList.add(convertedDate);
-                        }
-                        bool isSeen = notificationController.getSeenNotificationIdList()!.contains(notificationController.notificationList![index].id);
+                  Center(child: SizedBox(width: Dimensions.webMaxWidth, child: ListView.builder(
+                    itemCount: notificationController.notificationList!.length,
+                    physics: const NeverScrollableScrollPhysics(),
+                    shrinkWrap: true,
+                    itemBuilder: (context, index) {
+                      DateTime originalDateTime = DateConverter.dateTimeStringToDate(notificationController.notificationList![index].createdAt!);
+                      DateTime convertedDate = DateTime(originalDateTime.year, originalDateTime.month, originalDateTime.day);
+                      bool addTitle = false;
+                      if(!dateTimeList.contains(convertedDate)) {
+                        addTitle = true;
+                        dateTimeList.add(convertedDate);
+                      }
+                      bool isSeen = notificationController.getSeenNotificationIdList()!.contains(notificationController.notificationList![index].id);
 
-                        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      return Builder(
+                          builder: (context) {
+                            return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
-                          addTitle ? Padding(
-                            padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeExtraSmall, horizontal: Dimensions.paddingSizeSmall),
-                            child: Text(
-                              DateConverter.dateTimeStringToDateOnly(notificationController.notificationList![index].createdAt!),
-                              style: robotoMedium,
-                            ),
-                          ) : const SizedBox(),
+                              addTitle ? Padding(
+                                padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeExtraSmall, horizontal: Dimensions.paddingSizeSmall),
+                                child: Text(
+                                  DateConverter.dateTimeStringToDateOnly(notificationController.notificationList![index].createdAt!),
+                                  style: robotoMedium,
+                                ),
+                              ) : const SizedBox(),
 
-                          InkWell(
-                            onTap: () {
-                              notificationController.addSeenNotificationId(notificationController.notificationList![index].id!);
+                              InkWell(
+                                onTap: () {
+                                  notificationController.addSeenNotificationId(notificationController.notificationList![index].id!);
 
-                              showDialog(context: context, builder: (BuildContext context) {
-                                return NotificationDialog(notificationModel: notificationController.notificationList![index]);
-                              });
-                            },
-                            child: Container(
-                              color: isSeen ? Colors.transparent : Theme.of(context).cardColor,
-                              padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeLarge, horizontal: Dimensions.paddingSizeLarge),
-                              child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                  showDialog(context: context, builder: (BuildContext context) {
+                                    return NotificationDialog(notificationModel: notificationController.notificationList![index]);
+                                  });
+                                },
+                                child: Container(
+                                  color: isSeen ? Colors.transparent : Theme.of(context).cardColor,
+                                  padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeLarge, horizontal: Dimensions.paddingSizeLarge),
+                                  child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
-                                ClipOval(child: CustomImage(
-                                  height: 34, width: 34, fit: BoxFit.cover, placeholder: Images.notificationPlaceholder,
-                                  image: '${Get.find<SplashController>().configModel!.baseUrls!.notificationImageUrl}'
-                                      '/${notificationController.notificationList![index].data!.image}',
-                                )),
-                                const SizedBox(width: Dimensions.paddingSizeSmall),
+                                    ClipOval(child: CustomImage(
+                                      height: 34, width: 34, fit: BoxFit.cover, placeholder: Images.notificationPlaceholder,
+                                      image: '${Get.find<SplashController>().configModel!.baseUrls!.notificationImageUrl}'
+                                          '/${notificationController.notificationList![index].data!.image}',
+                                    )),
+                                    const SizedBox(width: Dimensions.paddingSizeSmall),
 
-                                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                  Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                    Expanded(
-                                      child: Text(
-                                        notificationController.notificationList![index].data!.title ?? '', maxLines: 2, overflow: TextOverflow.ellipsis,
-                                        style: isSeen ? robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall) : robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall),
+                                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                      Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                        Expanded(
+                                          child: Text(
+                                            notificationController.notificationList![index].data!.title ?? '', maxLines: 2, overflow: TextOverflow.ellipsis,
+                                            style: isSeen ? robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall) : robotoBold.copyWith(fontSize: Dimensions.fontSizeSmall),
+                                          ),
+                                        ),
+
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall),
+                                          child: Text(
+                                            DateConverter.dateTimeStringToTime(notificationController.notificationList![index].createdAt!),
+                                            style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor),
+                                          ),
+                                        ),
+                                      ]),
+                                      const SizedBox(height: Dimensions.paddingSizeExtraSmall),
+
+                                      Text(
+                                        notificationController.notificationList![index].data!.description ?? '', maxLines: 2, overflow: TextOverflow.ellipsis,
+                                        style: isSeen ? robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall) : robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall),
                                       ),
-                                    ),
+                                    ])),
 
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall),
-                                      child: Text(
-                                        DateConverter.dateTimeStringToTime(notificationController.notificationList![index].createdAt!),
-                                        style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor),
-                                      ),
-                                    ),
                                   ]),
-                                  const SizedBox(height: Dimensions.paddingSizeExtraSmall),
+                                ),
+                              ),
 
-                                  Text(
-                                    notificationController.notificationList![index].data!.description ?? '', maxLines: 2, overflow: TextOverflow.ellipsis,
-                                    style: isSeen ? robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall) : robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall),
-                                  ),
-                                ])),
+                              // Padding(
+                              //   padding: const EdgeInsets.only(left: 50),
+                              //   child: Divider(color: Theme.of(context).disabledColor, thickness: 1),
+                              // ),
 
-                              ]),
-                            ),
-                          ),
-
-                          // Padding(
-                          //   padding: const EdgeInsets.only(left: 50),
-                          //   child: Divider(color: Theme.of(context).disabledColor, thickness: 1),
-                          // ),
-
-                        ]);
-                      },
-                    ))),
-                  ],
+                            ]);
+                          }
+                      );
+                    },
+                  ))),
+                ],
                 ),
               ),
             )),

@@ -79,6 +79,13 @@ class Restaurant {
   String? slug;
   int? foodsCount;
   List<Foods>? foods;
+  bool? announcementActive;
+  String? announcementMessage;
+  bool? instantOrder;
+  bool? customerDateOrderStatus;
+  int? customerOrderDate;
+  bool? freeDeliveryDistanceStatus;
+  double? freeDeliveryDistanceValue;
 
 
   Restaurant(
@@ -125,6 +132,13 @@ class Restaurant {
         this.slug,
         this.foodsCount,
         this.foods,
+        this.announcementActive,
+        this.announcementMessage,
+        this.instantOrder,
+        this.customerDateOrderStatus,
+        this.customerOrderDate,
+        this.freeDeliveryDistanceStatus,
+        this.freeDeliveryDistanceValue,
       });
 
   Restaurant.fromJson(Map<String, dynamic> json) {
@@ -146,7 +160,7 @@ class Restaurant {
     scheduleOrder = json['schedule_order'];
     avgRating = json['avg_rating']?.toDouble();
     tax = json['tax']?.toDouble();
-    ratingCount = json['rating_count '];
+    ratingCount = json['rating_count'];
     selfDeliverySystem = json['self_delivery_system'];
     posSystem = json['pos_system'];
     open = json['open'];
@@ -191,6 +205,13 @@ class Restaurant {
         foods!.add(Foods.fromJson(v));
       });
     }
+    announcementActive = json['announcement'] == 1;
+    announcementMessage = json['announcement_message'];
+    instantOrder = json['instant_order'];
+    customerDateOrderStatus = json['customer_date_order_sratus'];
+    customerOrderDate = json['customer_order_date'];
+    freeDeliveryDistanceStatus = json['free_delivery_distance_status'];
+    freeDeliveryDistanceValue = (json['free_delivery_distance_value'] != null && json['free_delivery_distance_value'] != '') ? double.parse(json['free_delivery_distance_value'].toString()) : null;
   }
 
   Map<String, dynamic> toJson() {
@@ -213,7 +234,7 @@ class Restaurant {
     data['schedule_order'] = scheduleOrder;
     data['avg_rating'] = avgRating;
     data['tax'] = tax;
-    data['rating_count '] = ratingCount;
+    data['rating_count'] = ratingCount;
     data['self_delivery_system'] = selfDeliverySystem;
     data['pos_system'] = posSystem;
     data['open'] = open;
@@ -239,6 +260,13 @@ class Restaurant {
     if (foods != null) {
       data['foods'] = foods!.map((v) => v.toJson()).toList();
     }
+    data['announcement'] = announcementActive;
+    data['announcement_message'] = announcementMessage;
+    data['instant_order'] = instantOrder;
+    data['customer_date_order_sratus'] = customerDateOrderStatus;
+    data['customer_order_date'] = customerOrderDate;
+    data['free_delivery_distance_status'] = freeDeliveryDistanceStatus;
+    data['free_delivery_distance_value'] = freeDeliveryDistanceValue;
     return data;
   }
 }

@@ -32,6 +32,7 @@ class VerificationScreenState extends State<VerificationScreen> {
   String? _number;
   Timer? _timer;
   int _seconds = 0;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -65,7 +66,8 @@ class VerificationScreenState extends State<VerificationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(title: 'phone_verification'.tr),
-      body: SafeArea(child: Center(child: Scrollbar(child: SingleChildScrollView(
+      body: SafeArea(child: Center(child: Scrollbar(controller: _scrollController, child: SingleChildScrollView(
+        controller: _scrollController,
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
         child: Center(child: Container(
@@ -83,11 +85,11 @@ class VerificationScreenState extends State<VerificationScreen> {
               ) : SizedBox(
                 width: 210,
                 child: Wrap(crossAxisAlignment: WrapCrossAlignment.center, children: [
-                    RichText(text: TextSpan(children: [
-                      TextSpan(text: 'enter_the_verification_sent_to'.tr, style: robotoRegular.copyWith(color: Theme.of(context).disabledColor)),
-                      TextSpan(text: ' $_number', style: robotoMedium.copyWith(color: Theme.of(context).textTheme.bodyLarge!.color)),
-                    ])),
-                  ],
+                  RichText(text: TextSpan(children: [
+                    TextSpan(text: 'enter_the_verification_sent_to'.tr, style: robotoRegular.copyWith(color: Theme.of(context).disabledColor)),
+                    TextSpan(text: ' $_number', style: robotoMedium.copyWith(color: Theme.of(context).textTheme.bodyLarge!.color)),
+                  ])),
+                ],
                 ),
               ),
 
@@ -157,7 +159,7 @@ class VerificationScreenState extends State<VerificationScreen> {
                       authController.verifyToken(_number).then((value) {
                         if(value.isSuccess) {
                           if(ResponsiveHelper.isDesktop(context)){
-                            Get.dialog(Center(child: NewPassScreen(resetToken:  authController.verificationCode, number : _number, fromPasswordChange: true, fromDialog: true )));
+                            Get.dialog(Center(child: NewPassScreen(resetToken:  authController.verificationCode, number : _number, fromPasswordChange: false, fromDialog: true )));
                           }else{
                             Get.toNamed(RouteHelper.getResetPasswordRoute(_number, authController.verificationCode, 'reset-password'));
                           }
@@ -171,7 +173,7 @@ class VerificationScreenState extends State<VerificationScreen> {
               ) : const SizedBox.shrink(),
               const SizedBox(height: Dimensions.paddingSizeDefault),
 
-              /*(widget.password.isNotEmpty) ?*/ Padding(
+              Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 29),
                 child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                   Text(
@@ -200,10 +202,10 @@ class VerificationScreenState extends State<VerificationScreen> {
                         });
                       }
                     } : null,
-                    child: Text('${'resend_it'.tr}${_seconds > 0 ? ' (${_seconds}s)' : ''}', style: TextStyle(color: Theme.of(context).primaryColor),),
+                    child: Text('${'resent_it'.tr}${_seconds > 0 ? ' (${_seconds}s)' : ''}', style: TextStyle(color: Theme.of(context).primaryColor),),
                   ),
                 ]),
-              )/* : const SizedBox()*/,
+              ),
 
             ]);
           }),

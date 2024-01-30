@@ -20,6 +20,7 @@ import 'package:efood_multivendor/view/base/menu_drawer.dart';
 import 'package:efood_multivendor/view/base/no_data_screen.dart';
 import 'package:efood_multivendor/view/base/product_widget.dart';
 import 'package:efood_multivendor/view/base/web_constrained_box.dart';
+
 import 'package:efood_multivendor/view/base/web_page_title_widget.dart';
 import 'package:efood_multivendor/view/screens/cart/widget/cart_product_widget.dart';
 import 'package:efood_multivendor/view/screens/cart/widget/not_available_bottom_sheet.dart';
@@ -31,7 +32,8 @@ import 'package:get/get.dart';
 
 class CartScreen extends StatefulWidget {
   final bool fromNav;
-  const CartScreen({Key? key, required this.fromNav}) : super(key: key);
+  final bool fromReorder;
+  const CartScreen({Key? key, required this.fromNav, this.fromReorder = false}) : super(key: key);
 
   @override
   State<CartScreen> createState() => _CartScreenState();
@@ -48,9 +50,12 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Future<void> initCall() async {
-    await Get.find<RestaurantController>().getRestaurantDetails(Restaurant(id: Get.find<CartController>().cartList[0].product!.restaurantId, name: null), fromCart: true);
-    Get.find<CartController>().calculationCart();
+    if(Get.find<CartController>().cartList.isEmpty) {
+      await Get.find<CartController>().getCartDataOnline();
+    }
     if(Get.find<CartController>().cartList.isNotEmpty){
+      await Get.find<RestaurantController>().getRestaurantDetails(Restaurant(id: Get.find<CartController>().cartList[0].product!.restaurantId, name: null), fromCart: true);
+      Get.find<CartController>().calculationCart();
       if(Get.find<CartController>().addCutlery){
         Get.find<CartController>().updateCutlery(isUpdate: false);
       }
@@ -69,36 +74,37 @@ class _CartScreenState extends State<CartScreen> {
         return GetBuilder<CartController>(builder: (cartController) {
 
           bool suggestionEmpty = (restaurantController.suggestedItems != null && restaurantController.suggestedItems!.isEmpty);
-          return cartController.cartList.isNotEmpty ? Column(
-              children: [
-                WebScreenTitleWidget(title: 'my_cart'.tr),
+          return (cartController.isLoading && widget.fromReorder) ? const Center(child: SizedBox(height: 30, width: 30, child: CircularProgressIndicator()))
+              : cartController.cartList.isNotEmpty ? Column(
+            children: [
+              WebScreenTitleWidget(title: 'my_cart'.tr),
 
-                Expanded(
-                  child: Scrollbar(
+              Expanded(
+                child: Scrollbar(
+                  controller: scrollController,
+                  child: SingleChildScrollView(
                     controller: scrollController,
-                    child: SingleChildScrollView(
-                      controller: scrollController,
-                      padding: isDesktop ? const EdgeInsets.only(top: Dimensions.paddingSizeSmall) : EdgeInsets.zero,
-                      child: FooterView(
-                        child: Center(
-                          child: SizedBox(
-                            width: Dimensions.webMaxWidth,
-                            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    padding: isDesktop ? const EdgeInsets.only(top: Dimensions.paddingSizeSmall) : EdgeInsets.zero,
+                    child: FooterView(
+                      child: Center(
+                        child: SizedBox(
+                          width: Dimensions.webMaxWidth,
+                          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
-                              Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                Expanded(
-                                  flex: 6,
-                                  child: Column(children: [
-                                    Container(
-                                      decoration: isDesktop ? BoxDecoration(
-                                        borderRadius: const  BorderRadius.all(Radius.circular(Dimensions.radiusDefault)),
-                                        color: Theme.of(context).cardColor,
-                                        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
-                                      ) : const BoxDecoration(),
-                                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                        WebConstrainedBox(
-                                          dataLength: cartController.cartList.length, minLength: 5, minHeight: suggestionEmpty ? 0.6 : 0.4,
-                                          child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+                            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                              Expanded(
+                                flex: 6,
+                                child: Column(children: [
+                                  Container(
+                                    decoration: isDesktop ? BoxDecoration(
+                                      borderRadius: const  BorderRadius.all(Radius.circular(Dimensions.radiusDefault)),
+                                      color: Theme.of(context).cardColor,
+                                      boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
+                                    ) : const BoxDecoration(),
+                                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                      WebConstrainedBox(
+                                        dataLength: cartController.cartList.length, minLength: 5, minHeight: suggestionEmpty ? 0.6 : 0.4,
+                                        child: Column(crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
                                               ConstrainedBox(
                                                 constraints: BoxConstraints(maxHeight: isDesktop ? MediaQuery.of(context).size.height * 0.4 : double.infinity),
@@ -132,37 +138,37 @@ class _CartScreenState extends State<CartScreen> {
                                               ),
 
                                               !isDesktop ? suggestedItemView(cartController.cartList) : const SizedBox(),
-                                          ]),
-                                        ),
-                                        const SizedBox(height: Dimensions.paddingSizeSmall),
+                                            ]),
+                                      ),
+                                      const SizedBox(height: Dimensions.paddingSizeSmall),
 
-                                        !isDesktop ? pricingView(cartController, cartController.cartList[0].product!) : const SizedBox(),
-                                      ]),
-                                    ),
-                                    const SizedBox(height: Dimensions.paddingSizeSmall),
+                                      !isDesktop ? pricingView(cartController, cartController.cartList[0].product!) : const SizedBox(),
+                                    ]),
+                                  ),
+                                  const SizedBox(height: Dimensions.paddingSizeSmall),
 
-                                    isDesktop ? suggestedItemView(cartController.cartList) : const SizedBox(),
-                                  ]),
-                                ),
-                                SizedBox(width: isDesktop ? Dimensions.paddingSizeLarge : 0),
+                                  isDesktop ? suggestedItemView(cartController.cartList) : const SizedBox(),
+                                ]),
+                              ),
+                              SizedBox(width: isDesktop ? Dimensions.paddingSizeLarge : 0),
 
-                                isDesktop ? Expanded(flex: 4, child: pricingView(cartController, cartController.cartList[0].product!)) : const SizedBox(),
-
-                              ]),
+                              isDesktop ? Expanded(flex: 4, child: pricingView(cartController, cartController.cartList[0].product!)) : const SizedBox(),
 
                             ]),
-                          ),
+
+                          ]),
                         ),
                       ),
                     ),
                   ),
                 ),
+              ),
 
-                isDesktop ? const SizedBox.shrink() : CheckoutButton(cartController: cartController, availableList: cartController.availableList),
+              isDesktop ? const SizedBox.shrink() : CheckoutButton(cartController: cartController, availableList: cartController.availableList),
 
-              ],
-            ) : const SingleChildScrollView(child: FooterView(child: NoDataScreen(isCart: true, title: '')));
-          },
+            ],
+          ) : const SingleChildScrollView(child: FooterView(child: NoDataScreen(isCart: true, title: '')));
+        },
         );
       }),
     );
@@ -286,6 +292,15 @@ class _CartScreenState extends State<CartScreen> {
                   ]) : Text('calculating'.tr, style: robotoRegular),
                   // Text('(-) ${PriceConverter.convertPrice(cartController.itemDiscountPrice)}', style: robotoRegular, textDirection: TextDirection.ltr),
                 ]),
+                SizedBox(height: cartController.variationPrice > 0 ? Dimensions.paddingSizeSmall : 0),
+
+                cartController.variationPrice > 0 ? Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('variations'.tr, style: robotoRegular),
+                    Text('(+) ${PriceConverter.convertPrice(cartController.variationPrice)}', style: robotoRegular, textDirection: TextDirection.ltr),
+                  ],
+                ) : const SizedBox(),
                 const SizedBox(height: 10),
 
                 Row(
@@ -333,7 +348,7 @@ class _CartScreenState extends State<CartScreen> {
 
   Widget cutleryView(RestaurantController restaurantController, CartController cartController) {
     bool isDesktop = ResponsiveHelper.isDesktop(context);
-    return (restaurantController.restaurant != null && restaurantController.restaurant!.cutlery!) ? Container(
+    return (restaurantController.restaurant != null && restaurantController.restaurant!.cutlery != null && restaurantController.restaurant!.cutlery!) ? Container(
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
@@ -363,7 +378,7 @@ class _CartScreenState extends State<CartScreen> {
             onChanged: (bool? value) {
               cartController.updateCutlery();
             },
-            trackColor: Theme.of(context).primaryColor.withOpacity(0.5),
+            trackColor: Theme.of(context).primaryColor.withOpacity(0.2),
           ),
         )
 
@@ -439,13 +454,13 @@ class CheckoutButton extends StatelessWidget {
       child: SafeArea(
         child: GetBuilder<RestaurantController>(
             builder: (storeController) {
-              if(Get.find<RestaurantController>().restaurant != null && !Get.find<RestaurantController>().restaurant!.freeDelivery! &&  Get.find<SplashController>().configModel!.freeDeliveryOver != null){
+              if(Get.find<RestaurantController>().restaurant != null && Get.find<RestaurantController>().restaurant!.freeDelivery != null && !Get.find<RestaurantController>().restaurant!.freeDelivery! &&  Get.find<SplashController>().configModel!.freeDeliveryOver != null){
                 percentage = cartController.subTotal/Get.find<SplashController>().configModel!.freeDeliveryOver!;
               }
               return Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  (storeController.restaurant != null && !storeController.restaurant!.freeDelivery!
+                  (storeController.restaurant != null && storeController.restaurant!.freeDelivery != null && !storeController.restaurant!.freeDelivery!
                   && Get.find<SplashController>().configModel!.freeDeliveryOver != null && percentage < 1)
                   ? Padding(
                     padding: EdgeInsets.only(bottom: isDesktop ? Dimensions.paddingSizeLarge : 0),
@@ -481,11 +496,6 @@ class CheckoutButton extends StatelessWidget {
                       children: [
                         Text('subtotal'.tr, style: robotoMedium.copyWith(color: Theme.of(context).primaryColor)),
                         PriceConverter.convertAnimationPrice(cartController.subTotal, textStyle: robotoRegular.copyWith(color: Theme.of(context).primaryColor)),
-
-                        // Text(
-                        //   PriceConverter.convertPrice(cartController.subTotal),
-                        //   style: robotoMedium.copyWith(color: Theme.of(context).primaryColor), textDirection: TextDirection.ltr,
-                        // ),
                       ],
                     ),
                   ) : const SizedBox(),
@@ -495,7 +505,10 @@ class CheckoutButton extends StatelessWidget {
                     buttonText: 'proceed_to_checkout'.tr, onPressed: () {
                     if(!cartController.cartList.first.product!.scheduleOrder! && cartController.availableList.contains(false)) {
                       showCustomSnackBar('one_or_more_product_unavailable'.tr);
-                    } else {
+                    } else if(storeController.restaurant!.freeDelivery == null || storeController.restaurant!.cutlery == null) {
+                      showCustomSnackBar('restaurant_is_unavailable'.tr);
+                    }
+                    else {
                       Get.find<CouponController>().removeCouponData(false);
                       Get.toNamed(RouteHelper.getCheckoutRoute('cart'));
                     }

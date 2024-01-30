@@ -15,6 +15,6 @@ class WishListRepo {
   }
 
   Future<Response> removeWishList(int? id, bool isRestaurant) async {
-    return await apiClient.deleteData('${AppConstants.removeWishListUri}${isRestaurant ? 'restaurant_id=' : 'food_id='}$id');
+    return await apiClient.postData('${AppConstants.removeWishListUri}${isRestaurant ? 'restaurant_id=' : 'food_id='}$id', {"_method": "delete"});
   }
 }

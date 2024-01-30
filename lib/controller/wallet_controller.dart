@@ -1,3 +1,4 @@
+import 'package:efood_multivendor/controller/auth_controller.dart';
 import 'package:efood_multivendor/controller/user_controller.dart';
 import 'package:efood_multivendor/data/api/api_checker.dart';
 import 'package:efood_multivendor/data/model/body/wallet_filter_body.dart';
@@ -142,7 +143,7 @@ class WalletController extends GetxController implements GetxService{
 
         html.window.open(redirectUrl,"_self");
       } else{
-        Get.toNamed(RouteHelper.getPaymentRoute(OrderModel(), '', addFundUrl: redirectUrl));
+        Get.toNamed(RouteHelper.getPaymentRoute(OrderModel(), '', addFundUrl: redirectUrl, guestId: Get.find<AuthController>().getGuestId()));
       }
     } else {
       ApiChecker.checkApi(response);

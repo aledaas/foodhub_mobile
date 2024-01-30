@@ -15,6 +15,7 @@ import 'package:efood_multivendor/util/dimensions.dart';
 import 'package:efood_multivendor/util/images.dart';
 import 'package:efood_multivendor/view/base/custom_app_bar.dart';
 import 'package:efood_multivendor/view/base/menu_drawer.dart';
+
 import 'package:efood_multivendor/view/screens/order/widget/track_details_view.dart';
 import 'package:efood_multivendor/view/screens/order/widget/tracking_stepper_widget.dart';
 import 'package:flutter/material.dart';
@@ -24,7 +25,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class OrderTrackingScreen extends StatefulWidget {
   final String? orderID;
-  const OrderTrackingScreen({Key? key, required this.orderID}) : super(key: key);
+  final String? contactNumber;
+  const OrderTrackingScreen({Key? key, required this.orderID, this.contactNumber}) : super(key: key);
 
   @override
   OrderTrackingScreenState createState() => OrderTrackingScreenState();
@@ -40,7 +42,7 @@ class OrderTrackingScreenState extends State<OrderTrackingScreen> with WidgetsBi
       double.parse(Get.find<LocationController>().getUserAddress()!.latitude!),
       double.parse(Get.find<LocationController>().getUserAddress()!.longitude!),
     ));
-    Get.find<OrderController>().trackOrder(widget.orderID, null, true);
+    Get.find<OrderController>().trackOrder(widget.orderID, null, true, contactNumber: widget.contactNumber);
   }
 
   @override
@@ -55,7 +57,7 @@ class OrderTrackingScreenState extends State<OrderTrackingScreen> with WidgetsBi
   @override
   void didChangeAppLifecycleState(final AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      Get.find<OrderController>().callTrackOrderApi(orderModel: Get.find<OrderController>().trackModel!, orderId: widget.orderID.toString());
+      Get.find<OrderController>().callTrackOrderApi(orderModel: Get.find<OrderController>().trackModel!, orderId: widget.orderID.toString(), contactNumber: widget.contactNumber);
     }else if(state == AppLifecycleState.paused){
       Get.find<OrderController>().cancelTimer();
     }
@@ -80,16 +82,16 @@ class OrderTrackingScreenState extends State<OrderTrackingScreen> with WidgetsBi
           track = orderController.trackModel;
 
           /*if(_controller != null && GetPlatform.isWeb) {
-            if(_track.deliveryAddress != null) {
-              _controller.showMarkerInfoWindow(MarkerId('destination'));
-            }
-            if(_track.restaurant != null) {
-              _controller.showMarkerInfoWindow(MarkerId('restaurant'));
-            }
-            if(_track.deliveryMan != null) {
-              _controller.showMarkerInfoWindow(MarkerId('delivery_boy'));
-            }
-          }*/
+              if(_track.deliveryAddress != null) {
+                _controller.showMarkerInfoWindow(MarkerId('destination'));
+              }
+              if(_track.restaurant != null) {
+                _controller.showMarkerInfoWindow(MarkerId('restaurant'));
+              }
+              if(_track.deliveryMan != null) {
+                _controller.showMarkerInfoWindow(MarkerId('delivery_boy'));
+              }
+            }*/
         }
 
         return track != null ? Center(child: SizedBox(width: Dimensions.webMaxWidth, child: Stack(children: [
@@ -131,7 +133,7 @@ class OrderTrackingScreenState extends State<OrderTrackingScreen> with WidgetsBi
                 notificationBody: NotificationBody(deliverymanId: track!.deliveryMan!.id, orderId: int.parse(widget.orderID!)),
                 user: User(id: track.deliveryMan!.id, fName: track.deliveryMan!.fName, lName: track.deliveryMan!.lName, image: track.deliveryMan!.image),
               ));
-              orderController.callTrackOrderApi(orderModel: track, orderId: track.id.toString());
+              orderController.callTrackOrderApi(orderModel: track, orderId: track.id.toString(), contactNumber: widget.contactNumber);
             }),
           ),
 

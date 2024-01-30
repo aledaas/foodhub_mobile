@@ -17,6 +17,7 @@ import 'package:efood_multivendor/view/base/footer_view.dart';
 import 'package:efood_multivendor/view/base/menu_drawer.dart';
 import 'package:efood_multivendor/view/base/my_text_field.dart';
 import 'package:efood_multivendor/view/base/not_logged_in_screen.dart';
+import 'package:efood_multivendor/view/base/web_header.dart';
 import 'package:efood_multivendor/view/base/web_menu_bar.dart';
 import 'package:efood_multivendor/view/screens/profile/widget/profile_bg_widget.dart';
 import 'package:flutter/material.dart';
@@ -38,6 +39,8 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
+
+  final ScrollController scrollController = ScrollController();
 
   @override
   void initState() {
@@ -61,139 +64,146 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
       appBar: ResponsiveHelper.isDesktop(context) ? const WebMenuBar() : AppBar(leading: IconButton(onPressed: () =>Get.back(),
           icon: Icon(Icons.arrow_back_ios, color: Theme.of(context).textTheme.bodyLarge!.color)), elevation: 0, backgroundColor: Theme.of(context).cardColor, actions: const [SizedBox()],),
       endDrawer: const MenuDrawer(), endDrawerEnableOpenDragGesture: false,
-      body: GetBuilder<UserController>(builder: (userController) {
-        if(userController.userInfoModel != null && _phoneController.text.isEmpty) {
-          _firstNameController.text = userController.userInfoModel!.fName ?? '';
-          _lastNameController.text = userController.userInfoModel!.lName ?? '';
-          _phoneController.text = userController.userInfoModel!.phone ?? '';
-          _emailController.text = userController.userInfoModel!.email ?? '';
-        }
+      body: Column(
+        children: [
 
-        return isLoggedIn ? userController.userInfoModel != null ? ResponsiveHelper.isDesktop(context) ? webView(userController, isLoggedIn) : ProfileBgWidget(
-          backButton: true,
-          circularImage: Center(child: Stack(children: [
-            ClipOval(child: userController.pickedFile != null ? GetPlatform.isWeb ? Image.network(
-              userController.pickedFile!.path, width: 100, height: 100, fit: BoxFit.cover,
-            ) : Image.file(
-              File(userController.pickedFile!.path), width: 100, height: 100, fit: BoxFit.cover,
-            ) : CustomImage(
-              image: '${Get.find<SplashController>().configModel!.baseUrls!.customerImageUrl}/${userController.userInfoModel!.image}',
-              height: 100, width: 100, fit: BoxFit.cover,
-            )),
-            Positioned(
-              bottom: 0, right: 0, top: 0, left: 0,
-              child: InkWell(
-                onTap: () => userController.pickImage(),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.3), shape: BoxShape.circle,
-                    border: Border.all(width: 1, color: Theme.of(context).primaryColor),
-                  ),
-                  child: Container(
-                    margin: const EdgeInsets.all(25),
-                    decoration: BoxDecoration(
-                      border: Border.all(width: 2, color: Colors.white),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.camera_alt, color: Colors.white),
-                  ),
-                ),
-              ),
-            ),
-          ])),
-          mainWidget: Column(children: [
+          GetBuilder<UserController>(builder: (userController) {
+            if(userController.userInfoModel != null && _phoneController.text.isEmpty) {
+              _firstNameController.text = userController.userInfoModel!.fName ?? '';
+              _lastNameController.text = userController.userInfoModel!.lName ?? '';
+              _phoneController.text = userController.userInfoModel!.phone ?? '';
+              _emailController.text = userController.userInfoModel!.email ?? '';
+              print('=========>> ${userController.userInfoModel!.image}');
+            }
 
-            Expanded(child: Scrollbar(child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
-              child: Center(child: SizedBox(width: Dimensions.webMaxWidth, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            return Expanded(
+              child: isLoggedIn ? userController.userInfoModel != null ? ResponsiveHelper.isDesktop(context) ? webView(userController, isLoggedIn) : Column(children: [
 
-                Text(
-                  'first_name'.tr,
-                  style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor),
-                ),
-                const SizedBox(height: Dimensions.paddingSizeExtraSmall),
-                MyTextField(
-                  hintText: 'first_name'.tr,
-                  controller: _firstNameController,
-                  focusNode: _firstNameFocus,
-                  nextFocus: _lastNameFocus,
-                  inputType: TextInputType.name,
-                  capitalization: TextCapitalization.words,
-                ),
-                const SizedBox(height: Dimensions.paddingSizeLarge),
-
-                Text(
-                  'last_name'.tr,
-                  style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor),
-                ),
-                const SizedBox(height: Dimensions.paddingSizeExtraSmall),
-                MyTextField(
-                  hintText: 'last_name'.tr,
-                  controller: _lastNameController,
-                  focusNode: _lastNameFocus,
-                  nextFocus: _emailFocus,
-                  inputType: TextInputType.name,
-                  capitalization: TextCapitalization.words,
-                ),
-                const SizedBox(height: Dimensions.paddingSizeLarge),
-
-                Text(
-                  'email'.tr,
-                  style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor),
-                ),
-                const SizedBox(height: Dimensions.paddingSizeExtraSmall),
-                MyTextField(
-                  hintText: 'email'.tr,
-                  controller: _emailController,
-                  focusNode: _emailFocus,
-                  inputAction: TextInputAction.done,
-                  inputType: TextInputType.emailAddress,
-                ),
-                const SizedBox(height: Dimensions.paddingSizeLarge),
-
-                Row(children: [
-                  Text(
-                    'phone'.tr,
-                    style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor),
-                  ),
-                  const SizedBox(width: Dimensions.paddingSizeExtraSmall),
-                  Text('(${'non_changeable'.tr})', style: robotoRegular.copyWith(
-                    fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).colorScheme.error,
+                Center(child: Stack(children: [
+                  ClipOval(child: userController.pickedFile != null ? GetPlatform.isWeb ? Image.network(
+                    userController.pickedFile!.path, width: 100, height: 100, fit: BoxFit.cover,
+                  ) : Image.file(
+                    File(userController.pickedFile!.path), width: 100, height: 100, fit: BoxFit.cover,
+                  ) : CustomImage(
+                    image: '${Get.find<SplashController>().configModel!.baseUrls!.customerImageUrl}/${userController.userInfoModel!.image}',
+                    height: 100, width: 100, fit: BoxFit.cover,
                   )),
-                ]),
-                const SizedBox(height: Dimensions.paddingSizeExtraSmall),
-                MyTextField(
-                  hintText: 'phone'.tr,
-                  controller: _phoneController,
-                  focusNode: _phoneFocus,
-                  inputType: TextInputType.phone,
-                  isEnabled: false,
+                  Positioned(
+                    bottom: 0, right: 0, top: 0, left: 0,
+                    child: InkWell(
+                      onTap: () => userController.pickImage(),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.3), shape: BoxShape.circle,
+                          border: Border.all(width: 1, color: Theme.of(context).primaryColor),
+                        ),
+                        child: Container(
+                          margin: const EdgeInsets.all(25),
+                          decoration: BoxDecoration(
+                            border: Border.all(width: 2, color: Colors.white),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.camera_alt, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ),
+                ])),
+
+                Expanded(child: Scrollbar(child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
+                  child: Center(child: SizedBox(width: Dimensions.webMaxWidth, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+
+                    Text(
+                      'first_name'.tr,
+                      style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor),
+                    ),
+                    const SizedBox(height: Dimensions.paddingSizeExtraSmall),
+                    MyTextField(
+                      hintText: 'first_name'.tr,
+                      controller: _firstNameController,
+                      focusNode: _firstNameFocus,
+                      nextFocus: _lastNameFocus,
+                      inputType: TextInputType.name,
+                      capitalization: TextCapitalization.words,
+                    ),
+                    const SizedBox(height: Dimensions.paddingSizeLarge),
+
+                    Text(
+                      'last_name'.tr,
+                      style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor),
+                    ),
+                    const SizedBox(height: Dimensions.paddingSizeExtraSmall),
+                    MyTextField(
+                      hintText: 'last_name'.tr,
+                      controller: _lastNameController,
+                      focusNode: _lastNameFocus,
+                      nextFocus: _emailFocus,
+                      inputType: TextInputType.name,
+                      capitalization: TextCapitalization.words,
+                    ),
+                    const SizedBox(height: Dimensions.paddingSizeLarge),
+
+                    Text(
+                      'email'.tr,
+                      style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor),
+                    ),
+                    const SizedBox(height: Dimensions.paddingSizeExtraSmall),
+                    MyTextField(
+                      hintText: 'email'.tr,
+                      controller: _emailController,
+                      focusNode: _emailFocus,
+                      inputAction: TextInputAction.done,
+                      inputType: TextInputType.emailAddress,
+                    ),
+                    const SizedBox(height: Dimensions.paddingSizeLarge),
+
+                    Row(children: [
+                      Text(
+                        'phone'.tr,
+                        style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor),
+                      ),
+                      const SizedBox(width: Dimensions.paddingSizeExtraSmall),
+                      Text('(${'non_changeable'.tr})', style: robotoRegular.copyWith(
+                        fontSize: Dimensions.fontSizeExtraSmall, color: Theme.of(context).colorScheme.error,
+                      )),
+                    ]),
+                    const SizedBox(height: Dimensions.paddingSizeExtraSmall),
+                    MyTextField(
+                      hintText: 'phone'.tr,
+                      controller: _phoneController,
+                      focusNode: _phoneFocus,
+                      inputType: TextInputType.phone,
+                      isEnabled: false,
+                    ),
+
+                  ]))),
+                ))),
+
+                SafeArea(
+                  child: CustomButton(
+                    isLoading: userController.isLoading,
+                    onPressed: () => _updateProfile(userController),
+                    margin: const EdgeInsets.all(Dimensions.paddingSizeSmall),
+                    buttonText: 'update'.tr,
+                  ),
                 ),
 
-              ]))),
-            ))),
-
-            SafeArea(
-              child: CustomButton(
-                isLoading: userController.isLoading,
-                onPressed: () => _updateProfile(userController),
-                margin: const EdgeInsets.all(Dimensions.paddingSizeSmall),
-                buttonText: 'update'.tr,
-              ),
-            ),
-
-          ]),
-        ) : const Center(child: CircularProgressIndicator()) : NotLoggedInScreen(callBack: (value){
-          initCall();
-          setState(() {});
-        });
-      }),
+              ]) : const Center(child: CircularProgressIndicator()) : NotLoggedInScreen(callBack: (value){
+                initCall();
+                setState(() {});
+              }),
+            );
+          }),
+        ],
+      ),
     );
   }
 
   Widget webView(UserController userController, bool isLoggedIn) {
     return SingleChildScrollView(
+      controller: scrollController,
       child: Center(
         child: FooterView(
           child: SizedBox(

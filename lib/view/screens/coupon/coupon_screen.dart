@@ -8,6 +8,7 @@ import 'package:efood_multivendor/view/base/footer_view.dart';
 import 'package:efood_multivendor/view/base/menu_drawer.dart';
 import 'package:efood_multivendor/view/base/no_data_screen.dart';
 import 'package:efood_multivendor/view/base/not_logged_in_screen.dart';
+
 import 'package:efood_multivendor/view/base/web_page_title_widget.dart';
 import 'package:efood_multivendor/view/screens/coupon/widget/coupon_card.dart';
 import 'package:flutter/material.dart';

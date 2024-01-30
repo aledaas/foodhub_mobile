@@ -8,6 +8,7 @@ import 'package:efood_multivendor/view/base/custom_app_bar.dart';
 import 'package:efood_multivendor/view/base/footer_view.dart';
 import 'package:efood_multivendor/view/base/menu_drawer.dart';
 import 'package:efood_multivendor/view/base/not_logged_in_screen.dart';
+
 import 'package:efood_multivendor/view/base/web_page_title_widget.dart';
 import 'package:efood_multivendor/view/screens/wallet/widget/bonus_banner.dart';
 import 'package:efood_multivendor/view/screens/wallet/widget/wallet_bottom_sheet.dart';
@@ -138,24 +139,24 @@ class _WalletScreenState extends State<WalletScreen> {
                               builder: (walletController) {
                                 return ResponsiveHelper.isDesktop(context) ? Padding(
                                   padding: const EdgeInsets.only(top: Dimensions.paddingSizeDefault),
-                                    child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                      Expanded (flex: 4 , child: Column(children: [
-                                          Container(
-                                            decoration: ResponsiveHelper.isDesktop(context) ? BoxDecoration(
-                                              color: Theme.of(context).cardColor,
-                                              borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-                                              boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
-                                            ) : null,
-                                            padding: const EdgeInsets.all(Dimensions.paddingSizeLarge),
-                                            child: WalletCardWidget(fromWallet: widget.fromWallet, tooltipController: tooltipController)
-                                          ),
-                                        ],
-                                      )),
-                                      const SizedBox(width: Dimensions.paddingSizeDefault),
+                                  child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                    Expanded (flex: 4 , child: Column(children: [
+                                      Container(
+                                          decoration: ResponsiveHelper.isDesktop(context) ? BoxDecoration(
+                                            color: Theme.of(context).cardColor,
+                                            borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+                                            boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, spreadRadius: 1)],
+                                          ) : null,
+                                          padding: const EdgeInsets.all(Dimensions.paddingSizeLarge),
+                                          child: WalletCardWidget(fromWallet: widget.fromWallet, tooltipController: tooltipController)
+                                      ),
+                                    ],
+                                    )),
+                                    const SizedBox(width: Dimensions.paddingSizeDefault),
 
-                                      Expanded (flex: 6, child: Column(children: [
-                                        widget.fromWallet ? const WebBonusBannerView() : const SizedBox(),
-                                        Container(
+                                    Expanded (flex: 6, child: Column(children: [
+                                      widget.fromWallet ? const WebBonusBannerView() : const SizedBox(),
+                                      Container(
                                           decoration: ResponsiveHelper.isDesktop(context) ? BoxDecoration(
                                             color: Theme.of(context).cardColor,
                                             borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
@@ -163,24 +164,24 @@ class _WalletScreenState extends State<WalletScreen> {
                                           ) : null,
                                           padding: const EdgeInsets.all(Dimensions.paddingSizeLarge),
                                           child: WalletHistoryWidget(fromWallet: widget.fromWallet))],
-                                      )),
-                                    ]),
+                                    )),
+                                  ]),
                                 )
-                             : Column(children: [
+                                    : Column(children: [
 
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge),
-                                  child: WalletCardWidget(fromWallet: widget.fromWallet, tooltipController: tooltipController),
-                                ),
-                                widget.fromWallet ? const BonusBanner() : const SizedBox(),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge),
+                                    child: WalletCardWidget(fromWallet: widget.fromWallet, tooltipController: tooltipController),
+                                  ),
+                                  widget.fromWallet ? const BonusBanner() : const SizedBox(),
 
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge),
-                                  child: WalletHistoryWidget(fromWallet: widget.fromWallet),
-                                )
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge),
+                                    child: WalletHistoryWidget(fromWallet: widget.fromWallet),
+                                  )
 
-                              ]);
-                            }
+                                ]);
+                              }
                           ),
                         ),
                       )

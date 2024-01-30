@@ -93,7 +93,7 @@ class RestaurantsView extends StatelessWidget {
               ),
             ),
 
-            !isAvailable ? Positioned(top: 55, left: 10, child: Container(
+            !isAvailable ? Positioned(top: 10, left: 10, child: Container(
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.error.withOpacity(0.5),
                 borderRadius: BorderRadius.circular(Dimensions.radiusLarge)

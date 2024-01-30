@@ -8,73 +8,216 @@ import 'package:efood_multivendor/util/app_constants.dart';
 import 'package:efood_multivendor/util/dimensions.dart';
 import 'package:efood_multivendor/util/images.dart';
 import 'package:efood_multivendor/util/styles.dart';
+import 'package:efood_multivendor/view/base/custom_dropdown.dart';
 import 'package:efood_multivendor/view/base/hover/text_hover.dart';
 import 'package:efood_multivendor/view/screens/auth/widget/auth_dialog.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class WebMenuBar extends StatelessWidget implements PreferredSizeWidget {
   const WebMenuBar({Key? key}) : super(key: key);
 
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: Dimensions.webMaxWidth,
-      color: Theme.of(context).cardColor,
-      padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
-      child: Center(child: SizedBox(width: Dimensions.webMaxWidth, child: Row(children: [
-            InkWell(
-              onTap: () => Get.toNamed(RouteHelper.getInitialRoute()),
-              child: Image.asset(Images.logo, height: 50, width: 50),
-            ),
 
-        Get.find<LocationController>().getUserAddress() != null ? Expanded(child: InkWell(
-          onTap: () => Get.find<LocationController>().navigateToLocationScreen('home'),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall),
-            child: GetBuilder<LocationController>(builder: (locationController) {
-              return Column(children: [
+    return  Column(
+      children: [
+        Container(
+          height: 40, width: double.infinity,
+          color: Theme.of(context).primaryColor.withOpacity(0.05),
+          child: Center(
+            child: SizedBox(
+              width: Dimensions.webMaxWidth,
+              child: Row(children: [
+                SizedBox(
+                  width: 500,
+                  child: Get.find<LocationController>().getUserAddress() != null ? InkWell(
+                    onTap: () => Get.find<LocationController>().navigateToLocationScreen('home'),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall),
+                      child: GetBuilder<LocationController>(builder: (locationController) {
+                        return Row(children: [
+                          Icon(
+                            locationController.getUserAddress()!.addressType == 'home' ? CupertinoIcons.house_alt_fill
+                                : locationController.getUserAddress()!.addressType == 'office' ? CupertinoIcons.bag_fill : CupertinoIcons.location_solid,
+                            size: 16, color: Theme.of(context).primaryColor,
+                          ),
+                          const SizedBox(width: Dimensions.paddingSizeExtraSmall),
 
-                Row(crossAxisAlignment: CrossAxisAlignment.center, mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Icon(
-                      locationController.getUserAddress()!.addressType == 'home' ? Icons.home_filled
-                          : locationController.getUserAddress()!.addressType == 'office' ? Icons.work : Icons.location_on,
-                      size: 20, color: Theme.of(context).primaryColor,
+                          Text(
+                            '${locationController.getUserAddress()!.addressType!.tr}: ',
+                            style: robotoMedium.copyWith(
+                              color: Theme.of(context).primaryColor, fontSize: Dimensions.fontSizeExtraSmall,
+                            ),
+                            maxLines: 1, overflow: TextOverflow.ellipsis,
+                          ),
+
+                          Flexible(
+                            child: Text(
+                              locationController.getUserAddress()!.address!,
+                              style: robotoRegular.copyWith(
+                                color: Theme.of(context).textTheme.bodyLarge!.color, fontSize: Dimensions.fontSizeExtraSmall,
+                              ),
+                              maxLines: 1, overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const Icon(Icons.keyboard_arrow_down),
+                        ]);
+                      }),
                     ),
-                    const SizedBox(width: Dimensions.paddingSizeExtraSmall),
-
-                    Flexible(
-                      child: Text(
-                        locationController.getUserAddress()!.addressType!.tr,
-                        style: robotoMedium.copyWith(
-                          color: Theme.of(context).primaryColor, fontSize: Dimensions.fontSizeSmall,
-                        ),
-                        maxLines: 1, overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
+                  ) : const SizedBox(),
                 ),
 
-                  Row(crossAxisAlignment: CrossAxisAlignment.center, mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Flexible(
-                        child: Text(
-                          locationController.getUserAddress()!.address!,
-                          style: robotoRegular.copyWith(
-                            color: Theme.of(context).textTheme.bodyLarge!.color, fontSize: Dimensions.fontSizeSmall,
+                const Spacer(),
+
+                GetBuilder<LocalizationController>(builder: (localizationController) {
+
+                  List<DropdownItem<int>> languageList = [];
+                  List<DropdownItem<int>> joinUsList = [];
+
+                  for(int index=0; index<AppConstants.languages.length; index++) {
+                    languageList.add(DropdownItem<int>(value: index, child: Row(
+                      children: [
+                        SizedBox(height: 15, width: 15, child: Image.asset(AppConstants.languages[index].imageUrl!)),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 5),
+                          child: Text(AppConstants.languages[index].languageName!, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall),),
+                        ),
+                      ],
+                    )));
+                  }
+
+                  for(int index=0; index<AppConstants.joinDropdown.length; index++) {
+                    if(index != 0) {
+                      joinUsList.add(DropdownItem<int>(value: index, child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 5.0, vertical: 5),
+                        child: Text(AppConstants.joinDropdown[index].tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall, fontWeight: FontWeight.w100, color: Get.find<ThemeController>().darkTheme ? Colors.white : Colors.black)),
+                      )));
+                    }
+
+                  }
+                  return Row(children: [
+                    SizedBox(
+                      width: 120,
+                      child: CustomDropdown<int>(
+                        onChange: (int? value, int index) {
+                          localizationController.setLanguage(Locale(
+                            AppConstants.languages[index].languageCode!,
+                            AppConstants.languages[index].countryCode,
+                          ));
+                          localizationController.setSelectIndex(index);
+                        },
+                        dropdownButtonStyle: DropdownButtonStyle(
+                          height: 50,
+                          padding: const EdgeInsets.symmetric(
+                            vertical: Dimensions.paddingSizeExtraSmall,
+                            horizontal: Dimensions.paddingSizeExtraSmall,
                           ),
-                          maxLines: 1, overflow: TextOverflow.ellipsis,
+                          primaryColor: Theme.of(context).textTheme.bodyLarge!.color,
+
+                        ),
+                        dropdownStyle: DropdownStyle(
+                          elevation: 10,
+                          borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                          padding: const EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
+                        ),
+                        items: languageList,
+                        child: Row(
+                          children: [
+                            SizedBox(height: 15, width: 15, child: Image.asset(AppConstants.languages[localizationController.selectedIndex].imageUrl!)),
+
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                              child: Text(
+                                AppConstants.languages[localizationController.selectedIndex].languageName!,
+                                style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeExtraSmall),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      Icon(Icons.keyboard_arrow_down, color: Theme.of(context).primaryColor),
-                    ],
-                  ),
-                ],
-              );
-            }),
+                    ),
+
+                    ConstrainedBox (
+                      constraints: const BoxConstraints(minWidth: 100, maxWidth: 170),
+                      child: CustomDropdown<int>(
+                        onChange: (int? value, int index) {
+                          if(index == 0){
+                            Get.toNamed(RouteHelper.getRestaurantRegistrationRoute());
+                          } else if (index == 1) {
+                            Get.toNamed(RouteHelper.getDeliverymanRegistrationRoute());
+                          }
+                        },
+                        canAddValue: false,
+                        dropdownButtonStyle: DropdownButtonStyle(
+                          height: 50,
+                          padding: const EdgeInsets.symmetric(
+                            vertical: Dimensions.paddingSizeExtraSmall,
+                            horizontal: Dimensions.paddingSizeExtraSmall,
+                          ),
+                          primaryColor: Theme.of(context).textTheme.bodyLarge!.color,
+
+                        ),
+                        dropdownStyle: DropdownStyle(
+                          elevation: 10,
+                          borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
+                          padding: const EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
+                        ),
+                        items: joinUsList,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(CupertinoIcons.person, color: Get.find<ThemeController>().darkTheme ? Colors.white : Colors.black, size: 16,),
+                            const SizedBox(width: Dimensions.paddingSizeSmall),
+                            Text(AppConstants.joinDropdown[0].tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeExtraSmall, fontWeight: FontWeight.w100, color: Get.find<ThemeController>().darkTheme ? Colors.white : Colors.black)),
+                          ],
+                        ),
+                      ),
+
+                    ),
+
+                  ]);
+                }),
+
+                GetBuilder<ThemeController>(
+                    builder: (themeController) {
+                      return InkWell(
+                        onTap: () => themeController.toggleTheme(),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).cardColor,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Theme.of(context).primaryColor, width: 0.5),
+                          ),
+                          padding: const EdgeInsets.all(3),
+                          child: Icon(themeController.darkTheme ? CupertinoIcons.moon_stars_fill : CupertinoIcons.sun_min_fill, size: 18, color: Theme.of(context).primaryColor),
+                        ),
+                      );
+                    }
+                ),
+
+                const SizedBox(width: Dimensions.paddingSizeSmall),
+
+              ]),
+            ),
           ),
-        )) : const Expanded(child: SizedBox()),
+        ),
+
+        Container(
+          width: double.infinity,
+          color: Theme.of(context).cardColor,
+          padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
+          child: Center(child: SizedBox(width: Dimensions.webMaxWidth, child: Row(children: [
+            InkWell(
+              onTap: () => Get.toNamed(RouteHelper.getInitialRoute()),
+              child: Row(children: [
+                Image.asset(Images.logo, height: 30, width: 40),
+                Image.asset(Images.logoName, height: 40, width: 100),
+              ]),
+            ),
+
             const SizedBox(width: 20),
 
             Row(
@@ -87,8 +230,17 @@ class WebMenuBar extends StatelessWidget implements PreferredSizeWidget {
                 const SizedBox(width: 20),
                 MenuButton(title: 'restaurants'.tr, onTap: () => Get.toNamed(RouteHelper.getAllRestaurantRoute('popular'))),
                 const SizedBox(width: 20),
-            ],
+              ],
             ),
+            const Expanded(child: SizedBox()),
+
+            MenuIconButton(icon: CupertinoIcons.search, onTap: () => Get.toNamed(RouteHelper.getSearchRoute())),
+            const SizedBox(width: 20),
+
+            MenuIconButton(icon: CupertinoIcons.bell_fill, onTap: () => Get.toNamed(RouteHelper.getNotificationRoute())),
+            const SizedBox(width: 20),
+
+            MenuIconButton(icon: Icons.shopping_cart, isCart: true, onTap: () => Get.toNamed(RouteHelper.getCartRoute())),
             const SizedBox(width: 20),
 
             GetBuilder<AuthController>(builder: (authController) {
@@ -107,7 +259,7 @@ class WebMenuBar extends StatelessWidget implements PreferredSizeWidget {
                     borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
                   ),
                   child: Row(children: [
-                    Icon(authController.isLoggedIn() ? Icons.person_pin_rounded : Icons.lock_outline, size: 18, color: Get.find<ThemeController>().darkTheme ? Colors.white : Colors.black),
+                    Icon(authController.isLoggedIn() ? CupertinoIcons.person_crop_square : CupertinoIcons.lock, size: 18, color: Get.find<ThemeController>().darkTheme ? Colors.white : Colors.black),
                     const SizedBox(width: Dimensions.paddingSizeSmall),
                     Text(authController.isLoggedIn() ? 'profile'.tr : 'sign_in'.tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, fontWeight: FontWeight.w100)),
                   ]),
@@ -115,66 +267,17 @@ class WebMenuBar extends StatelessWidget implements PreferredSizeWidget {
               );
             }),
 
-
-            GetBuilder<LocalizationController>(builder: (localizationController) {
-              int index0 = 0;
-              List<DropdownMenuItem<int>> languageList = [];
-              for(int index=0; index<AppConstants.joinDropdown.length; index++) {
-                languageList.add(DropdownMenuItem(
-                  value: index,
-                  child: TextHover(builder: (hovered) {
-                    return  Row(
-                      children: [
-                        index == 0 ? Icon(Icons.perm_identity, color: Get.find<ThemeController>().darkTheme ? Colors.white : Colors.black) : const SizedBox(),
-                        index == 0 ? const SizedBox(width: Dimensions.paddingSizeSmall) : const SizedBox(),
-                        Text(AppConstants.joinDropdown[index].tr, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall, fontWeight: FontWeight.w100, color: Get.find<ThemeController>().darkTheme ? Colors.white : Colors.black)),
-                        index == 0 ? const SizedBox(width: Dimensions.paddingSizeSmall) : const SizedBox(),
-                        index == 0 ? Icon(Icons.keyboard_arrow_down, color: Get.find<ThemeController>().darkTheme ? Colors.white : Colors.black ) : const SizedBox(),
-                      ],
-                    );
-
-                  }),
-                ));
-              }
-              return SizedBox (
-                width: 170,
-                child: DropdownButton<int>(
-
-                  value: index0,
-                  items: languageList,
-                  dropdownColor: Theme.of(context).cardColor,
-
-                  icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white, size: 0.0),
-                  elevation: 0, iconSize: 30, underline: const SizedBox(),
-                  onChanged: (int? index) {
-                    if(index == 1){
-                      Get.toNamed(RouteHelper.getRestaurantRegistrationRoute());
-                    } else if (index == 2) {
-                      Get.toNamed(RouteHelper.getDeliverymanRegistrationRoute());
-                    }
-                    //localizationController.setLanguage(Locale(AppConstants.languages[index].languageCode, AppConstants.languages[index].countryCode));
-                  },
-                ),
-              );
-            }),
-
-            MenuIconButton(icon: Icons.notifications, onTap: () => Get.toNamed(RouteHelper.getNotificationRoute())),
-            const SizedBox(width: 20),
-            MenuIconButton(icon: Icons.search, onTap: () => Get.toNamed(RouteHelper.getSearchRoute())),
-            const SizedBox(width: 20),
-            MenuIconButton(icon: Icons.shopping_cart, isCart: true, onTap: () => Get.toNamed(RouteHelper.getCartRoute())),
-            const SizedBox(width: 20),
             MenuIconButton(icon: Icons.menu, onTap: () {
               Scaffold.of(context).openEndDrawer();
-              // Get.bottomSheet(const MenuScreen(), backgroundColor: Colors.transparent, isScrollControlled: true);
             }),
           ]),
+          )),
         ),
-      ),
+      ],
     );
   }
   @override
-  Size get preferredSize => const Size(Dimensions.webMaxWidth, 70);
+  Size get preferredSize =>  const Size(Dimensions.webMaxWidth, 100);
 }
 
 

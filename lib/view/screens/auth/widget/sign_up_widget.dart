@@ -16,7 +16,6 @@ import 'package:efood_multivendor/view/base/custom_snackbar.dart';
 import 'package:efood_multivendor/view/base/custom_text_field.dart';
 import 'package:efood_multivendor/view/screens/auth/sign_in_screen.dart';
 import 'package:efood_multivendor/view/screens/auth/widget/condition_check_box.dart';
-import 'package:efood_multivendor/view/screens/auth/widget/pass_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -157,21 +156,21 @@ class SignUpWidgetState extends State<SignUpWidget> {
                   prefixIcon: Icons.lock,
                   isPassword: true,
                   showTitle: ResponsiveHelper.isDesktop(context),
-                  onChanged: (value){
-                    if(value != null && value.isNotEmpty){
-                      if(!authController.showPassView){
-                        authController.showHidePass();
-                      }
-                      authController.validPassCheck(value);
-                    }else{
-                      if(authController.showPassView){
-                        authController.showHidePass();
-                      }
-                    }
-                  },
+                  // onChanged: (value){
+                  //   if(value != null && value.isNotEmpty){
+                  //     if(!authController.showPassView){
+                  //       authController.showHidePass();
+                  //     }
+                  //     authController.validPassCheck(value);
+                  //   }else{
+                  //     if(authController.showPassView){
+                  //       authController.showHidePass();
+                  //     }
+                  //   }
+                  // },
                 ),
 
-                authController.showPassView ? const PassView() : const SizedBox(),
+                // authController.showPassView ? const PassView() : const SizedBox(),
               ]),
             ),
             SizedBox(width: ResponsiveHelper.isDesktop(context) ? Dimensions.paddingSizeSmall : 0),
@@ -243,12 +242,16 @@ class SignUpWidgetState extends State<SignUpWidget> {
             Text('already_have_account'.tr, style: robotoRegular.copyWith(color: Theme.of(context).hintColor)),
 
             InkWell(
-              onTap: () {
+              onTap: authController.isLoading ? null : () {
                 if(ResponsiveHelper.isDesktop(context)){
                   Get.back();
                   Get.dialog(const SignInScreen(exitFromApp: false, backFromThis: false));
                 }else{
-                  Get.toNamed(RouteHelper.getSignInRoute(RouteHelper.signUp));
+                  if(Get.currentRoute == RouteHelper.signUp) {
+                  Get.back();
+                  } else {
+                    Get.toNamed(RouteHelper.getSignInRoute(RouteHelper.signUp));
+                  }
                 }
               },
               child: Padding(
@@ -295,7 +298,7 @@ class SignUpWidgetState extends State<SignUpWidget> {
       showCustomSnackBar('invalid_phone_number'.tr);
     }else if (password.isEmpty) {
       showCustomSnackBar('enter_password'.tr);
-    }else if (password.length < 6) {
+    }else if (password.length < 8) {
       showCustomSnackBar('password_should_be'.tr);
     }else if (password != confirmPassword) {
       showCustomSnackBar('confirm_password_does_not_matched'.tr);
@@ -314,7 +317,9 @@ class SignUpWidgetState extends State<SignUpWidget> {
             Get.toNamed(RouteHelper.getVerificationRoute(numberWithCountryCode, status.message, RouteHelper.signUp, data));
           }else {
             Get.find<LocationController>().navigateToLocationScreen(RouteHelper.signUp);
-            // Get.toNamed(RouteHelper.getAccessLocationRoute(RouteHelper.signUp));
+            if(ResponsiveHelper.isDesktop(context)) {
+              Get.back();
+            }
           }
         }else {
           showCustomSnackBar(status.message);

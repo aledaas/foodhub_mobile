@@ -9,8 +9,8 @@ class RestaurantRepo {
   final SharedPreferences sharedPreferences;
   RestaurantRepo({required this.sharedPreferences, required this.apiClient});
 
-  Future<Response> getRestaurantList(int offset, String filterBy, int topRated, int discount, int veg, int nonVeg) async {
-    return await apiClient.getData('${AppConstants.restaurantUri}/$filterBy?offset=$offset&limit=12&top_rated=$topRated&discount=$discount&veg=$veg&non_veg=$nonVeg');
+  Future<Response> getRestaurantList(int offset, String filterBy, int topRated, int discount, int veg, int nonVeg, {bool fromMap = false}) async {
+    return await apiClient.getData('${AppConstants.restaurantUri}/all?offset=$offset&limit=${fromMap ? 20 : 12}&filter_data=$filterBy&top_rated=$topRated&discount=$discount&veg=$veg&non_veg=$nonVeg');
   }
 
   Future<Response> getPopularRestaurantList(String type) async {

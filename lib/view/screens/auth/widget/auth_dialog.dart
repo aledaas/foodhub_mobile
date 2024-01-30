@@ -18,7 +18,7 @@ class AuthDialog extends StatefulWidget {
 
 class AuthDialogState extends State<AuthDialog>  with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final List<Tab> _tabs = <Tab>[ Tab(text: 'login'.tr), Tab(text: 'signup'.tr) ];
+  final List<Tab> _tabs = <Tab>[ Tab(text: 'login'.tr), Tab(text: 'sign_up'.tr) ];
   @override
   void initState() {
     super.initState();

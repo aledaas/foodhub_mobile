@@ -13,6 +13,7 @@ import 'package:efood_multivendor/view/screens/restaurant/widget/customizable_sp
 import 'package:efood_multivendor/view/screens/restaurant/widget/info_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:marquee/marquee.dart';
 
 class RestaurantInfoSection extends StatelessWidget {
   final Restaurant restaurant;
@@ -40,6 +41,7 @@ class RestaurantInfoSection extends StatelessWidget {
         ),
         onPressed: () => Get.back(),
       ) : const SizedBox(),
+
       flexibleSpace: GetBuilder<CouponController>(
         builder: (couponController) {
           bool hasCoupon = (Get.find<CouponController>().couponList!= null && Get.find<CouponController>().couponList!.isNotEmpty);
@@ -61,7 +63,7 @@ class RestaurantInfoSection extends StatelessWidget {
                     child: Align(
                       alignment: Alignment.bottomLeft,
                       child: Container(
-                        height: (hasCoupon ? 250 : 152) - (scrollingRate * 25),
+                        height: (hasCoupon ? 260 : 159) - (scrollingRate * 25),
                         decoration: BoxDecoration(
                           color: Theme.of(context).cardColor,
                           borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
@@ -89,68 +91,100 @@ class RestaurantInfoSection extends StatelessWidget {
                   ) : Align(
                     alignment: Alignment.bottomLeft,
                     child: Container(
-                      height: 160,
+                      height: restaurant.announcementActive! ? 200 : 160,
                       decoration: BoxDecoration(
                           color: Theme.of(context).cardColor,
                           borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
                           boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10)]
                       ),
                       margin: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault, vertical: Dimensions.paddingSizeSmall),
-                      padding: EdgeInsets.only(
-                        left: Get.find<LocalizationController>().isLtr ? 20 : 0,
+                      /*padding: EdgeInsets.only(
+                        left: restaurant.announcementActive! ? 0 : Get.find<LocalizationController>().isLtr ? 20 : 0,
                         right: Get.find<LocalizationController>().isLtr ? 0 : 20,
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall),
-                        child: Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            Row(children: [
-
-                              SizedBox(width: context.width * 0.17 - (scrollingRate * 90)),
-
-                              Expanded(child: InfoView(restaurant: restaurant, restController: restController, scrollingRate: scrollingRate)),
+                      ),*/
+                      child: Column(
+                        children: [
+                          restaurant.announcementActive != null && restaurant.announcementActive! && restaurant.announcementMessage != null ? Container(
+                            height: 40 - (scrollingRate * 40),
+                            padding: EdgeInsets.only(
+                              left: Get.find<LocalizationController>().isLtr ? 250 : 20,
+                              right: Get.find<LocalizationController>().isLtr ? 20 : 250,
+                            ),
+                            decoration: const BoxDecoration(
+                              color: Colors.green,
+                              borderRadius: BorderRadius.only(topLeft: Radius.circular(Dimensions.radiusDefault), topRight: Radius.circular(Dimensions.radiusDefault)),
+                            ),
+                            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                              Image.asset(Images.announcement, height: 26, width: 26),
                               const SizedBox(width: Dimensions.paddingSizeSmall),
 
-                              Expanded(child: CouponView(scrollingRate: scrollingRate)),
-
+                              Flexible(
+                                child: Marquee(
+                                  text: restaurant.announcementMessage!,
+                                  style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).cardColor),
+                                  blankSpace: 20.0,
+                                  velocity: 100.0,
+                                  accelerationDuration: const Duration(seconds: 5),
+                                  decelerationDuration: const Duration(milliseconds: 500),
+                                  accelerationCurve: Curves.linear,
+                                  decelerationCurve: Curves.easeOut,
+                                ),
+                              ),
                             ]),
+                          ) : const SizedBox(),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeSmall),
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                Row(children: [
 
-                            Positioned(left: Get.find<LocalizationController>().isLtr ? 10 : null, right: Get.find<LocalizationController>().isLtr ? null : 10, top: - 80 + (scrollingRate * 77), child: Container(
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Theme.of(context).cardColor,
-                                border: Border.all(color: Theme.of(context).primaryColor, width: 0.2),
-                                boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withOpacity(0.3), blurRadius: 10)]
-                              ),
-                              padding: const EdgeInsets.all(2),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(500),
-                                child: Stack(children: [
-                                  CustomImage(
-                                    image: '${Get.find<SplashController>().configModel!.baseUrls!.restaurantImageUrl}/${restaurant.logo}',
-                                    height: 200 - (scrollingRate * 90), width: 200 - (scrollingRate * 90), fit: BoxFit.cover,
-                                  ),
-                                  restController.isRestaurantOpenNow(restaurant.active!, restaurant.schedules) ? const SizedBox() : Positioned(
-                                    left: 0, right: 0, bottom: 0,
-                                    child: Container(
-                                      height: 30,
-                                      alignment: Alignment.center,
-                                      decoration: BoxDecoration(
-                                        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(Dimensions.radiusSmall)),
-                                        color: Colors.black.withOpacity(0.6),
-                                      ),
-                                      child: Text(
-                                        'closed_now'.tr, textAlign: TextAlign.center,
-                                        style: robotoRegular.copyWith(color: Colors.white, fontSize: Dimensions.fontSizeSmall),
-                                      ),
-                                    ),
-                                  ),
+                                  SizedBox(width: context.width * 0.17 - (scrollingRate * 90)),
+
+                                  Expanded(child: InfoView(restaurant: restaurant, restController: restController, scrollingRate: scrollingRate)),
+                                  const SizedBox(width: Dimensions.paddingSizeSmall),
+
+                                  Expanded(child: CouponView(scrollingRate: scrollingRate)),
+
                                 ]),
-                              ),
-                            ))
-                          ],
-                        ),
+
+                                Positioned(left: Get.find<LocalizationController>().isLtr ? 30 : null, right: Get.find<LocalizationController>().isLtr ? null : 30, top: - 80 + (scrollingRate * 77), child: Container(
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Theme.of(context).cardColor,
+                                    border: Border.all(color: Theme.of(context).primaryColor, width: 0.2),
+                                    boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withOpacity(0.3), blurRadius: 10)]
+                                  ),
+                                  padding: const EdgeInsets.all(2),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(500),
+                                    child: Stack(children: [
+                                      CustomImage(
+                                        image: '${Get.find<SplashController>().configModel!.baseUrls!.restaurantImageUrl}/${restaurant.logo}',
+                                        height: 200 - (scrollingRate * 90), width: 200 - (scrollingRate * 90), fit: BoxFit.cover,
+                                      ),
+                                      restController.isRestaurantOpenNow(restaurant.active!, restaurant.schedules) ? const SizedBox() : Positioned(
+                                        left: 0, right: 0, bottom: 0,
+                                        child: Container(
+                                          height: 30,
+                                          alignment: Alignment.center,
+                                          decoration: BoxDecoration(
+                                            borderRadius: const BorderRadius.vertical(bottom: Radius.circular(Dimensions.radiusSmall)),
+                                            color: Colors.black.withOpacity(0.6),
+                                          ),
+                                          child: Text(
+                                            'closed_now'.tr, textAlign: TextAlign.center,
+                                            style: robotoRegular.copyWith(color: Colors.white, fontSize: Dimensions.fontSizeSmall),
+                                          ),
+                                        ),
+                                      ),
+                                    ]),
+                                  ),
+                                ))
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   );

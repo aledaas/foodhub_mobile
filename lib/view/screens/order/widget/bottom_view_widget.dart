@@ -1,3 +1,4 @@
+import 'package:efood_multivendor/controller/auth_controller.dart';
 import 'package:efood_multivendor/controller/location_controller.dart';
 import 'package:efood_multivendor/controller/order_controller.dart';
 import 'package:efood_multivendor/controller/splash_controller.dart';
@@ -22,7 +23,8 @@ class BottomViewWidget extends StatelessWidget {
   final OrderModel order;
   final int? orderId;
   final double total;
-  const BottomViewWidget({Key? key, required this.orderController, required this.order, this.orderId, required this.total }) : super(key: key);
+  final String? contactNumber;
+  const BottomViewWidget({Key? key, required this.orderController, required this.order, this.orderId, required this.total, this.contactNumber }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +39,7 @@ class BottomViewWidget extends StatelessWidget {
     bool cancelled = order.orderStatus == AppConstants.cancelled;
     bool cod = order.paymentMethod == 'cash_on_delivery';
     bool digitalPay = order.paymentMethod == 'digital_payment';
+    bool offlinePay = order.paymentMethod == 'offline_payment';
 
     return Column(children: [
       !orderController.showCancelled ? Center(
@@ -50,13 +53,13 @@ class BottomViewWidget extends StatelessWidget {
                 margin: const EdgeInsets.all(Dimensions.paddingSizeSmall),
                 onPressed: () async {
                   orderController.cancelTimer();
-                  await Get.toNamed(RouteHelper.getOrderTrackingRoute(order.id));
-                  orderController.callTrackOrderApi(orderModel: order, orderId: orderId.toString());
+                  await Get.toNamed(RouteHelper.getOrderTrackingRoute(order.id, contactNumber));
+                  orderController.callTrackOrderApi(orderModel: order, orderId: orderId.toString(), contactNumber: contactNumber);
                 },
               ),
             ) : const SizedBox(),
 
-            (pending && order.paymentStatus == 'unpaid' && digitalPay && Get.find<SplashController>().configModel!.cashOnDelivery!) ?
+            (!offlinePay && pending && order.paymentStatus == 'unpaid' && digitalPay && Get.find<SplashController>().configModel!.cashOnDelivery!) ?
             Expanded(
               child: CustomButton(
                 buttonText: 'switch_to_cash_on_delivery'.tr,
@@ -69,7 +72,7 @@ class BottomViewWidget extends StatelessWidget {
                             ?? 0;
 
                         if(maxCodOrderAmount > total){
-                          orderController.switchToCOD(order.id.toString()).then((isSuccess) {
+                          orderController.switchToCOD(order.id.toString(), null).then((isSuccess) {
                             Get.back();
                             if(isSuccess) {
                               Get.back();
@@ -92,7 +95,7 @@ class BottomViewWidget extends StatelessWidget {
               padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
               child: TextButton(
                 style: TextButton.styleFrom(minimumSize: const Size(1, 50), shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+                  borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
                   side: BorderSide(width: 2, color: Theme.of(context).disabledColor),
                 )),
                 onPressed: () {
@@ -138,7 +141,7 @@ class BottomViewWidget extends StatelessWidget {
           width: Dimensions.webMaxWidth,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall, vertical: Dimensions.paddingSizeExtraSmall),
-            child: !orderController.isLoading ? Row(
+            child: !orderController.isLoading ? Get.find<AuthController>().isLoggedIn() ? Row(
               children: [
                 (!subscription && delivered && orderController.orderDetails![0].itemCampaignId == null) ? Expanded(
                   child: CustomButton(
@@ -156,7 +159,7 @@ class BottomViewWidget extends StatelessWidget {
                       await Get.toNamed(RouteHelper.getReviewRoute(), arguments: RateReviewScreen(
                         orderDetailsList: orderDetailsList, deliveryMan: order.deliveryMan,
                       ));
-                      orderController.callTrackOrderApi(orderModel: order, orderId: orderId.toString());
+                      orderController.callTrackOrderApi(orderModel: order, orderId: orderId.toString(), contactNumber: contactNumber);
                     },
                   ),
                 ) : const SizedBox(),
@@ -170,47 +173,43 @@ class BottomViewWidget extends StatelessWidget {
                   ),
                 ) : const SizedBox(),
               ],
-            ) : const Center(child: CircularProgressIndicator()),
+            ) : const SizedBox() : const Center(child: CircularProgressIndicator()),
           ),
         ),
       ),
 
 
-      Builder(
-          builder: (context) {
-            return ((order.orderStatus == 'failed' || cancelled) && !cod && Get.find<SplashController>().configModel!.cashOnDelivery!) ? Center(
-              child: Container(
-                width: Dimensions.webMaxWidth,
-                padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
-                child: CustomButton(
-                  buttonText: 'switch_to_cash_on_delivery'.tr,
-                  onPressed: () {
-                    Get.dialog(ConfirmationDialog(
-                        icon: Images.warning, description: 'are_you_sure_to_switch'.tr,
-                        onYesPressed: () {
-                          double? maxCodOrderAmount = Get.find<LocationController>().getUserAddress()!.zoneData!.firstWhere((data) => data.id == order.restaurant!.zoneId).maxCodOrderAmount;
+      (!offlinePay && (order.orderStatus == 'failed' || cancelled) && !cod && Get.find<SplashController>().configModel!.cashOnDelivery!) ? Center(
+        child: Container(
+          width: Dimensions.webMaxWidth,
+          padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
+          child: CustomButton(
+            buttonText: 'switch_to_cash_on_delivery'.tr,
+            onPressed: () {
+              Get.dialog(ConfirmationDialog(
+                  icon: Images.warning, description: 'are_you_sure_to_switch'.tr,
+                  onYesPressed: () {
+                    double? maxCodOrderAmount = Get.find<LocationController>().getUserAddress()!.zoneData!.firstWhere((data) => data.id == order.restaurant!.zoneId).maxCodOrderAmount;
 
-                          if(maxCodOrderAmount == null || maxCodOrderAmount > total){
-                            orderController.switchToCOD(order.id.toString()).then((isSuccess) {
-                              Get.back();
-                              if(isSuccess) {
-                                Get.back();
-                              }
-                            });
-                          }else{
-                            if(Get.isDialogOpen!) {
-                              Get.back();
-                            }
-                            showCustomSnackBar('${'you_cant_order_more_then'.tr} ${PriceConverter.convertPrice(maxCodOrderAmount)} ${'in_cash_on_delivery'.tr}');
-                          }
+                    if(maxCodOrderAmount == null || maxCodOrderAmount > total){
+                      orderController.switchToCOD(order.id.toString(), null).then((isSuccess) {
+                        Get.back();
+                        if(isSuccess) {
+                          Get.back();
                         }
-                    ));
-                  },
-                ),
-              ),
-            ) : const SizedBox();
-          }
-      ),
+                      });
+                    }else{
+                      if(Get.isDialogOpen!) {
+                        Get.back();
+                      }
+                      showCustomSnackBar('${'you_cant_order_more_then'.tr} ${PriceConverter.convertPrice(maxCodOrderAmount)} ${'in_cash_on_delivery'.tr}');
+                    }
+                  }
+              ));
+            },
+          ),
+        ),
+      ) : const SizedBox(),
     ]);
   }
 }

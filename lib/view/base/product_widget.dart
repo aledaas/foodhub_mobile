@@ -14,7 +14,6 @@ import 'package:efood_multivendor/helper/route_helper.dart';
 import 'package:efood_multivendor/util/dimensions.dart';
 import 'package:efood_multivendor/util/images.dart';
 import 'package:efood_multivendor/util/styles.dart';
-import 'package:efood_multivendor/view/base/confirmation_dialog.dart';
 import 'package:efood_multivendor/view/base/custom_image.dart';
 import 'package:efood_multivendor/view/base/custom_snackbar.dart';
 import 'package:efood_multivendor/view/base/discount_tag.dart';
@@ -35,7 +34,7 @@ class ProductWidget extends StatelessWidget {
   final bool isCampaign;
   final bool fromCartSuggestion;
   const ProductWidget({Key? key, required this.product, required this.isRestaurant, required this.restaurant, required this.index,
-   required this.length, this.inRestaurant = false, this.isCampaign = false, this.fromCartSuggestion = false}) : super(key: key);
+    required this.length, this.inRestaurant = false, this.isCampaign = false, this.fromCartSuggestion = false}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -94,7 +93,7 @@ class ProductWidget extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
             color: Theme.of(context).cardColor,
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), spreadRadius: 1, blurRadius: 10, offset: Offset(2, 5))],
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), spreadRadius: 1, blurRadius: 10, offset: const Offset(2, 5))],
           ),
           child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
 
@@ -123,11 +122,13 @@ class ProductWidget extends StatelessWidget {
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
 
-                      Wrap(crossAxisAlignment: WrapCrossAlignment.center, children: [
-                        Text(
-                          isRestaurant ? restaurant!.name! : product!.name!,
-                          style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall),
-                          maxLines: 1, overflow: TextOverflow.ellipsis,
+                      Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+                        Flexible(
+                          child: Text(
+                            isRestaurant ? restaurant!.name! : product!.name!,
+                            style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall),
+                            maxLines: 1, overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                         const SizedBox(width: Dimensions.paddingSizeExtraSmall),
 
@@ -189,7 +190,7 @@ class ProductWidget extends StatelessWidget {
                         ),
 
                       ],
-                    ) : Row(children: [
+                    ) : Wrap(children: [
 
                       discount! > 0 ? Text(
                         PriceConverter.convertPrice(product!.price), textDirection: TextDirection.ltr,
@@ -244,8 +245,8 @@ class ProductWidget extends StatelessWidget {
                       int cartQty = cartController.cartQuantity(product!.id!);
                       int cartIndex = cartController.isExistInCart(product!.id, null);
                       CartModel cartModel = CartModel(
-                        price, discountPrice, (price - discountPrice),
-                        1, [], [], false, product, [],
+                        null, price, discountPrice, (price - discountPrice),
+                        1, [], [], false, product, [], product?.quantityLimit,
                       );
                       return cartQty != 0 ? Container(
                         decoration: BoxDecoration(
@@ -300,36 +301,7 @@ class ProductWidget extends StatelessWidget {
                           ),
                         ]),
                       ) : InkWell(
-                        onTap: () {
-                          if(product!.variations == null || (product!.variations != null && product!.variations!.isEmpty)) {
-
-                            Get.find<ProductController>().setExistInCart(product!);
-
-                            if (Get.find<CartController>().existAnotherRestaurantProduct(cartModel.product!.restaurantId)) {
-                              Get.dialog(ConfirmationDialog(
-                                icon: Images.warning,
-                                title: 'are_you_sure_to_reset'.tr,
-                                description: 'if_you_continue'.tr,
-                                onYesPressed: () {
-                                  Get.back();
-                                  Get.find<CartController>().removeAllAndAddToCart(cartModel);
-                                  _showCartSnackBar();
-                                },
-                              ), barrierDismissible: false);
-                            } else {
-                              Get.find<CartController>().addToCart(cartModel, Get.find<ProductController>().cartIndex);
-                              _showCartSnackBar();
-                            }
-
-                          } else {
-                            ResponsiveHelper.isMobile(context) ? Get.bottomSheet(
-                              ProductBottomSheet(product: product, isCampaign: false),
-                              backgroundColor: Colors.transparent, isScrollControlled: true,
-                            ) : Get.dialog(
-                              Dialog(child: ProductBottomSheet(product: product, isCampaign: false)),
-                            );
-                          }
-                        },
+                        onTap: () => Get.find<ProductController>().productDirectlyAddToCart(product, context),
                         child: Container(
                           decoration: BoxDecoration(
                             color: Theme.of(context).cardColor,
@@ -353,24 +325,4 @@ class ProductWidget extends StatelessWidget {
     );
   }
 
-  void _showCartSnackBar() {
-    ScaffoldMessenger.of(Get.context!).showSnackBar(SnackBar(
-      dismissDirection: DismissDirection.horizontal,
-      margin: ResponsiveHelper.isDesktop(Get.context) ?  EdgeInsets.only(
-        right: Get.context!.width * 0.7,
-        left: Dimensions.paddingSizeSmall, bottom: Dimensions.paddingSizeSmall,
-      ) : const EdgeInsets.all(Dimensions.paddingSizeSmall),
-      duration: const Duration(seconds: 3),
-      backgroundColor: Colors.green,
-      action: SnackBarAction(label: 'view_cart'.tr, textColor: Colors.white, onPressed: () {
-        Get.toNamed(RouteHelper.getCartRoute());
-      }),
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Dimensions.radiusSmall)),
-      content: Text(
-        'item_added_to_cart'.tr,
-        style: robotoMedium.copyWith(color: Colors.white),
-      ),
-    ));
-  }
 }

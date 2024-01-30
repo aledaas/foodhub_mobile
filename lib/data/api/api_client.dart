@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get_connect/http/src/request/request.dart';
-
+import 'package:http_parser/http_parser.dart';
+import 'dart:io';
 import 'package:efood_multivendor/data/model/response/address_model.dart';
 import 'package:efood_multivendor/data/model/response/error_response.dart';
 import 'package:efood_multivendor/util/app_constants.dart';
@@ -9,6 +11,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'package:path/path.dart';
 
 class ApiClient extends GetxService {
   final String appBaseUrl;
@@ -86,11 +89,11 @@ class ApiClient extends GetxService {
     }
   }
 
-  Future<Response> postMultipartData(String uri, Map<String, String> body, List<MultipartBody> multipartBody, {Map<String, String>? headers}) async {
+  Future<Response> postMultipartData(String uri, Map<String, String> body, List<MultipartBody> multipartBody, List<MultipartDocument> otherFile, {Map<String, String>? headers}) async {
     try {
       if(kDebugMode) {
         debugPrint('====> API Call: $uri\nHeader: $_mainHeaders');
-        debugPrint('====> API Body: $body with ${multipartBody.length} files');
+        debugPrint('====> API Body: $body with ${multipartBody.length} and multipart ${otherFile.length}');
       }
       http.MultipartRequest request = http.MultipartRequest('POST', Uri.parse(appBaseUrl+uri));
       request.headers.addAll(headers ?? _mainHeaders);
@@ -99,10 +102,21 @@ class ApiClient extends GetxService {
           Uint8List list = await multipart.file!.readAsBytes();
           request.files.add(http.MultipartFile(
             multipart.key, multipart.file!.readAsBytes().asStream(), list.length,
-            filename: '${DateTime.now().toString()}.png',
+            filename: basename(multipart.file!.path), contentType: MediaType('image', 'jpg'),
+            // filename: '${DateTime.now().toString()}.png',
           ));
         }
       }
+
+      if(otherFile.isNotEmpty){
+        for(MultipartDocument file in otherFile){
+          File other = File(file.file!.files.single.path!);
+          Uint8List list0 = await other.readAsBytes();
+          var part = http.MultipartFile(file.key, other.readAsBytes().asStream(), list0.length, filename: basename(other.path));
+          request.files.add(part);
+        }
+      }
+
       request.fields.addAll(body);
       http.Response response = await http.Response.fromStream(await request.send());
       return handleResponse(response, uri);
@@ -175,4 +189,10 @@ class MultipartBody {
   XFile? file;
 
   MultipartBody(this.key, this.file);
+}
+
+class MultipartDocument {
+  String key;
+  FilePickerResult? file;
+  MultipartDocument(this.key, this.file);
 }

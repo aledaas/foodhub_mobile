@@ -1,3 +1,4 @@
+import 'package:efood_multivendor/controller/auth_controller.dart';
 import 'package:efood_multivendor/controller/order_controller.dart';
 import 'package:efood_multivendor/controller/splash_controller.dart';
 import 'package:efood_multivendor/data/model/body/notification_body.dart';
@@ -16,6 +17,7 @@ import 'package:efood_multivendor/view/base/custom_image.dart';
 import 'package:efood_multivendor/view/base/custom_snackbar.dart';
 import 'package:efood_multivendor/view/base/rating_bar.dart';
 import 'package:efood_multivendor/view/screens/chat/widget/image_dialog.dart';
+import 'package:efood_multivendor/view/screens/checkout/widget/offline_info_edit_dialog.dart';
 import 'package:efood_multivendor/view/screens/order/widget/delivery_details.dart';
 import 'package:efood_multivendor/view/screens/order/widget/log_dialog.dart';
 import 'package:efood_multivendor/view/screens/order/widget/order_product_widget.dart';
@@ -29,10 +31,12 @@ class OrderInfoSection extends StatelessWidget {
   final OrderController orderController;
   final List<String> schedules;
   final bool showChatPermission;
-  const OrderInfoSection({Key? key, required this.order, required this.orderController, required this.schedules, required this.showChatPermission}) : super(key: key);
+  final String? contactNumber;
+  const OrderInfoSection({Key? key, required this.order, required this.orderController, required this.schedules, required this.showChatPermission, this.contactNumber}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    ExpansionTileController expansionTileController = ExpansionTileController();
     bool subscription = order.subscription != null;
 
     bool pending = order.orderStatus == AppConstants.pending;
@@ -45,10 +49,11 @@ class OrderInfoSection extends StatelessWidget {
     bool takeAway = order.orderType == 'take_away';
     bool cod = order.paymentMethod == 'cash_on_delivery';
     bool isDesktop = ResponsiveHelper.isDesktop(context);
+    bool isGuestLoggedIn = Get.find<AuthController>().isGuestLoggedIn();
 
     bool ongoing = (order.orderStatus != 'delivered' && order.orderStatus != 'failed'
         && order.orderStatus != 'refund_requested' && order.orderStatus != 'refunded'
-        && order.orderStatus != 'refund_request_canceled');
+        && order.orderStatus != 'refund_request_canceled' && order.orderStatus != 'canceled');
 
     bool pastOrder = (order.orderStatus == 'delivered' || order.orderStatus == 'failed'
         || order.orderStatus == 'refund_requested' || order.orderStatus == 'refunded'
@@ -149,9 +154,10 @@ class OrderInfoSection extends StatelessWidget {
                     color: Theme.of(context).primaryColor.withOpacity(0.05), borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
                   ),
                   child: Text(
-                    cod ? 'cash_on_delivery'.tr : order.paymentMethod == 'wallet'
-                        ? 'wallet_payment'.tr : order.paymentMethod == 'partial_payment'
-                        ? 'partial_payment'.tr : 'digital_payment'.tr,
+                    cod ? 'cash_on_delivery'.tr
+                        : order.paymentMethod == 'wallet' ? 'wallet_payment'.tr
+                        : order.paymentMethod == 'partial_payment' ? 'partial_payment'.tr
+                        : order.paymentMethod == 'offline_payment' ? 'offline_payment'.tr : 'digital_payment'.tr,
                     style: robotoMedium.copyWith(color: Theme.of(context).primaryColor, fontSize: Dimensions.fontSizeExtraSmall),
                   ),
                 ),
@@ -526,7 +532,7 @@ class OrderInfoSection extends StatelessWidget {
               icon: const Icon(Icons.directions), label: Text('direction'.tr),
             ) : const SizedBox(),
 
-            (showChatPermission && !delivered && order.orderStatus != 'failed' && !cancelled && order.orderStatus != 'refunded') ? InkWell(
+            (showChatPermission && !delivered && order.orderStatus != 'failed' && !cancelled && order.orderStatus != 'refunded' && !isGuestLoggedIn) ? InkWell(
               onTap: () async {
                 orderController.cancelTimer();
                 await Get.toNamed(RouteHelper.getChatRoute(
@@ -538,7 +544,7 @@ class OrderInfoSection extends StatelessWidget {
               child: Image.asset(Images.chatImageOrderDetails, height: 25, width: 25, fit: BoxFit.cover),
             ) : const SizedBox(),
 
-            (!subscription && Get.find<SplashController>().configModel!.refundStatus! && delivered && orderController.orderDetails![0].itemCampaignId == null)
+            (!subscription && Get.find<SplashController>().configModel!.refundStatus! && delivered && orderController.orderDetails![0].itemCampaignId == null && !isGuestLoggedIn)
             ? InkWell(
               onTap: () => Get.toNamed(RouteHelper.getRefundRequestRoute(order.id.toString())),
               child: Container(
@@ -599,7 +605,7 @@ class OrderInfoSection extends StatelessWidget {
                   ),
                 ])),
 
-                InkWell(
+                !isGuestLoggedIn ? InkWell(
                   onTap: () async {
                     orderController.cancelTimer();
                     await Get.toNamed(RouteHelper.getChatRoute(
@@ -609,7 +615,7 @@ class OrderInfoSection extends StatelessWidget {
                     orderController.callTrackOrderApi(orderModel: order, orderId: order.id.toString());
                   },
                   child: Image.asset(Images.chatImageOrderDetails, height: 25, width: 25, fit: BoxFit.cover),
-                ),
+                ) : const SizedBox(),
                 const SizedBox(width: Dimensions.paddingSizeDefault),
 
                 InkWell(
@@ -643,10 +649,18 @@ class OrderInfoSection extends StatelessWidget {
         ),
         padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge, vertical: Dimensions.paddingSizeSmall),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          !isDesktop ? Text('payment_method'.tr, style: robotoMedium) : const SizedBox(),
-          SizedBox(height: !isDesktop ? Dimensions.paddingSizeSmall : 0),
+          !isDesktop ? Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
 
-          Row(children: [
+            Text('payment_method'.tr, style: robotoMedium),
+            order.paymentMethod == 'offline_payment' || (order.paymentMethod == 'partial_payment' && orderController.trackModel!.offlinePayment != null) ? Text(
+              orderController.trackModel!.offlinePayment != null ? orderController.trackModel!.offlinePayment!.data!.status!.tr : '',
+              style: robotoMedium.copyWith(color: (orderController.trackModel!.offlinePayment != null ? orderController.trackModel!.offlinePayment!.data!.status.toString() == 'denied' : false) ? Colors.red : Theme.of(context).primaryColor),
+            ) : const SizedBox(),
+          ]) : const SizedBox(),
+          SizedBox(height: (!isDesktop && order.paymentMethod != 'offline_payment') ? Dimensions.paddingSizeSmall : 0),
+
+          order.paymentMethod == 'offline_payment'  || (order.paymentMethod == 'partial_payment' && orderController.trackModel!.offlinePayment != null)
+          ? offlineView(context, orderController, expansionTileController, ongoing, contactNumber) :  Row(children: [
 
             Image.asset(
               order.paymentMethod == 'cash_on_delivery' ? Images.cashOnDelivery
@@ -673,6 +687,87 @@ class OrderInfoSection extends StatelessWidget {
       ),
     ]);
   }
+}
+
+Widget offlineView(BuildContext context, OrderController orderController, ExpansionTileController controller, bool ongoing, String? contactNumber) {
+  return ListTileTheme(
+    contentPadding: const EdgeInsets.all(0),
+    dense: true,
+    horizontalTitleGap: 5.0,
+    minLeadingWidth: 0,
+    child: Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        controller: controller,
+        leading: Image.asset(
+          Images.cash, width: 20, height: 20,
+          color: Theme.of(context).textTheme.bodyMedium!.color,
+        ),
+        title: Text(
+          'offline_payment'.tr,
+          style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeSmall, color: Theme.of(context).disabledColor),
+        ),
+        trailing: Icon(orderController.isExpanded ? Icons.expand_more : Icons.expand_less, size: 18),
+        tilePadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+        onExpansionChanged: (value) => orderController.expandedUpdate(value),
+
+        children: [
+          const Divider(),
+
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            Text('seller_payment_info'.tr, style: robotoMedium),
+            const SizedBox(),
+          ]),
+          const SizedBox(height: Dimensions.paddingSizeDefault),
+
+          orderController.trackModel!.offlinePayment != null ? ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: orderController.trackModel!.offlinePayment!.methodFields!.length,
+            itemBuilder: (context, index){
+              return Padding(
+                padding: const EdgeInsets.only(bottom: Dimensions.paddingSizeExtraSmall),
+                child: Row(children: [
+                  Text('${orderController.trackModel!.offlinePayment!.methodFields![index].inputName.toString().replaceAll('_', ' ')} : ', style: robotoRegular),
+                  Text('${orderController.trackModel!.offlinePayment!.methodFields![index].inputData}', style: robotoRegular),
+                ]),
+              );
+            },
+          ) : Text('no_data_found'.tr),
+          const Divider(),
+
+          orderController.trackModel!.offlinePayment != null ? Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            Text('my_payment_info'.tr, style: robotoMedium),
+
+            (ongoing && orderController.trackModel!.offlinePayment!.data!.status != 'verified') ? InkWell(
+              onTap: (){
+                Get.dialog(OfflineInfoEditDialog(offlinePayment: orderController.trackModel!.offlinePayment!, orderId: orderController.trackModel!.id!, contactNumber: contactNumber), barrierDismissible: true);
+              },
+              child: Text('edit_details'.tr, style: robotoBold.copyWith(color: Colors.blue)),
+            ) : const SizedBox(),
+          ]) : const SizedBox(),
+          const SizedBox(height: Dimensions.paddingSizeDefault),
+
+          orderController.trackModel!.offlinePayment != null ? ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: orderController.trackModel!.offlinePayment!.input!.length,
+            itemBuilder: (context, index){
+              Input data = orderController.trackModel!.offlinePayment!.input![index];
+              return Padding(
+                padding: const EdgeInsets.only(bottom: Dimensions.paddingSizeExtraSmall),
+                child: Row(children: [
+                  Text('${data.userInput.toString().replaceAll('_', ' ')}: ', style: robotoRegular),
+                  Text(data.userData.toString(), style: robotoRegular),
+                ]),
+              );
+            },
+          ) : const SizedBox(),
+          // const SizedBox(height: Dimensions.paddingSizeSmall),
+        ],
+      ),
+    ),
+  );
 }
 
 void openDialog(BuildContext context, String imageUrl) => showDialog(

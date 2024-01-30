@@ -12,6 +12,7 @@ import 'package:efood_multivendor/view/base/custom_snackbar.dart';
 import 'package:efood_multivendor/view/base/footer_view.dart';
 import 'package:efood_multivendor/view/base/menu_drawer.dart';
 import 'package:efood_multivendor/view/base/product_bottom_sheet.dart';
+import 'package:efood_multivendor/view/base/web_header.dart';
 import 'package:efood_multivendor/view/base/web_menu_bar.dart';
 import 'package:efood_multivendor/view/screens/home/widget/new/cuisine_card.dart';
 import 'package:efood_multivendor/view/screens/search/widget/filter_widget.dart';
@@ -29,7 +30,7 @@ class SearchScreen extends StatefulWidget {
 
 class SearchScreenState extends State<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
-
+  final ScrollController scrollController = ScrollController();
 
   late bool _isLoggedIn;
 
@@ -38,6 +39,7 @@ class SearchScreenState extends State<SearchScreen> {
     super.initState();
 
     _isLoggedIn = Get.find<AuthController>().isLoggedIn();
+    Get.find<search.SearchController>().setSearchMode(true, canUpdate: false);
     if(_isLoggedIn) {
       Get.find<search.SearchController>().getSuggestedFoods();
     }
@@ -97,6 +99,7 @@ class SearchScreenState extends State<SearchScreen> {
             ),
 
             Expanded(child: searchController.isSearchMode ? SingleChildScrollView(
+              controller: scrollController,
               physics: const BouncingScrollPhysics(),
               padding: ResponsiveHelper.isDesktop(context) ? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall),
               child: FooterView(
@@ -199,48 +202,48 @@ class SearchScreenState extends State<SearchScreen> {
                   const SizedBox(height: Dimensions.paddingSizeLarge),
 
                   GetBuilder<CuisineController>(builder: (cuisineController) {
-                      return (cuisineController.cuisineModel != null && cuisineController.cuisineModel!.cuisines!.isEmpty) ? const SizedBox() : Column(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          (cuisineController.cuisineModel != null) ? Text(
-                            'cuisines'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge),
-                          ) : const SizedBox(),
-                          const SizedBox(height: Dimensions.paddingSizeDefault),
+                    return (cuisineController.cuisineModel != null && cuisineController.cuisineModel!.cuisines!.isEmpty) ? const SizedBox() : Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        (cuisineController.cuisineModel != null) ? Text(
+                          'cuisines'.tr, style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge),
+                        ) : const SizedBox(),
+                        const SizedBox(height: Dimensions.paddingSizeDefault),
 
 
-                          (cuisineController.cuisineModel != null) ? cuisineController.cuisineModel!.cuisines!.isNotEmpty ? GetBuilder<CuisineController>(
-                              builder: (cuisineController) {
-                                return cuisineController.cuisineModel != null ? GridView.builder(
-                                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: ResponsiveHelper.isDesktop(context) ? 8 : ResponsiveHelper.isTab(context) ? 6 : 4,
-                                      mainAxisSpacing: 20,
-                                      crossAxisSpacing: ResponsiveHelper.isDesktop(context) ? 35 : 15,
-                                      childAspectRatio: ResponsiveHelper.isDesktop(context) ? 1 : 0.9,
-                                    ),
-                                    shrinkWrap: true,
-                                    itemCount: cuisineController.cuisineModel!.cuisines!.length,
-                                    scrollDirection: Axis.vertical,
-                                    physics: const NeverScrollableScrollPhysics(),
-                                    itemBuilder: (context, index){
-                                      return InkWell(
-                                        onTap: (){
-                                          Get.toNamed(RouteHelper.getCuisineRestaurantRoute(cuisineController.cuisineModel!.cuisines![index].id, cuisineController.cuisineModel!.cuisines![index].name));
-                                        },
-                                        child: SizedBox(
-                                          height: 130,
-                                          child: CuisineCard(
-                                            image: '${Get.find<SplashController>().configModel!.baseUrls!.cuisineImageUrl}/${cuisineController.cuisineModel!.cuisines![index].image}',
-                                            name: cuisineController.cuisineModel!.cuisines![index].name!,
-                                          ),
+                        (cuisineController.cuisineModel != null) ? cuisineController.cuisineModel!.cuisines!.isNotEmpty ? GetBuilder<CuisineController>(
+                            builder: (cuisineController) {
+                              return cuisineController.cuisineModel != null ? GridView.builder(
+                                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: ResponsiveHelper.isDesktop(context) ? 8 : ResponsiveHelper.isTab(context) ? 6 : 4,
+                                    mainAxisSpacing: 20,
+                                    crossAxisSpacing: ResponsiveHelper.isDesktop(context) ? 35 : 15,
+                                    childAspectRatio: ResponsiveHelper.isDesktop(context) ? 1 : 0.9,
+                                  ),
+                                  shrinkWrap: true,
+                                  itemCount: cuisineController.cuisineModel!.cuisines!.length,
+                                  scrollDirection: Axis.vertical,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  itemBuilder: (context, index){
+                                    return InkWell(
+                                      onTap: (){
+                                        Get.toNamed(RouteHelper.getCuisineRestaurantRoute(cuisineController.cuisineModel!.cuisines![index].id, cuisineController.cuisineModel!.cuisines![index].name));
+                                      },
+                                      child: SizedBox(
+                                        height: 130,
+                                        child: CuisineCard(
+                                          image: '${Get.find<SplashController>().configModel!.baseUrls!.cuisineImageUrl}/${cuisineController.cuisineModel!.cuisines![index].image}',
+                                          name: cuisineController.cuisineModel!.cuisines![index].name!,
                                         ),
-                                      );
-                                    }) : const Center(child: CircularProgressIndicator());
-                              }
-                          ) : Padding(padding: const EdgeInsets.only(top: 10), child: Text('no_suggestions_available'.tr)) : const SizedBox(),
-                        ],
-                      );
-                    }
+                                      ),
+                                    );
+                                  }) : const Center(child: CircularProgressIndicator());
+                            }
+                        ) : Padding(padding: const EdgeInsets.only(top: 10), child: Text('no_suggestions_available'.tr)) : const SizedBox(),
+                      ],
+                    );
+                  }
                   ),
 
 
@@ -253,7 +256,6 @@ class SearchScreenState extends State<SearchScreen> {
 
           ]);
         })),
-
         bottomNavigationBar: GetBuilder<CartController>(builder: (cartController) {
           return cartController.cartList.isNotEmpty && !ResponsiveHelper.isDesktop(context) ? const BottomCartWidget() : const SizedBox();
         }),
@@ -277,7 +279,7 @@ class SearchScreenState extends State<SearchScreen> {
         prices.sort();
       }
       double? maxValue = prices.isNotEmpty ? prices[prices.length-1] : 1000;
-      ResponsiveHelper.isMobile(context) ? Get.bottomSheet(FilterWidget(maxValue: maxValue, isRestaurant: searchController.isRestaurant)): Get.dialog(
+      ResponsiveHelper.isMobile(context) ? Get.bottomSheet(FilterWidget(maxValue: maxValue, isRestaurant: searchController.isRestaurant), isScrollControlled: true, ): Get.dialog(
         Dialog(
           insetPadding: const EdgeInsets.all(30),
             child: FilterWidget(maxValue: maxValue, isRestaurant: searchController.isRestaurant)),

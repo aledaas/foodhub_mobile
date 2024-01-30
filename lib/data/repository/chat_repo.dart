@@ -30,7 +30,7 @@ class ChatRepo {
     }else {
       fields.addAll({'receiver_id': userID.toString()});
     }
-    return await apiClient.postMultipartData(AppConstants.sendMessageUri, fields, images);
+    return await apiClient.postMultipartData(AppConstants.sendMessageUri, fields, images, []);
   }
 
 }

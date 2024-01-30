@@ -16,6 +16,7 @@ import 'package:efood_multivendor/view/base/custom_snackbar.dart';
 import 'package:efood_multivendor/view/base/menu_drawer.dart';
 import 'package:efood_multivendor/view/base/not_logged_in_screen.dart';
 import 'package:efood_multivendor/view/base/paginated_list_view.dart';
+
 import 'package:efood_multivendor/view/base/web_menu_bar.dart';
 import 'package:efood_multivendor/view/screens/chat/widget/message_bubble.dart';
 import 'package:flutter/material.dart';
@@ -90,7 +91,7 @@ class _ChatScreenState extends State<ChatScreen> {
         },
         child: Scaffold(
           endDrawer: const MenuDrawer(),endDrawerEnableOpenDragGesture: false,
-          appBar: (ResponsiveHelper.isDesktop(context) ? const WebMenuBar() : AppBar(
+          appBar: !ResponsiveHelper.isDesktop(context) ? AppBar(
             leading: IconButton(
               onPressed: () {
                 if(widget.fromNotification) {
@@ -122,7 +123,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
               )
             ],
-          )),
+          ) : const WebMenuBar(),
 
           body: isLoggedIn ? SafeArea(
             child: Center(

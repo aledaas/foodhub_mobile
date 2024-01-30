@@ -30,7 +30,7 @@ class DiscountTag extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           child: Text(
-            discount! > 0 ? '${isRightSide ? '' : currencySymbol}$discount${discountType == 'percent' ? '%'
+            discount! > 0 ? '${(isRightSide || discountType == 'percent') ? '' : currencySymbol}$discount${discountType == 'percent' ? '%'
                 : isRightSide ? currencySymbol : ''} ${'off'.tr}' : 'free_delivery'.tr,
             style: robotoMedium.copyWith(
               color: Colors.white,

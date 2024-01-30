@@ -5,6 +5,7 @@ import 'package:efood_multivendor/view/base/custom_app_bar.dart';
 import 'package:efood_multivendor/view/base/footer_view.dart';
 import 'package:efood_multivendor/view/base/menu_drawer.dart';
 import 'package:efood_multivendor/view/base/product_view.dart';
+import 'package:efood_multivendor/view/base/web_header.dart';
 import 'package:efood_multivendor/view/base/web_page_title_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';

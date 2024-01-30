@@ -62,13 +62,14 @@ class SignInScreenState extends State<SignInScreen> {
             return Future.value(false);
           }
         }else {
+          Get.back(result: false);
           return true;
         }
       },
       child: Scaffold(
         backgroundColor: ResponsiveHelper.isDesktop(context) ? Colors.transparent : Theme.of(context).cardColor,
         appBar: ResponsiveHelper.isDesktop(context) ? null : !widget.exitFromApp ? AppBar(leading: IconButton(
-          onPressed: () => Get.back(),
+          onPressed: () => Get.back(result: false),
           icon: Icon(Icons.arrow_back_ios_rounded, color: Theme.of(context).textTheme.bodyLarge!.color),
         ), elevation: 0, backgroundColor: Colors.transparent) : null,
         body: SafeArea(child: Scrollbar(
@@ -95,7 +96,7 @@ class SignInScreenState extends State<SignInScreen> {
                         ),
                       ) : const SizedBox(),
 
-                      Image.asset(Images.logo, width: 100),
+                      Image.asset(Images.logo, width: 60),
                       const SizedBox(height: Dimensions.paddingSizeSmall),
                       Image.asset(Images.logoName, width: 100),
                       const SizedBox(height: Dimensions.paddingSizeExtraLarge),
@@ -119,46 +120,5 @@ class SignInScreenState extends State<SignInScreen> {
     );
   }
 
-  // void _login(AuthController authController, String countryDialCode) async {
-  //   String phone = _phoneController.text.trim();
-  //   String password = _passwordController.text.trim();
-  //   String numberWithCountryCode = countryDialCode+phone;
-  //   PhoneValid phoneValid = await CustomValidator.isPhoneValid(numberWithCountryCode);
-  //   numberWithCountryCode = phoneValid.phone;
-  //
-  //   if (phone.isEmpty) {
-  //     showCustomSnackBar('enter_phone_number'.tr);
-  //   }else if (!phoneValid.isValid) {
-  //     showCustomSnackBar('invalid_phone_number'.tr);
-  //   }else if (password.isEmpty) {
-  //     showCustomSnackBar('enter_password'.tr);
-  //   }else if (password.length < 6) {
-  //     showCustomSnackBar('password_should_be'.tr);
-  //   }else {
-  //     authController.login(numberWithCountryCode, password, alreadyInApp: widget.backFromThis).then((status) async {
-  //       if (status.isSuccess) {
-  //         if (authController.isActiveRememberMe) {
-  //           authController.saveUserNumberAndPassword(phone, password, countryDialCode);
-  //         } else {
-  //           authController.clearUserNumberAndPassword();
-  //         }
-  //         String token = status.message!.substring(1, status.message!.length);
-  //         if(Get.find<SplashController>().configModel!.customerVerification! && int.parse(status.message![0]) == 0) {
-  //           List<int> encoded = utf8.encode(password);
-  //           String data = base64Encode(encoded);
-  //           Get.toNamed(RouteHelper.getVerificationRoute(numberWithCountryCode, token, RouteHelper.signUp, data));
-  //         }else {
-  //           if(widget.backFromThis) {
-  //             Get.back();
-  //           }else {
-  //             Get.find<LocationController>().navigateToLocationScreen('sign-in', offNamed: true);
-  //           }
-  //         }
-  //       }else {
-  //         showCustomSnackBar(status.message);
-  //       }
-  //     });
-  //   }
-  // }
 }
 

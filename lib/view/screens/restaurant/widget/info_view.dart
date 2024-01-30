@@ -136,11 +136,12 @@ class InfoView extends StatelessWidget {
       ]),
       SizedBox(height: Dimensions.paddingSizeLarge - (scrollingRate * (isDesktop ? 2 : Dimensions.paddingSizeLarge))),
 
-      Row(children: [
+      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        const Expanded(child: SizedBox()),
 
-        Row(children: [
+        Column(children: [
           Icon(Icons.access_time, color: Theme.of(context).primaryColor, size: 20 - (scrollingRate * (isDesktop ? 2 : 20))),
-          const SizedBox(width: Dimensions.paddingSizeExtraSmall),
+          // const SizedBox(height: 2),
 
           Text(restaurant.deliveryTime!, style: robotoRegular.copyWith(fontSize: Dimensions.fontSizeSmall - (scrollingRate * (isDesktop ? 2 : Dimensions.fontSizeSmall)), color: Theme.of(context).textTheme.bodyLarge!.color)),
         ]),
@@ -153,7 +154,7 @@ class InfoView extends StatelessWidget {
               longitude: restaurant.longitude, contactPersonNumber: '', contactPersonName: '', addressType: '',
             ), 'restaurant',
           )),
-          child: Row(children: [
+          child: Column(children: [
             Image.asset(Images.restaurantLocationIcon, height: 20 - (scrollingRate * (isDesktop ? 2 : 20)), width: 20 - (scrollingRate * (isDesktop ? 2 : 20)), color: Theme.of(context).primaryColor),
             const SizedBox(width: Dimensions.paddingSizeExtraSmall),
 
@@ -164,7 +165,7 @@ class InfoView extends StatelessWidget {
 
         InkWell(
           onTap: () => Get.toNamed(RouteHelper.getRestaurantReviewRoute(restaurant.id)),
-          child: Row(children: [
+          child: Column(children: [
             Row(children: [
               Icon(Icons.star, color: Theme.of(context).primaryColor, size: 20 - (scrollingRate * (isDesktop ? 2 : 20))),
               const SizedBox(width: Dimensions.paddingSizeExtraSmall),
@@ -184,8 +185,8 @@ class InfoView extends StatelessWidget {
 
         (restaurant.delivery! && restaurant.freeDelivery!) ? const Expanded(child: SizedBox()) : const SizedBox(),
 
-        (restaurant.delivery! && restaurant.freeDelivery!) ? Row(children: [
-          Icon(Icons.money_off, color: Theme.of(context).primaryColor, size: 16 - (scrollingRate * (isDesktop ? 2 : 16))),
+        (restaurant.delivery! && restaurant.freeDelivery!) ? Column(children: [
+          Icon(Icons.money_off, color: Theme.of(context).primaryColor, size: 20 - (scrollingRate * (isDesktop ? 2 : 20))),
           const SizedBox(width: Dimensions.paddingSizeExtraSmall),
           Text(
             'free_delivery'.tr,

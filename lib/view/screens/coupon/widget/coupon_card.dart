@@ -31,8 +31,8 @@ class CouponCard extends StatelessWidget {
           angle: Get.find<LocalizationController>().isLtr ? 0 : pi,
           child: Image.asset(
             Get.find<ThemeController>().darkTheme ? Images.couponBgDark : Images.couponBgLight,
-            height: ResponsiveHelper.isMobilePhone() ? 120 : 140, width: size.width,
-            fit: BoxFit.cover,
+            height: ResponsiveHelper.isMobilePhone() ? 120 : 150,
+            fit: ResponsiveHelper.isMobilePhone() ? BoxFit.cover : BoxFit.contain,
           ),
         ),
       ),

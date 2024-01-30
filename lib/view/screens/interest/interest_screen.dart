@@ -6,9 +6,9 @@ import 'package:efood_multivendor/util/dimensions.dart';
 import 'package:efood_multivendor/util/styles.dart';
 import 'package:efood_multivendor/view/base/custom_button.dart';
 import 'package:efood_multivendor/view/base/custom_image.dart';
-import 'package:efood_multivendor/view/base/footer_view.dart';
 import 'package:efood_multivendor/view/base/menu_drawer.dart';
 import 'package:efood_multivendor/view/base/no_data_screen.dart';
+
 import 'package:efood_multivendor/view/base/web_menu_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -21,6 +21,7 @@ class InterestScreen extends StatefulWidget {
 }
 
 class _InterestScreenState extends State<InterestScreen> {
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -52,6 +53,7 @@ class _InterestScreenState extends State<InterestScreen> {
 
                 Expanded(
                   child: GridView.builder(
+                    controller: _scrollController,
                     physics: const BouncingScrollPhysics(),
                     itemCount: categoryController.categoryList!.length,
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(

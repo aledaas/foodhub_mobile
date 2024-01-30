@@ -2,6 +2,7 @@ import 'package:efood_multivendor/util/app_constants.dart';
 import 'package:flutter/material.dart';
 
 ThemeData dark = ThemeData(
+  useMaterial3: false,
   fontFamily: AppConstants.fontFamily,
   primaryColor: const Color(0xFFFF8200),
   secondaryHeaderColor: const Color(0xFF009f67),

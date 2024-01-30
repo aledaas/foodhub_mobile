@@ -1,5 +1,8 @@
+import 'package:efood_multivendor/controller/auth_controller.dart';
 import 'package:efood_multivendor/controller/order_controller.dart';
 import 'package:efood_multivendor/controller/restaurant_controller.dart';
+import 'package:efood_multivendor/controller/splash_controller.dart';
+import 'package:efood_multivendor/helper/date_converter.dart';
 import 'package:efood_multivendor/helper/responsive_helper.dart';
 import 'package:efood_multivendor/util/dimensions.dart';
 import 'package:efood_multivendor/util/styles.dart';
@@ -19,10 +22,10 @@ class TimeSlotSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     bool isDesktop = ResponsiveHelper.isDesktop(context);
-    // final tooltipController2 = JustTheController();
+    bool isGuestLoggedIn = Get.find<AuthController>().isGuestLoggedIn();
 
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      (fromCart && !orderController.subscriptionOrder && restController.restaurant!.scheduleOrder!) ?  Container(
+      (!isGuestLoggedIn && fromCart && !orderController.subscriptionOrder && restController.restaurant!.scheduleOrder!) ?  Container(
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
@@ -68,6 +71,7 @@ class TimeSlotSection extends StatelessWidget {
                   builder: (con) => TimeSlotBottomSheet(
                     tomorrowClosed: tomorrowClosed,
                     todayClosed: todayClosed,
+                    restaurant: restController.restaurant!,
                   ),
                 );
               }
@@ -82,8 +86,11 @@ class TimeSlotSection extends StatelessWidget {
                 const SizedBox(width: Dimensions.paddingSizeLarge),
                 Expanded(child: Text(
                   (orderController.selectedDateSlot == 0 && todayClosed) ? 'restaurant_is_closed'.tr
-                      : orderController.preferableTime.isNotEmpty ? orderController.preferableTime : 'now'.tr,
-                  style: robotoRegular.copyWith(color: (orderController.selectedDateSlot == 0 && todayClosed) ? Theme.of(context).colorScheme.error : Theme.of(context).textTheme.bodyMedium!.color),
+                      : orderController.preferableTime.isNotEmpty ? orderController.preferableTime
+                      : (Get.find<SplashController>().configModel!.instantOrder! && restController.restaurant!.instantOrder!) ? 'now'.tr : 'select_preference_time'.tr,
+                  style: robotoRegular.copyWith(
+                      color: (orderController.selectedDateSlot == 0 && todayClosed) ? Theme.of(context).colorScheme.error
+                          : Theme.of(context).textTheme.bodyMedium!.color),
                 )),
 
                 Icon(Icons.access_time_filled_outlined, color: Theme.of(context).primaryColor),
@@ -94,7 +101,7 @@ class TimeSlotSection extends StatelessWidget {
 
           isDesktop && orderController.canShowTimeSlot ? Padding(
             padding: const EdgeInsets.only(top: Dimensions.paddingSizeLarge),
-            child: TimeSlotBottomSheet(tomorrowClosed: tomorrowClosed, todayClosed: todayClosed),
+            child: TimeSlotBottomSheet(tomorrowClosed: tomorrowClosed, todayClosed: todayClosed, restaurant: restController.restaurant!),
           ) : const SizedBox(),
 
           const SizedBox(height: Dimensions.paddingSizeLarge),

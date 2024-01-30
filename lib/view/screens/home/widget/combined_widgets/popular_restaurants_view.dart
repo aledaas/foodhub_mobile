@@ -36,10 +36,16 @@ class PopularRestaurantsView extends StatelessWidget {
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
                 ResponsiveHelper.isDesktop(context) ? Padding(
-                  padding: const EdgeInsets.only(bottom: Dimensions.paddingSizeOverLarge),
-                  child: Text(isRecentlyViewed ? 'your_restaurants'.tr : 'popular_restaurants'.tr,
-                    style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, fontWeight: FontWeight.w600),
-                  ),
+                  padding: const EdgeInsets.only(bottom: Dimensions.paddingSizeLarge),
+                  child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                    Text(isRecentlyViewed ? 'your_restaurants'.tr : 'popular_restaurants'.tr,
+                      style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, fontWeight: FontWeight.w600),
+                    ),
+
+                    ArrowIconButton(onTap: () {
+                      Get.toNamed(RouteHelper.getAllRestaurantRoute(isRecentlyViewed ? 'recently_viewed' : 'popular'));
+                    }),
+                  ]),
                 ) : Padding(
                   padding: const EdgeInsets.only(left: Dimensions.paddingSizeDefault, right: Dimensions.paddingSizeDefault, bottom: Dimensions.paddingSizeLarge),
                   child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
@@ -63,6 +69,7 @@ class PopularRestaurantsView extends StatelessWidget {
                     itemBuilder: (context, index) {
                       bool isAvailable = restaurantList[index].open == 1 && restaurantList[index].active!;
                       return InkWell(
+                        hoverColor: Colors.transparent,
                         onTap: () => Get.toNamed(RouteHelper.getRestaurantRoute(restaurantList[index].id),
                           arguments: RestaurantScreen(restaurant: restaurantList[index]),
                         ),
@@ -260,7 +267,7 @@ class PopularRestaurantShimmer extends StatelessWidget {
           scrollDirection: Axis.horizontal,
           physics: const NeverScrollableScrollPhysics(),
           padding: EdgeInsets.only(left: ResponsiveHelper.isMobile(context) ? Dimensions.paddingSizeDefault : 0, right: ResponsiveHelper.isMobile(context) ? Dimensions.paddingSizeDefault : 0),
-          itemCount: 4,
+          itemCount: 7,
           itemBuilder: (context, index) {
             return Shimmer(
               duration: const Duration(seconds: 2),

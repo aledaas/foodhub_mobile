@@ -23,7 +23,9 @@ class PaymentScreen extends StatefulWidget {
   final String paymentMethod;
   final String? addFundUrl;
   final String? subscriptionUrl;
-  const PaymentScreen({Key? key, required this.orderModel, required this.paymentMethod, this.addFundUrl, this.subscriptionUrl}) : super(key: key);
+  final String guestId;
+  final String contactNumber;
+  const PaymentScreen({Key? key, required this.orderModel, required this.paymentMethod, this.addFundUrl, this.subscriptionUrl, required this.guestId, required this.contactNumber}) : super(key: key);
 
   @override
   PaymentScreenState createState() => PaymentScreenState();
@@ -41,9 +43,7 @@ class PaymentScreenState extends State<PaymentScreen> {
   void initState() {
     super.initState();
     if(widget.addFundUrl == '' && widget.addFundUrl!.isEmpty && widget.subscriptionUrl == '' && widget.subscriptionUrl!.isEmpty) {
-      selectedUrl = '${AppConstants.baseUrl}/payment-mobile?customer_id=${widget.orderModel
-          .userId}&order_id=${widget.orderModel.id}&payment_method=${widget
-          .paymentMethod}';
+      selectedUrl = '${AppConstants.baseUrl}/payment-mobile?customer_id=${widget.orderModel.userId == 0 ? widget.guestId : widget.orderModel.userId}&order_id=${widget.orderModel.id}&payment_method=${widget.paymentMethod}';
     } else if(widget.subscriptionUrl != '' && widget.subscriptionUrl!.isNotEmpty){
       selectedUrl = widget.subscriptionUrl!;
     } else {
@@ -59,7 +59,7 @@ class PaymentScreenState extends State<PaymentScreen> {
       maxCodOrderAmount = zoneData.maxCodOrderAmount;
     }
 
-    browser = MyInAppBrowser(orderID: widget.orderModel.id.toString(), orderAmount: widget.orderModel.orderAmount, maxCodOrderAmount: maxCodOrderAmount, addFundUrl: widget.addFundUrl, subscriptionUrl: widget.subscriptionUrl);
+    browser = MyInAppBrowser(orderID: widget.orderModel.id.toString(), orderAmount: widget.orderModel.orderAmount, maxCodOrderAmount: maxCodOrderAmount, addFundUrl: widget.addFundUrl, subscriptionUrl: widget.subscriptionUrl, contactNumber: widget.contactNumber);
 
     if (Platform.isAndroid) {
       await AndroidInAppWebViewController.setWebContentsDebuggingEnabled(true);
@@ -130,9 +130,10 @@ class PaymentScreenState extends State<PaymentScreen> {
   Future<bool?> _exitApp() async {
     if (kDebugMode) {
       print('---------- : ${widget.orderModel.orderStatus} / ${widget.orderModel.paymentMethod}/ ${widget.orderModel.id}');
+      print('---check------- : ${widget.addFundUrl == null} && ${widget.addFundUrl!.isEmpty} && ${widget.subscriptionUrl == ''} && ${widget.subscriptionUrl!.isEmpty}');
     }
-    if(widget.addFundUrl == null && widget.addFundUrl!.isEmpty && widget.subscriptionUrl == '' && widget.subscriptionUrl!.isEmpty){
-      return Get.dialog(PaymentFailedDialog(orderID: widget.orderModel.id.toString(), orderAmount: widget.orderModel.orderAmount, maxCodOrderAmount: maxCodOrderAmount));
+    if((widget.addFundUrl == null || widget.addFundUrl!.isEmpty) && widget.subscriptionUrl == '' && widget.subscriptionUrl!.isEmpty){
+      return Get.dialog(PaymentFailedDialog(orderID: widget.orderModel.id.toString(), orderAmount: widget.orderModel.orderAmount, maxCodOrderAmount: maxCodOrderAmount, contactPersonNumber: widget.contactNumber));
     } else {
       return Get.dialog(FundPaymentDialog(isSubscription: widget.subscriptionUrl != null && widget.subscriptionUrl!.isNotEmpty));
     }
@@ -146,7 +147,8 @@ class MyInAppBrowser extends InAppBrowser {
   final double? maxCodOrderAmount;
   final String? addFundUrl;
   final String? subscriptionUrl;
-  MyInAppBrowser({required this.orderID, required this.orderAmount, required this.maxCodOrderAmount, int? windowId, UnmodifiableListView<UserScript>? initialUserScripts, this.addFundUrl, this.subscriptionUrl})
+  final String? contactNumber;
+  MyInAppBrowser({required this.orderID, required this.orderAmount, required this.maxCodOrderAmount, this.contactNumber, int? windowId, UnmodifiableListView<UserScript>? initialUserScripts, this.addFundUrl, this.subscriptionUrl})
       : super(windowId: windowId, initialUserScripts: initialUserScripts);
 
   bool _canRedirect = true;
@@ -163,7 +165,7 @@ class MyInAppBrowser extends InAppBrowser {
     if (kDebugMode) {
       print("\n\nStarted: $url\n\n");
     }
-    _redirect(url.toString());
+    _redirect(url.toString(), contactNumber);
   }
 
   @override
@@ -172,7 +174,7 @@ class MyInAppBrowser extends InAppBrowser {
     if (kDebugMode) {
       print("\n\nStopped: $url\n\n");
     }
-    _redirect(url.toString());
+    _redirect(url.toString(), contactNumber);
   }
 
   @override
@@ -197,8 +199,8 @@ class MyInAppBrowser extends InAppBrowser {
   void onExit() {
     if(_canRedirect) {
       // Get.dialog(PaymentFailedDialog(orderID: orderID, orderAmount: orderAmount, maxCodOrderAmount: maxCodOrderAmount));
-      if(addFundUrl == null && addFundUrl!.isEmpty && subscriptionUrl == '' && subscriptionUrl!.isEmpty){
-        Get.dialog(PaymentFailedDialog(orderID: orderID, orderAmount: orderAmount, maxCodOrderAmount: maxCodOrderAmount));
+      if((addFundUrl == null || addFundUrl!.isEmpty) && subscriptionUrl == '' && subscriptionUrl!.isEmpty){
+        Get.dialog(PaymentFailedDialog(orderID: orderID, orderAmount: orderAmount, maxCodOrderAmount: maxCodOrderAmount, contactPersonNumber: contactNumber,));
       } else {
         Get.dialog(FundPaymentDialog(isSubscription: subscriptionUrl != null && subscriptionUrl!.isNotEmpty));
       }
@@ -234,7 +236,7 @@ class MyInAppBrowser extends InAppBrowser {
     }
   }
 
-  void _redirect(String url) {
+  void _redirect(String url, String? contactNumber) {
     if(_canRedirect) {
       bool isSuccess = url.contains('${AppConstants.baseUrl}/payment-success');
       bool isFailed = url.contains('${AppConstants.baseUrl}/payment-fail');
@@ -248,9 +250,9 @@ class MyInAppBrowser extends InAppBrowser {
         if (isSuccess) {
           double total = ((orderAmount! / 100) * Get.find<SplashController>().configModel!.loyaltyPointItemPurchasePoint!);
           Get.find<AuthController>().saveEarningPoint(total.toStringAsFixed(0));
-          Get.offNamed(RouteHelper.getOrderSuccessRoute(orderID, 'success', orderAmount));
+          Get.offNamed(RouteHelper.getOrderSuccessRoute(orderID, 'success', orderAmount, contactNumber));
         } else if (isFailed || isCancel) {
-          Get.offNamed(RouteHelper.getOrderSuccessRoute(orderID, 'fail', orderAmount));
+          Get.offNamed(RouteHelper.getOrderSuccessRoute(orderID, 'fail', orderAmount, contactNumber));
         }
       } else{
         if(isSuccess || isFailed || isCancel) {

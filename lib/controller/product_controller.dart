@@ -1,5 +1,6 @@
 import 'package:efood_multivendor/controller/cart_controller.dart';
 import 'package:efood_multivendor/data/api/api_checker.dart';
+import 'package:efood_multivendor/data/model/body/place_order_body.dart';
 import 'package:efood_multivendor/data/model/body/review_body.dart';
 import 'package:efood_multivendor/data/model/response/cart_model.dart';
 import 'package:efood_multivendor/data/model/response/order_details_model.dart';
@@ -7,8 +8,14 @@ import 'package:efood_multivendor/data/model/response/product_model.dart';
 import 'package:efood_multivendor/data/model/response/response_model.dart';
 import 'package:efood_multivendor/data/repository/product_repo.dart';
 import 'package:efood_multivendor/helper/date_converter.dart';
+import 'package:efood_multivendor/helper/price_converter.dart';
+import 'package:efood_multivendor/helper/responsive_helper.dart';
 import 'package:efood_multivendor/util/dimensions.dart';
+import 'package:efood_multivendor/util/images.dart';
+import 'package:efood_multivendor/view/base/cart_snackbar.dart';
+import 'package:efood_multivendor/view/base/confirmation_dialog.dart';
 import 'package:efood_multivendor/view/base/custom_snackbar.dart';
+import 'package:efood_multivendor/view/base/product_bottom_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -144,6 +151,7 @@ class ProductController extends GetxController implements GetxService {
       }
 
     }
+    setExistInCartForBottomSheet(product, selectedVariations);
   }
 
   int selectedVariationLength(List<List<bool?>> selectedVariations, int index) {
@@ -189,6 +197,32 @@ class ProductController extends GetxController implements GetxService {
           _addOnQtyList.add(1);
         }
       }
+    }
+    return _cartIndex;
+  }
+
+  int setExistInCartForBottomSheet(Product product, List<List<bool?>>? selectedVariations, {bool notify = true}) {
+
+    _cartIndex = Get.find<CartController>().isExistInCartForBottomSheet(product.id, null, selectedVariations);
+    if(_cartIndex != -1) {
+      _quantity = Get.find<CartController>().cartList[_cartIndex].quantity;
+      _addOnActiveList = [];
+      _addOnQtyList = [];
+      List<int?> addOnIdList = [];
+      for (var addOnId in Get.find<CartController>().cartList[_cartIndex].addOnIds!) {
+        addOnIdList.add(addOnId.id);
+      }
+      for (var addOn in product.addOns!) {
+        if(addOnIdList.contains(addOn.id)) {
+          _addOnActiveList.add(true);
+          _addOnQtyList.add(Get.find<CartController>().cartList[_cartIndex].addOnIds![addOnIdList.indexOf(addOn.id)].quantity);
+        }else {
+          _addOnActiveList.add(false);
+          _addOnQtyList.add(1);
+        }
+      }
+    } else {
+      _quantity = 1;
     }
     return _cartIndex;
   }
@@ -362,5 +396,66 @@ class ProductController extends GetxController implements GetxService {
   double? getDiscount(Product product) => product.restaurantDiscount == 0 ? product.discount : product.restaurantDiscount;
 
   String? getDiscountType(Product product) => product.restaurantDiscount == 0 ? product.discountType : 'percent';
+
+  void productDirectlyAddToCart(Product? product, BuildContext context, {bool inStore = false, bool isCampaign = false}) {
+
+    print('------check : ${product!.variations == null || (product.variations != null && product.variations!.isEmpty)}');
+    print('------check item : ${product.toJson()}');
+    if (product.variations == null || (product.variations != null && product.variations!.isEmpty)) {
+      double price = product.price!;
+      double discount = product.discount!;
+      double discountPrice = PriceConverter.convertWithDiscount(price, discount, product.discountType)!;
+
+      // CartModel cartModel = CartModel(
+      //   null, price, discount, [], [], (price - discountPrice), 1, [], [], isCampaign,
+      //   product.stock, product, product.quantityLimit != null ? product.quantityLimit! : null,
+      // );
+
+      CartModel cartModel = CartModel(
+        null, price, discountPrice, (price - discountPrice),
+        1, [], [], false, product, [], product.quantityLimit,
+      );
+
+      // OnlineCart onlineCart = OnlineCart(
+      //   null, isCampaign ? null : product.id, isCampaign ? product.id : null, price.toString(),
+      //   '', null, Get.find<SplashController>().getModuleConfig(product.moduleType).newVariation! ? [] : null,
+      //   1, [], [], [], 'Item',
+      // );
+
+      OnlineCart onlineCart = OnlineCart(
+        null, isCampaign ? null : product.id, isCampaign ? product.id : null,
+        discountPrice.toString(), [], 1, [], [], [], 'Food',
+      );
+
+      Get.find<ProductController>().setExistInCart(product);
+
+      if (Get.find<CartController>().existAnotherRestaurantProduct(cartModel.product!.restaurantId)) {
+        Get.dialog(ConfirmationDialog(
+          icon: Images.warning,
+          title: 'are_you_sure_to_reset'.tr,
+          description: 'if_you_continue'.tr,
+          onYesPressed: () {
+            Get.find<CartController>().clearCartOnline().then((success) async {
+              if (success) {
+                await Get.find<CartController>().addToCartOnline(onlineCart);
+                Get.back();
+                showCartSnackBar();
+              }
+            });
+          },
+        ), barrierDismissible: false);
+      } else {
+        Get.find<CartController>().addToCartOnline(onlineCart);
+        showCartSnackBar();
+      }
+    } else {
+      ResponsiveHelper.isMobile(context) ? Get.bottomSheet(
+        ProductBottomSheet(product: product, isCampaign: false),
+        backgroundColor: Colors.transparent, isScrollControlled: true,
+      ) : Get.dialog(
+        Dialog(child: ProductBottomSheet(product: product, isCampaign: false)),
+      );
+    }
+  }
 
 }

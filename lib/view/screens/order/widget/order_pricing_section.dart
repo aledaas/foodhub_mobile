@@ -23,7 +23,8 @@ class OrderPricingSection extends StatelessWidget {
   final double total;
   final OrderController orderController;
   final int? orderId;
-  const OrderPricingSection({Key? key, required this.itemsPrice, required this.addOns, required this.order, required this.subTotal, required this.discount, required this.couponDiscount, required this.tax, required this.dmTips, required this.deliveryCharge, required this.total, required this.orderController, this.orderId}) : super(key: key);
+  final String? contactNumber;
+  const OrderPricingSection({Key? key, required this.itemsPrice, required this.addOns, required this.order, required this.subTotal, required this.discount, required this.couponDiscount, required this.tax, required this.dmTips, required this.deliveryCharge, required this.total, required this.orderController, this.orderId, this.contactNumber}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -212,7 +213,7 @@ class OrderPricingSection extends StatelessWidget {
           ]),
         ),
 
-        ResponsiveHelper.isDesktop(context) ? BottomViewWidget(orderController: orderController, order: order, orderId: orderId, total: total) : const SizedBox(),
+        ResponsiveHelper.isDesktop(context) ? BottomViewWidget(orderController: orderController, order: order, orderId: orderId, total: total, contactNumber: contactNumber) : const SizedBox(),
 
       ]),
     );

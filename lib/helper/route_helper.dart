@@ -1,14 +1,17 @@
 import 'dart:convert';
 
+import 'package:efood_multivendor/controller/auth_controller.dart';
 import 'package:efood_multivendor/controller/location_controller.dart';
 import 'package:efood_multivendor/controller/splash_controller.dart';
 import 'package:efood_multivendor/data/model/body/deep_link_body.dart';
 import 'package:efood_multivendor/data/model/body/notification_body.dart';
+import 'package:efood_multivendor/data/model/body/place_order_body.dart';
 import 'package:efood_multivendor/data/model/body/social_log_in_body.dart';
 import 'package:efood_multivendor/data/model/response/address_model.dart';
 import 'package:efood_multivendor/data/model/response/basic_campaign_model.dart';
 import 'package:efood_multivendor/data/model/response/conversation_model.dart';
 import 'package:efood_multivendor/data/model/response/order_model.dart';
+import 'package:efood_multivendor/data/model/response/pricing_view_model.dart';
 import 'package:efood_multivendor/data/model/response/product_model.dart';
 import 'package:efood_multivendor/data/model/response/restaurant_model.dart';
 import 'package:efood_multivendor/util/app_constants.dart';
@@ -29,6 +32,7 @@ import 'package:efood_multivendor/view/screens/category/category_screen.dart';
 import 'package:efood_multivendor/view/screens/chat/chat_screen.dart';
 import 'package:efood_multivendor/view/screens/chat/conversation_screen.dart';
 import 'package:efood_multivendor/view/screens/checkout/checkout_screen.dart';
+import 'package:efood_multivendor/view/screens/checkout/offline_payment_screen.dart';
 import 'package:efood_multivendor/view/screens/checkout/order_successful_screen.dart';
 import 'package:efood_multivendor/view/screens/checkout/payment_screen.dart';
 import 'package:efood_multivendor/view/screens/checkout/payment_webview_screen.dart';
@@ -50,6 +54,7 @@ import 'package:efood_multivendor/view/screens/location/map_screen.dart';
 import 'package:efood_multivendor/view/screens/location/pick_map_screen.dart';
 import 'package:efood_multivendor/view/screens/notification/notification_screen.dart';
 import 'package:efood_multivendor/view/screens/onboard/onboarding_screen.dart';
+import 'package:efood_multivendor/view/screens/order/guest_track_order_screen.dart';
 import 'package:efood_multivendor/view/screens/order/order_details_screen.dart';
 import 'package:efood_multivendor/view/screens/order/order_screen.dart';
 import 'package:efood_multivendor/view/screens/order/order_tracking_screen.dart';
@@ -128,6 +133,8 @@ class RouteHelper {
   static const String cuisine = '/cuisine';
   static const String cuisineRestaurant = '/cuisine-restaurant';
   static const String subscriptionSuccess = '/subscription-success';
+  static const String offlinePaymentScreen = '/offline-payment-screen';
+  static const String guestTrackOrderScreen = '/guest-track-order-screen';
 
   static String getInitialRoute({bool fromSplash = false}) => '$initial?from-splash=$fromSplash';
   static String getSplashRoute(NotificationBody? body, DeepLinkBody? linkBody) {
@@ -174,8 +181,8 @@ class RouteHelper {
     }
     return '$restaurant?id=$id';
   }
-  static String getOrderDetailsRoute(int? orderID) {
-    return '$orderDetails?id=$orderID';
+  static String getOrderDetailsRoute(int? orderID, {bool? fromOffline, String? contactNumber, bool fromGuestTrack = false}) {
+    return '$orderDetails?id=$orderID&from_offline=$fromOffline&contact=$contactNumber&from_guest_track=$fromGuestTrack';
   }
   static String getProfileRoute() => profile;
   static String getUpdateProfileRoute() => updateProfile;
@@ -187,14 +194,14 @@ class RouteHelper {
     return '$map?address=$data&page=$page';
   }
   static String getAddressRoute() => address;
-  static String getOrderSuccessRoute(String orderID, String status, double? amount,
-      ) => '$orderSuccess?id=$orderID&status=$status&amount=$amount';
-  static String getPaymentRoute(OrderModel orderModel, String? paymentMethod, {String? addFundUrl, String? subscriptionUrl}) {
+  static String getOrderSuccessRoute(String orderID, String status, double? amount, String? contactNumber
+      ) => '$orderSuccess?id=$orderID&status=$status&amount=$amount&contact_number=$contactNumber';
+  static String getPaymentRoute(OrderModel orderModel, String? paymentMethod, {String? addFundUrl, String? subscriptionUrl, required String guestId, String? contactNumber}) {
     String data = base64Encode(utf8.encode(jsonEncode(orderModel.toJson())));
-    return '$payment?order=$data&payment-method=$paymentMethod&add-fund-url=$addFundUrl&subscription-url=$subscriptionUrl';
+    return '$payment?order=$data&payment-method=$paymentMethod&add-fund-url=$addFundUrl&subscription-url=$subscriptionUrl&guest-id=$guestId&number=$contactNumber';
   }
   static String getCheckoutRoute(String page) => '$checkout?page=$page';
-  static String getOrderTrackingRoute(int? id) => '$orderTracking?id=$id';
+  static String getOrderTrackingRoute(int? id, String? contactNumber) => '$orderTracking?id=$id&contact_number=$contactNumber';
   static String getBasicCampaignRoute(BasicCampaignModel basicCampaignModel) {
     String data = base64Encode(utf8.encode(jsonEncode(basicCampaignModel.toJson())));
     return '$basicCampaign?data=$data';
@@ -206,16 +213,19 @@ class RouteHelper {
     String data = base64Encode(encoded);
     return '$categoryProduct?id=$id&name=$data';
   }
-  static String getPopularFoodRoute(bool isPopular, {bool fromIsRestaurantFood = false}) => '$popularFoods?page=${isPopular ? 'popular' : 'reviewed'}&fromIsRestaurantFood=${fromIsRestaurantFood.toString()}';
+  static String getPopularFoodRoute(bool isPopular, {bool fromIsRestaurantFood = false, int? restaurantId}) => '$popularFoods?page=${isPopular ? 'popular' : 'reviewed'}&fromIsRestaurantFood=$fromIsRestaurantFood&restaurant_id=$restaurantId';
   static String getItemCampaignRoute() => itemCampaign;
   static String getSupportRoute() => support;
   static String getReviewRoute() => rateReview;
   static String getUpdateRoute(bool isUpdate) => '$update?update=${isUpdate.toString()}';
-  static String getCartRoute() => cart;
+  static String getCartRoute({bool fromReorder = false}) => '$cart?from_reorder=$fromReorder';
   static String getAddAddressRoute(bool fromCheckout, int? zoneId) => '$addAddress?page=${fromCheckout ? 'checkout' : 'address'}&zone_id=$zoneId';
-  static String getEditAddressRoute(AddressModel address) {
-    String data = base64Url.encode(utf8.encode(jsonEncode(address.toJson())));
-    return '$editAddress?data=$data';
+  static String getEditAddressRoute(AddressModel? address, {bool fromGuest = false}) {
+    String data = 'null';
+    if(address != null) {
+      data = base64Url.encode(utf8.encode(jsonEncode(address.toJson())));
+    }
+    return '$editAddress?data=$data&from-guest=$fromGuest';
   }
   static String getRestaurantReviewRoute(int? restaurantID) => '$restaurantReview?id=$restaurantID';
   static String getAllRestaurantRoute(String page) => '$allRestaurants?page=$page';
@@ -247,6 +257,16 @@ class RouteHelper {
   static String getCuisineRoute() => cuisine;
   static String getCuisineRestaurantRoute(int? cuisineId, String? name) => '$cuisineRestaurant?id=$cuisineId&name=$name';
   static String getSubscriptionSuccessRoute(String? status) => '$subscriptionSuccess?flag=$status';
+  static String getOfflinePaymentScreen({
+    required PlaceOrderBody placeOrderBody, required int? zoneId, required double total, required double? maxCodOrderAmount, required bool fromCart,
+    required bool? isCodActive, required PricingViewModel pricingView}) {
+    List<int> encoded = utf8.encode(jsonEncode(placeOrderBody.toJson()));
+    List<int> encoded2 = utf8.encode(jsonEncode(pricingView.toJson()));
+    String data = base64Encode(encoded);
+    String pricingData = base64Encode(encoded2);
+    return '$offlinePaymentScreen?order_body=$data&zone_id=$zoneId&total=$total&max_cod_amount=$maxCodOrderAmount&from_cart=$fromCart&cod_active=$isCodActive&pricing_body=$pricingData';
+  }
+  static String getGuestTrackOrderScreen(String orderId, String number) => '$guestTrackOrderScreen?order_id=$orderId&number=$number';
 
   static List<GetPage> routes = [
     GetPage(name: initial, page: () => getRoute(DashboardScreen(pageIndex: 0, fromSplash: (Get.parameters['from-splash'] == 'true')))),
@@ -313,7 +333,13 @@ class RouteHelper {
       ), byPuss: Get.parameters['slug']?.isNotEmpty ?? false);
     }),
     GetPage(name: orderDetails, page: () {
-      return getRoute(Get.arguments ?? OrderDetailsScreen(orderId: int.parse(Get.parameters['id'] ?? '0'), orderModel: null));
+      return getRoute(Get.arguments ?? OrderDetailsScreen(
+        orderId: int.parse(Get.parameters['id'] ?? '0'),
+        orderModel: null, fromOfflinePayment: Get.parameters['from_offline'] == 'true',
+        contactNumber: Get.parameters['contact'],
+        fromGuestTrack: Get.parameters['from_guest_track'] == 'true',
+
+      ));
     }),
     GetPage(name: profile, page: () => getRoute(const ProfileScreen())),
     GetPage(name: updateProfile, page: () => getRoute(const UpdateProfileScreen())),
@@ -330,6 +356,9 @@ class RouteHelper {
         orderID: Get.parameters['id'],
         status: Get.parameters['status'] != null ? (Get.parameters['status']!.contains('success') ? 1 : 0) : (Get.parameters['flag'] == 'success' ? 1 : 0),
         totalAmount: null,
+        contactPersonNumber: Get.parameters['contact_number'] != null && Get.parameters['contact_number'] != 'null'
+            ? Get.parameters['contact_number']
+            : Get.find<AuthController>().isGuestLoggedIn() ? Get.find<AuthController>().getGuestNumber() : null,
       ));
     }),
     GetPage(name: payment, page: () {
@@ -343,9 +372,14 @@ class RouteHelper {
       if(Get.parameters['subscription-url'] != null && Get.parameters['subscription-url'] != 'null'){
         subscriptionUrl = Get.parameters['subscription-url']!;
       }
+      String guestId = Get.parameters['guest-id']!;
+      String number = Get.parameters['number']!;
       return getRoute(AppConstants.payInWevView ? PaymentWebViewScreen(
-        orderModel: data, paymentMethod: paymentMethod, addFundUrl: addFundUrl, subscriptionUrl: subscriptionUrl
-      ) : PaymentScreen(orderModel: data, paymentMethod: paymentMethod, addFundUrl: addFundUrl, subscriptionUrl: subscriptionUrl));
+        orderModel: data, paymentMethod: paymentMethod, addFundUrl: addFundUrl, subscriptionUrl: subscriptionUrl,
+        guestId: guestId, contactNumber: number,
+      ) : PaymentScreen(orderModel: data, paymentMethod: paymentMethod, addFundUrl: addFundUrl, subscriptionUrl: subscriptionUrl,
+        guestId: guestId, contactNumber: number,
+      ));
     }),
     GetPage(name: checkout, page: () {
       CheckoutScreen? checkoutScreen = Get.arguments;
@@ -354,7 +388,7 @@ class RouteHelper {
         cartList: null, fromCart: Get.parameters['page'] == 'cart',
       )));
     }),
-    GetPage(name: orderTracking, page: () => getRoute(OrderTrackingScreen(orderID: Get.parameters['id']))),
+    GetPage(name: orderTracking, page: () => getRoute(OrderTrackingScreen(orderID: Get.parameters['id'], contactNumber: Get.parameters['contact_number']))),
     GetPage(name: basicCampaign, page: () {
       BasicCampaignModel data = BasicCampaignModel.fromJson(jsonDecode(utf8.decode(base64Decode(Get.parameters['data']!.replaceAll(' ', '+')))));
       return getRoute(CampaignScreen(campaign: data));
@@ -372,16 +406,26 @@ class RouteHelper {
       String data = utf8.decode(decode);
       return getRoute(CategoryProductScreen(categoryID: Get.parameters['id'], categoryName: data));
     }),
-    GetPage(name: popularFoods, page: () => getRoute(PopularFoodScreen(isPopular: Get.parameters['page'] == 'popular', fromIsRestaurantFood: Get.parameters['fromIsRestaurantFood'] == 'true'))),
+    GetPage(name: popularFoods, page: () {
+      return getRoute(PopularFoodScreen(
+        isPopular: Get.parameters['page'] == 'popular', fromIsRestaurantFood: Get.parameters['fromIsRestaurantFood'] == 'true',
+        restaurantId: (Get.parameters['restaurant_id'] != null && Get.parameters['restaurant_id'] != 'null') ? int.parse(Get.parameters['restaurant_id']!) : null,
+      ));
+    }),
     GetPage(name: itemCampaign, page: () => getRoute(const ItemCampaignScreen())),
     GetPage(name: support, page: () => getRoute(const SupportScreen())),
     GetPage(name: update, page: () => UpdateScreen(isUpdate: Get.parameters['update'] == 'true')),
-    GetPage(name: cart, page: () => getRoute(const CartScreen(fromNav: false))),
+    GetPage(name: cart, page: () => getRoute(CartScreen(fromNav: false, fromReorder: Get.parameters['from_reorder'] == 'true'))),
     GetPage(name: addAddress, page: () => getRoute(AddAddressScreen(fromCheckout: Get.parameters['page'] == 'checkout', zoneId: int.parse(Get.parameters['zone_id']!)))),
-    GetPage(name: editAddress, page: () => getRoute(AddAddressScreen(
-      fromCheckout: false,
-      address: AddressModel.fromJson(jsonDecode(utf8.decode(base64Url.decode(Get.parameters['data']!.replaceAll(' ', '+'))))),
-    ))),
+    GetPage(name: editAddress, page: () {
+      AddressModel? data;
+      if(Get.parameters['data'] != 'null') {
+        data = AddressModel.fromJson(jsonDecode(utf8.decode(base64Url.decode(Get.parameters['data']!.replaceAll(' ', '+')))));
+      }
+      return getRoute(AddAddressScreen(
+        fromCheckout: false, address: data, forGuest: Get.parameters['from-guest'] == 'true',
+      ));
+    }),
     GetPage(name: rateReview, page: () => getRoute(Get.arguments ?? const NotFound())),
     GetPage(name: restaurantReview, page: () => getRoute(ReviewScreen(restaurantID: Get.parameters['id']))),
     GetPage(name: allRestaurants, page: () => getRoute(
@@ -423,6 +467,23 @@ class RouteHelper {
     GetPage(name: cuisine, page: () => getRoute(const CuisineScreen())),
     GetPage(name: cuisineRestaurant, page: () => getRoute(CuisineRestaurantScreen(cuisineId: int.parse(Get.parameters['id']!), name: Get.parameters['name']))),
     GetPage(name: subscriptionSuccess, page: () => getRoute(SubscriptionSuccessScreen(success: Get.parameters['flag'] == 'success'))),
+    GetPage(name: offlinePaymentScreen, page: () {
+      List<int> decode = base64Decode(Get.parameters['order_body']!.replaceAll(' ', '+'));
+      PlaceOrderBody orderBody = PlaceOrderBody.fromJson(jsonDecode(utf8.decode(decode)));
+
+      List<int> decode2 = base64Decode(Get.parameters['pricing_body']!.replaceAll(' ', '+'));
+      PricingViewModel pricingViewBody = PricingViewModel.fromJson(jsonDecode(utf8.decode(decode2)));
+
+      return OfflinePaymentScreen(
+        placeOrderBody: orderBody, zoneId: int.parse(Get.parameters['zone_id']!),
+        total: double.parse(Get.parameters['total']!),
+        maxCodOrderAmount: (Get.parameters['max_cod_amount'] != null && Get.parameters['max_cod_amount'] != 'null') ? double.parse(Get.parameters['max_cod_amount']!) : null,
+        fromCart: Get.parameters['from_cart'] == 'true', isCashOnDeliveryActive: Get.parameters['cod_active'] == 'true', pricingView: pricingViewBody,
+      );
+    }),
+    GetPage(name: guestTrackOrderScreen, page: () => GuestTrackOrderScreen(
+      orderId: Get.parameters['order_id']!, number: Get.parameters['number']!,
+    )),
   ];
 
   static getRoute(Widget? navigateTo, {bool byPuss = false}) {

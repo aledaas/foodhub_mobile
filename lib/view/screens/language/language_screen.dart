@@ -40,7 +40,7 @@ class _ChooseLanguageScreenState extends State<ChooseLanguageScreen> {
             Expanded(child: Center(
               child: Container(
                 decoration: const BoxDecoration(
-                  image: DecorationImage(image: AssetImage(Images.languageBackground),)
+                    image: DecorationImage(image: AssetImage(Images.languageBackground),)
                 ),
                 child: Scrollbar(
                   controller: scrollController,
@@ -54,7 +54,7 @@ class _ChooseLanguageScreenState extends State<ChooseLanguageScreen> {
                         child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
 
                           !ResponsiveHelper.isDesktop(context) ? Column(children: [
-                              Center(child: Image.asset(Images.logo, width: 100)),
+                            Center(child: Image.asset(Images.logo, width: 60)),
                             const SizedBox(height: Dimensions.paddingSizeSmall),
                             Center(child: Image.asset(Images.logoName, width: 100)),
                           ]) : const SizedBox(),
@@ -66,7 +66,7 @@ class _ChooseLanguageScreenState extends State<ChooseLanguageScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeExtraSmall),
                             child: Text('select_language'.tr, style: robotoMedium),
                           ),
-                          const SizedBox(height: Dimensions.paddingSizeExtraSmall),
+                          const SizedBox(height: Dimensions.paddingSizeSmall),
 
                           Directionality(
                             textDirection: TextDirection.ltr,
@@ -74,17 +74,17 @@ class _ChooseLanguageScreenState extends State<ChooseLanguageScreen> {
                               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: ResponsiveHelper.isDesktop(context) ? 2 : ResponsiveHelper.isTab(context) ? 3 : 2,
                                 childAspectRatio: ResponsiveHelper.isDesktop(context) ? 6 : (1/1),
-                                mainAxisSpacing: Dimensions.paddingSizeSmall,
-                                crossAxisSpacing: Dimensions.paddingSizeSmall,
+                                mainAxisSpacing: Dimensions.paddingSizeDefault,
+                                crossAxisSpacing: Dimensions.paddingSizeDefault,
                               ),
                               itemCount: localizationController.languages.length,
                               physics: const NeverScrollableScrollPhysics(),
                               shrinkWrap: true,
-                              padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall),
+                              padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeDefault),
                               itemBuilder: (context, index) => ResponsiveHelper.isDesktop(context) ? WebLanguageWidget(
-                                  languageModel: localizationController.languages[index],
-                                  localizationController: localizationController, index: index,
-                                ) : LanguageWidget(
+                                languageModel: localizationController.languages[index],
+                                localizationController: localizationController, index: index,
+                              ) : LanguageWidget(
                                 languageModel: localizationController.languages[index],
                                 localizationController: localizationController, index: index,
                               ),
@@ -131,6 +131,7 @@ class LanguageSaveButton extends StatelessWidget {
 
       CustomButton(
         radius: 10,
+        color: const Color(0xFF00B263),
         buttonText: 'save'.tr,
         margin: const EdgeInsets.all(Dimensions.paddingSizeSmall),
         onPressed: () {

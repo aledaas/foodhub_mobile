@@ -50,7 +50,10 @@ class _FooterViewState extends State<FooterView> {
             child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,crossAxisAlignment: CrossAxisAlignment.start, children: [
               Expanded(flex: 4, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 const SizedBox(height: Dimensions.paddingSizeExtraLarge),
-                Image.asset(Images.logo, width: 126, height: 40),
+                Row(children: [
+                  Image.asset(Images.logo, width: 60, height: 40),
+                  Image.asset(Images.logoName, height: 40, width: 100),
+                ]),
                 const SizedBox(height: Dimensions.paddingSizeSmall),
 
 
@@ -187,8 +190,8 @@ class _FooterViewState extends State<FooterView> {
                             FooterButton(title: 'about_us'.tr, route: RouteHelper.getHtmlRoute('about-us')),
                             const SizedBox(height: Dimensions.paddingSizeSmall),
 
-                            FooterButton(title: 'find_stores'.tr, route: RouteHelper.getAllRestaurantRoute('popular')),
-                            const SizedBox(height: Dimensions.paddingSizeSmall),
+                            // FooterButton(title: 'find_stores'.tr, route: RouteHelper.getAllRestaurantRoute('popular')),
+                            // const SizedBox(height: Dimensions.paddingSizeSmall),
 
                             FooterButton(title: 'categories'.tr, route: RouteHelper.getCategoryRoute()),
                             const SizedBox(height: Dimensions.paddingSizeSmall),
@@ -304,47 +307,56 @@ class _FooterViewState extends State<FooterView> {
             child: Center(
               child: SizedBox(
                 width: Dimensions.webMaxWidth,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Text(
                       '© ${_config!.footerText ?? ''}',
                       style: robotoRegular.copyWith(color: _color, fontSize: Dimensions.fontSizeExtraSmall, fontWeight: FontWeight.w100),
                     ),
-
-                    GetBuilder<LocalizationController>(builder: (localizationController) {
-                      int index0 = 0;
-                      List<DropdownMenuItem<int>> languageList = [];
-                      for(int index = 0; index<AppConstants.languages.length; index++) {
-                        languageList.add(DropdownMenuItem(
-                          value: index,
-                          child: TextHover(builder: (hovered) {
-                            return Row(children: [
-                              Image.asset(AppConstants.languages[index].imageUrl!, height: 20, width: 20, color: Colors.white,),
-                              const SizedBox(width: Dimensions.paddingSizeExtraSmall),
-                              Text(AppConstants.languages[index].languageName!, style: robotoRegular.copyWith(color: hovered ? Colors.black : Colors.white)),
-                            ]);
-                          }),
-                        ));
-                        if(AppConstants.languages[index].languageCode == localizationController.locale.languageCode) {
-                          index0 = index;
-                        }
-                      }
-                      return DropdownButton<int>(
-                        value: index0,
-                        items: languageList,
-                        dropdownColor: const Color(0xFF414141),
-                        // dropdownColor: Theme.of(context).colorScheme.background,
-                        icon: const Icon(Icons.keyboard_arrow_up, color: Colors.white),
-                        elevation: 0, iconSize: 30, underline: const SizedBox(),
-                        onChanged: (int? index) {
-                          localizationController.setLanguage(Locale(AppConstants.languages[index!].languageCode!, AppConstants.languages[index].countryCode));
-                        },
-                      );
-                    }),
-
-                  ],
+                  ),
                 ),
+                // child: Row(
+                //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                //   children: [
+                //     // Text(
+                //     //   '© ${_config!.footerText ?? ''}',
+                //     //   style: robotoRegular.copyWith(color: _color, fontSize: Dimensions.fontSizeExtraSmall, fontWeight: FontWeight.w100),
+                //     // ),
+                //
+                //     // GetBuilder<LocalizationController>(builder: (localizationController) {
+                //     //   int index0 = 0;
+                //     //   List<DropdownMenuItem<int>> languageList = [];
+                //     //   for(int index = 0; index<AppConstants.languages.length; index++) {
+                //     //     languageList.add(DropdownMenuItem(
+                //     //       value: index,
+                //     //       child: TextHover(builder: (hovered) {
+                //     //         return Row(children: [
+                //     //           Image.asset(AppConstants.languages[index].imageUrl!, height: 20, width: 20, color: Colors.white,),
+                //     //           const SizedBox(width: Dimensions.paddingSizeExtraSmall),
+                //     //           Text(AppConstants.languages[index].languageName!, style: robotoRegular.copyWith(color: hovered ? Colors.black : Colors.white)),
+                //     //         ]);
+                //     //       }),
+                //     //     ));
+                //     //     if(AppConstants.languages[index].languageCode == localizationController.locale.languageCode) {
+                //     //       index0 = index;
+                //     //     }
+                //     //   }
+                //     //   return DropdownButton<int>(
+                //     //     value: index0,
+                //     //     items: languageList,
+                //     //     dropdownColor: const Color(0xFF414141),
+                //     //     // dropdownColor: Theme.of(context).colorScheme.background,
+                //     //     icon: const Icon(Icons.keyboard_arrow_up, color: Colors.white),
+                //     //     elevation: 0, iconSize: 30, underline: const SizedBox(),
+                //     //     onChanged: (int? index) {
+                //     //       localizationController.setLanguage(Locale(AppConstants.languages[index!].languageCode!, AppConstants.languages[index].countryCode));
+                //     //     },
+                //     //   );
+                //     // }),
+                //
+                //   ],
+                // ),
               )
             ),
           ),

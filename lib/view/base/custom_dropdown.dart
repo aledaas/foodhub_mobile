@@ -21,6 +21,7 @@ class CustomDropdown<T> extends StatefulWidget {
 
   /// if true the dropdown icon will as a leading icon, default to false
   final bool leadingIcon;
+  final bool canAddValue;
   const CustomDropdown({
     Key? key,
     this.hideIcon = false,
@@ -31,6 +32,7 @@ class CustomDropdown<T> extends StatefulWidget {
     this.icon,
     this.leadingIcon = false,
     this.onChange,
+    this.canAddValue = true,
   }) : super(key: key);
 
   @override
@@ -146,7 +148,9 @@ class CustomDropdownState<T> extends State<CustomDropdown<T?>>
                           children: widget.items.asMap().entries.map((item) {
                             return InkWell(
                               onTap: () {
-                                setState(() => _currentIndex = item.key);
+                                if(widget.canAddValue) {
+                                  setState(() => _currentIndex = item.key);
+                                }
                                 widget.onChange!(item.value.value, item.key);
                                 toggleDropdown();
                               },

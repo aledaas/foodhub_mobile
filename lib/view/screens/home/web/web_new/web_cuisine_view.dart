@@ -50,6 +50,7 @@ class WebCuisineView extends StatelessWidget {
                                 return Padding(
                                   padding: const EdgeInsets.only(right: 35),
                                   child: InkWell(
+                                    hoverColor: Colors.transparent,
                                     onTap: () =>  Get.toNamed(RouteHelper.getCuisineRestaurantRoute(cuisineController.cuisineModel!.cuisines![index].id, cuisineController.cuisineModel!.cuisines![index].name)),
                                     child: CuisineCard(
                                       image: '${Get.find<SplashController>().configModel!.baseUrls!.cuisineImageUrl}'

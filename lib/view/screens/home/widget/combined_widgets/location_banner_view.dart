@@ -26,30 +26,28 @@ class LocationBannerView extends StatelessWidget {
         child: Row(children: [
           SizedBox(width: ResponsiveHelper.isMobile(context) ? Dimensions.paddingSizeExtraSmall : 0),
           Expanded(
-              child: Row(children: [
-                Image.asset(Images.nearbyRestaurant, height: ResponsiveHelper.isMobile(context) ? 58:  93, width: ResponsiveHelper.isMobile(context) ? 74 : 119),
-                SizedBox(width: ResponsiveHelper.isMobile(context) ? Dimensions.paddingSizeSmall : Dimensions.paddingSizeLarge),
+            child: Row(children: [
+              Image.asset(Images.nearbyRestaurant, height: ResponsiveHelper.isMobile(context) ? 58:  93, width: ResponsiveHelper.isMobile(context) ? 74 : 119),
+              SizedBox(width: ResponsiveHelper.isMobile(context) ? Dimensions.paddingSizeSmall : Dimensions.paddingSizeLarge),
 
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text('find_nearby'.tr, style: robotoBold.copyWith(fontSize: ResponsiveHelper.isMobile(context) ? Dimensions.fontSizeDefault : Dimensions.fontSizeExtraLarge, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: Dimensions.paddingSizeSmall),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('find_nearby'.tr, style: robotoBold.copyWith(fontSize: ResponsiveHelper.isMobile(context) ? Dimensions.fontSizeDefault : Dimensions.fontSizeExtraLarge, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: Dimensions.paddingSizeSmall),
 
-                    Text('restaurant_near_from_you'.tr, style: robotoRegular.copyWith(fontSize: ResponsiveHelper.isMobile(context) ? Dimensions.fontSizeSmall : Dimensions.fontSizeLarge)),
-                  ],
-                ),
-              ],
+                  Text('restaurant_near_from_you'.tr, style: robotoRegular.copyWith(fontSize: ResponsiveHelper.isMobile(context) ? Dimensions.fontSizeSmall : Dimensions.fontSizeLarge)),
+                ],
               ),
+            ]),
           ),
 
           Column(mainAxisAlignment: ResponsiveHelper.isMobile(context) ? MainAxisAlignment.center : MainAxisAlignment.end, children: [
             Image.asset(Images.nearbyLocation, height: ResponsiveHelper.isMobile(context) ? 30 : 40, width: ResponsiveHelper.isMobile(context) ? 30 : 40),
             CustomButton(buttonText: 'see_location'.tr, width: ResponsiveHelper.isMobile(context) ? 85 : 120, height: ResponsiveHelper.isMobile(context) ? 30 : 40, isBold: false, fontSize: Dimensions.fontSizeSmall, radius: Dimensions.radiusSmall,
                 onPressed: ()=> Get.toNamed(RouteHelper.getMapViewRoute())),
-          ],
-          ),
+          ]),
           SizedBox(width: ResponsiveHelper.isMobile(context) ? Dimensions.paddingSizeSmall : 0),
         ],
         ),

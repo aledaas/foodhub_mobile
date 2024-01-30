@@ -1,16 +1,23 @@
 import 'dart:async';
+import 'dart:convert';
 
+import 'package:country_code_picker/country_code_picker.dart';
 import 'package:efood_multivendor/controller/auth_controller.dart';
 import 'package:efood_multivendor/controller/cart_controller.dart';
+import 'package:efood_multivendor/controller/coupon_controller.dart';
+import 'package:efood_multivendor/controller/localization_controller.dart';
 import 'package:efood_multivendor/controller/location_controller.dart';
+import 'package:efood_multivendor/controller/restaurant_controller.dart';
 import 'package:efood_multivendor/controller/splash_controller.dart';
 import 'package:efood_multivendor/controller/user_controller.dart';
 import 'package:efood_multivendor/data/api/api_checker.dart';
 import 'package:efood_multivendor/data/model/body/place_order_body.dart';
+import 'package:efood_multivendor/data/model/response/address_model.dart';
 import 'package:efood_multivendor/data/model/response/cart_model.dart' as cart;
 import 'package:efood_multivendor/data/model/response/cart_model.dart';
 import 'package:efood_multivendor/data/model/response/delivery_log_model.dart';
 import 'package:efood_multivendor/data/model/response/distance_model.dart';
+import 'package:efood_multivendor/data/model/response/offline_method_model.dart';
 import 'package:efood_multivendor/data/model/response/order_cancellation_body.dart';
 import 'package:efood_multivendor/data/model/response/order_details_model.dart';
 import 'package:efood_multivendor/data/model/response/order_model.dart';
@@ -24,9 +31,11 @@ import 'package:efood_multivendor/data/model/response/timeslote_model.dart';
 import 'package:efood_multivendor/data/repository/order_repo.dart';
 import 'package:efood_multivendor/helper/date_converter.dart';
 import 'package:efood_multivendor/helper/price_converter.dart';
+import 'package:efood_multivendor/helper/responsive_helper.dart';
 import 'package:efood_multivendor/helper/route_helper.dart';
 import 'package:efood_multivendor/util/app_constants.dart';
 import 'package:efood_multivendor/view/base/custom_snackbar.dart';
+import 'package:efood_multivendor/view/screens/checkout/widget/order_successfull_dialog.dart';
 import 'package:efood_multivendor/view/screens/checkout/widget/partial_pay_dialog.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -34,6 +43,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:universal_html/html.dart' as html;
 
 class OrderController extends GetxController implements GetxService {
   final OrderRepo orderRepo;
@@ -93,6 +103,7 @@ class OrderController extends GetxController implements GetxService {
   bool _canShowTipsField = false;
   bool _isDmTipSave = false;
   bool _acceptTerms = true;
+  bool _isLoadingUpdate = false;
 
   bool _canReorder = true;
   String _reorderMessage = '';
@@ -104,6 +115,13 @@ class OrderController extends GetxController implements GetxService {
   String? _digitalPaymentName;
   double _viewTotalPrice = 0;
   bool _canShowTimeSlot = false;
+  AddressModel? _guestAddress;
+  List<OfflineMethodModel>? _offlineMethodList;
+  int _selectedOfflineBankIndex = 0;
+  List<TextEditingController> informationControllerList = [];
+  List<FocusNode> informationFocusList = [];
+  String? countryDialCode = Get.find<AuthController>().getUserCountryCode().isNotEmpty ? Get.find<AuthController>().getUserCountryCode()
+      : CountryCode.fromCountryCode(Get.find<SplashController>().configModel!.country!).dialCode ?? Get.find<LocalizationController>().locale.countryCode;
 
   final TextEditingController couponController = TextEditingController();
   final TextEditingController noteController = TextEditingController();
@@ -114,6 +132,8 @@ class OrderController extends GetxController implements GetxService {
   final FocusNode streetNode = FocusNode();
   final FocusNode houseNode = FocusNode();
   final FocusNode floorNode = FocusNode();
+  bool _customDateRestaurantClose = false;
+  DateTime? _selectedCustomDate;
 
   List<OrderModel>? get runningOrderList => _runningOrderList;
   List<OrderModel>? get runningSubscriptionOrderList => _runningSubscriptionOrderList;
@@ -174,6 +194,29 @@ class OrderController extends GetxController implements GetxService {
   double? get viewTotalPrice => _viewTotalPrice;
   int get subscriptionTypeIndex => _subscriptionTypeIndex;
   bool get canShowTimeSlot => _canShowTimeSlot;
+  AddressModel? get guestAddress => _guestAddress;
+  List<OfflineMethodModel>? get offlineMethodList => _offlineMethodList;
+  int get selectedOfflineBankIndex => _selectedOfflineBankIndex;
+  bool get customDateRestaurantClose => _customDateRestaurantClose;
+  DateTime? get selectedCustomDate => _selectedCustomDate;
+  bool get isLoadingUpdate => _isLoadingUpdate;
+
+  void setCustomDate(DateTime? date, bool instanceOrder, {bool canUpdate = true}) {
+    _selectedCustomDate = date;
+    if(instanceOrder) {
+      _selectedTimeSlot = 0;
+    } else {
+      _selectedTimeSlot = 1;
+    }
+    if(canUpdate) {
+      update();
+    }
+  }
+
+  void setDateCloseRestaurant(bool status) {
+    _customDateRestaurantClose = status;
+    update();
+  }
 
   void setTotalAmount(double amount){
     _viewTotalPrice = amount;
@@ -191,8 +234,75 @@ class OrderController extends GetxController implements GetxService {
     }
   }
 
+  void setGuestAddress(AddressModel? address) {
+    _guestAddress = address;
+    update();
+  }
+
   void changeDigitalPaymentName(String name){
     _digitalPaymentName = name;
+    update();
+  }
+
+  void selectOfflineBank(int index){
+    _selectedOfflineBankIndex = index;
+    update();
+  }
+
+  Future<void> getOfflineMethodList()async {
+    Response response = await orderRepo.getOfflineMethodList();
+    if (response.statusCode == 200) {
+      _offlineMethodList = [];
+
+      response.body.forEach((method) => _offlineMethodList!.add(OfflineMethodModel.fromJson(method)));
+
+    }else{
+      ApiChecker.checkApi(response);
+    }
+    update();
+  }
+
+  Future<bool> saveOfflineInfo(String data) async {
+    _isLoading = true;
+    bool success = false;
+    update();
+    Response response = await orderRepo.saveOfflineInfo(data);
+    if (response.statusCode == 200) {
+      success = true;
+      _isLoading = false;
+      _guestAddress = null;
+    } else {
+      ApiChecker.checkApi(response);
+    }
+    update();
+    return success;
+  }
+
+  Future<bool> updateOfflineInfo(String data) async {
+    _isLoadingUpdate = true;
+    bool success = false;
+    update();
+    Response response = await orderRepo.updateOfflineInfo(data);
+    if (response.statusCode == 200) {
+      success = true;
+      _isLoadingUpdate = false;
+    } else {
+      ApiChecker.checkApi(response);
+    }
+    update();
+    return success;
+  }
+
+  void changesMethod() {
+    List<MethodInformations>? methodInformation = offlineMethodList![selectedOfflineBankIndex].methodInformations!;
+
+    informationControllerList = [];
+    informationFocusList = [];
+
+    for(int index=0; index<methodInformation.length; index++) {
+      informationControllerList.add(TextEditingController());
+      informationFocusList.add(FocusNode());
+    }
     update();
   }
 
@@ -254,14 +364,16 @@ class OrderController extends GetxController implements GetxService {
       List<Product> foods = [];
       response.body.forEach((food) => foods.add(Product.fromJson(food)));
 
-      List<CartModel> cartList = [];
+      List<OnlineCart> onlineCartList = [];
+      List<CartModel> offlineCartList = [];
 
       if(Get.find<LocationController>().getUserAddress()!.zoneIds!.contains(restaurantZoneId)){
 
         for(int i=0; i < orderedFoods.length; i++){
           for(int j=0; j<foods.length; j++){
             if(orderedFoods[i].foodDetails!.id == foods[j].id){
-              cartList.add(_sortOutProductAddToCard(orderedFoods[i].variation, foods[j], orderedFoods[i]));
+              onlineCartList.add(_sortOutProductAddToCard(orderedFoods[i].variation, foods[j], orderedFoods[i], getOnlineCart: true));
+              offlineCartList.add(_sortOutProductAddToCard(orderedFoods[i].variation, foods[j], orderedFoods[i], getOnlineCart: false));
             }
           }
         }
@@ -272,15 +384,15 @@ class OrderController extends GetxController implements GetxService {
       }
 
       if(_canReorder) {
-        _checkProductVariationHasChanged(cartList);
+        _checkProductVariationHasChanged(offlineCartList);
       }
 
       _isLoading = false;
       update();
 
       if(_canReorder) {
-        Get.find<CartController>().reorderAddToCart(cartList);
-        Get.toNamed(RouteHelper.getCartRoute());
+        await Get.find<CartController>().reorderAddToCart(onlineCartList);
+        Get.toNamed(RouteHelper.getCartRoute(fromReorder: true));
       }else{
         showCustomSnackBar(_reorderMessage.tr);
       }
@@ -292,7 +404,7 @@ class OrderController extends GetxController implements GetxService {
   }
 
 
-  CartModel _sortOutProductAddToCard(List<Variation>? orderedVariation, Product currentFood, OrderDetailsModel orderDetailsModel){
+  dynamic _sortOutProductAddToCard(List<Variation>? orderedVariation, Product currentFood, OrderDetailsModel orderDetailsModel, {bool getOnlineCart = true}){
     List<List<bool?>> selectedVariations = [];
 
     double price = currentFood.price!;
@@ -303,6 +415,7 @@ class OrderController extends GetxController implements GetxService {
     List<bool> addOnActiveList = [];
     List<int?> addOnQtyList = [];
     List<AddOns> addOnsList = [];
+    List<OrderVariation> variations = [];
 
     if(currentFood.variations != null && currentFood.variations!.isNotEmpty){
       for(int i=0; i<currentFood.variations!.length; i++){
@@ -316,6 +429,19 @@ class OrderController extends GetxController implements GetxService {
                   selectedVariations[i][x] = true;
                 }
               }
+            }
+          }
+        }
+      }
+    }
+
+    if(currentFood.variations != null && currentFood.variations!.isNotEmpty){
+      for(int i=0; i<currentFood.variations!.length; i++){
+        if(selectedVariations[i].contains(true)){
+          variations.add(OrderVariation(name: currentFood.variations![i].name, values: OrderVariationValue(label: [])));
+          for(int j=0; j<currentFood.variations![i].variationValues!.length; j++) {
+            if(selectedVariations[i][j]!) {
+              variations[variations.length-1].values!.label!.add(currentFood.variations![i].variationValues![j].level);
             }
           }
         }
@@ -349,10 +475,8 @@ class OrderController extends GetxController implements GetxService {
         addOnQtyList.add(orderDetailsModel.addOns![addOnIdList.indexOf(addOn.id)].quantity);
       }else {
         addOnActiveList.add(false);
-        addOnQtyList.add(1);
       }
     }
-    // orderDetailsModel.addOns
 
     double? discount = (currentFood.restaurantDiscount == 0) ? currentFood.discount : currentFood.restaurantDiscount;
     String? discountType = (currentFood.restaurantDiscount == 0) ? currentFood.discountType : 'percent';
@@ -362,20 +486,36 @@ class OrderController extends GetxController implements GetxService {
 
 
     CartModel cartModel = CartModel(
-      priceWithVariation, priceWithDiscount, (price - PriceConverter.convertWithDiscount(price, discount, discountType)!),
-      quantity, addOnIdWithQtnList, addOnsList, false, currentFood, selectedVariations,
+      null, priceWithVariation, priceWithDiscount, (price - PriceConverter.convertWithDiscount(price, discount, discountType)!),
+      quantity, addOnIdWithQtnList, addOnsList, false, currentFood, selectedVariations, currentFood.quantityLimit,
     );
-    return cartModel;
+
+    OnlineCart onlineCart = OnlineCart(
+        null, currentFood.id, null,
+        priceWithVariation.toString(), variations,
+        quantity, addOnIdList, addOnsList, addOnQtyList, 'Food'
+    );
+
+    if(getOnlineCart) {
+      return onlineCart;
+    } else {
+      return cartModel;
+    }
   }
 
   void _checkProductVariationHasChanged(List<CartModel> cartList){
 
     for(CartModel cart in cartList){
       if(cart.product!.variations != null && cart.product!.variations!.isNotEmpty){
+        print('--------varialtions ${cartList.indexOf(cart)} : ${jsonEncode(cart.product!.variations!)}');
         for (var pv in cart.product!.variations!) {
+          print('=====item ${cart.product!.variations!.indexOf(pv)} : ${pv.toJson()}');
           int selectedValues = 0;
 
+          print('========is required : ${pv.required!}');
+
           if(pv.required!){
+            print('---required 11111111111111--->> ${cart.variations![cart.product!.variations!.indexOf(pv)]}');
             for (var selected in cart.variations![cart.product!.variations!.indexOf(pv)]) {
               if(selected!){
                 selectedValues = selectedValues + 1;
@@ -389,7 +529,10 @@ class OrderController extends GetxController implements GetxService {
               _reorderMessage = 'this_ordered_products_are_updated_so_can_not_reorder_this_order';
             }
 
+            print('====can reorder 1: $_canReorder');
+
           }else{
+            print('---11111111111111--->> ${cart.variations![cart.product!.variations!.indexOf(pv)]}');
             for (var selected in cart.variations![cart.product!.variations!.indexOf(pv)]) {
               if(selected!){
                 selectedValues = selectedValues + 1;
@@ -399,13 +542,16 @@ class OrderController extends GetxController implements GetxService {
             if(selectedValues == 0){
               _canReorder = true;
             }else{
-              if(selectedValues >= pv.min! && selectedValues<= pv.max!){
+              print('---22222222222--->> ${selectedValues} >= ${pv.min}  && $selectedValues <= ${pv.max}');
+              if((selectedValues >= pv.min! && selectedValues<= pv.max!) || (pv.min == 0 && pv.max == 0)){
                 _canReorder = true;
               }else{
                 _canReorder = false;
+                print('======check 2');
                 _reorderMessage = 'this_ordered_products_are_updated_so_can_not_reorder_this_order';
               }
             }
+            print('====can reorder 2: $_canReorder');
           }
         }
       }
@@ -504,19 +650,23 @@ class OrderController extends GetxController implements GetxService {
     update();
   }
 
-  void callTrackOrderApi({required OrderModel orderModel, required String orderId}){
+  void callTrackOrderApi({required OrderModel orderModel, required String orderId, String? contactNumber}){
     if(orderModel.orderStatus != 'delivered' && orderModel.orderStatus != 'failed' && orderModel.orderStatus != 'canceled') {
       if (kDebugMode) {
         print('start api call------------');
       }
 
-      Get.find<OrderController>().timerTrackOrder(orderId.toString());
+      Get.find<OrderController>().timerTrackOrder(orderId.toString(), contactNumber: contactNumber);
       _timer?.cancel();
       _timer = Timer.periodic(const Duration(seconds: 10), (timer) {
-        Get.find<OrderController>().timerTrackOrder(orderId.toString());
+        if(Get.currentRoute.contains(RouteHelper.orderDetails)){
+          Get.find<OrderController>().timerTrackOrder(orderId.toString(), contactNumber: contactNumber);
+        } else {
+          _timer?.cancel();
+        }
       });
     }else{
-      Get.find<OrderController>().timerTrackOrder(orderId.toString());
+      Get.find<OrderController>().timerTrackOrder(orderId.toString(), contactNumber: contactNumber);
     }
   }
 
@@ -597,7 +747,7 @@ class OrderController extends GetxController implements GetxService {
         'order_id': orderId!,
         'customer_note': note,
       });
-      Response response = await orderRepo.submitRefundRequest(body, _refundImage);
+      Response response = await orderRepo.submitRefundRequest(body, _refundImage, Get.find<AuthController>().isLoggedIn() ? null : Get.find<AuthController>().getGuestId());
       if (response.statusCode == 200) {
         showCustomSnackBar(response.body['message'], isError: false);
         Get.offAllNamed(RouteHelper.getInitialRoute());
@@ -620,7 +770,7 @@ class OrderController extends GetxController implements GetxService {
     }
     if (!_runningOffsetList.contains(offset)) {
       _runningOffsetList.add(offset);
-      Response response = await orderRepo.getRunningOrderList(offset);
+      Response response = await orderRepo.getRunningOrderList(offset, Get.find<AuthController>().isLoggedIn() ? null : Get.find<AuthController>().getGuestId());
       if (response.statusCode == 200) {
         if (offset == 1) {
           _runningOrderList = [];
@@ -751,7 +901,7 @@ class OrderController extends GetxController implements GetxService {
     _isLoading = true;
     _showCancelled = false;
 
-    Response response = await orderRepo.getOrderDetails(orderID);
+    Response response = await orderRepo.getOrderDetails(orderID, Get.find<AuthController>().isLoggedIn() ? null : Get.find<AuthController>().getGuestId());
     if (response.statusCode == 200) {
       _orderDetails = [];
       _schedules = [];
@@ -777,7 +927,7 @@ class OrderController extends GetxController implements GetxService {
     }
   }
 
-  Future<ResponseModel?> trackOrder(String? orderID, OrderModel? orderModel, bool fromTracking) async {
+  Future<ResponseModel?> trackOrder(String? orderID, OrderModel? orderModel, bool fromTracking, {String? contactNumber, bool? fromGuestInput = false}) async {
     _trackModel = null;
     _responseModel = null;
     if(!fromTracking) {
@@ -786,7 +936,13 @@ class OrderController extends GetxController implements GetxService {
     _showCancelled = false;
     if(orderModel == null) {
       _isLoading = true;
-      Response response = await orderRepo.trackOrder(orderID);
+      // if(contactNumber != null && fromGuestInput!){
+      //   update();
+      // }
+      Response response = await orderRepo.trackOrder(
+        orderID, Get.find<AuthController>().isLoggedIn() ? null : Get.find<AuthController>().getGuestId(),
+        contactNumber: contactNumber,
+      );
       if (response.statusCode == 200) {
         _trackModel = OrderModel.fromJson(response.body);
         _responseModel = ResponseModel(true, response.body.toString());
@@ -805,10 +961,13 @@ class OrderController extends GetxController implements GetxService {
     return _responseModel;
   }
 
-  Future<ResponseModel?> timerTrackOrder(String orderID) async {
+  Future<ResponseModel?> timerTrackOrder(String orderID, {String? contactNumber}) async {
     _showCancelled = false;
 
-    Response response = await orderRepo.trackOrder(orderID);
+    Response response = await orderRepo.trackOrder(
+      orderID, Get.find<AuthController>().isLoggedIn() ? null : Get.find<AuthController>().getGuestId(),
+      contactNumber: contactNumber,
+    );
     if (response.statusCode == 200) {
       _trackModel = OrderModel.fromJson(response.body);
       _responseModel = ResponseModel(true, response.body.toString());
@@ -821,23 +980,78 @@ class OrderController extends GetxController implements GetxService {
     return _responseModel;
   }
 
-  Future<void> placeOrder(PlaceOrderBody placeOrderBody, Function callback, double amount) async {
+  Future<String> placeOrder(PlaceOrderBody placeOrderBody, int? zoneID, double amount, double? maximumCodOrderAmount, bool fromCart,
+      bool isCashOnDeliveryActive, {bool isOfflinePay = false}) async {
     _isLoading = true;
     update();
+    String orderID = '';
     Response response = await orderRepo.placeOrder(placeOrderBody);
     _isLoading = false;
     if (response.statusCode == 200) {
       String? message = response.body['message'];
-      String orderID = response.body['order_id'].toString();
-      orderRepo.sendNotificationRequest(orderID);
-      callback(true, message, orderID, amount);
+      orderID = response.body['order_id'].toString();
+      orderRepo.sendNotificationRequest(orderID, Get.find<AuthController>().isLoggedIn() ? null : Get.find<AuthController>().getGuestId());
+      if(!isOfflinePay) {
+        callback(true, message, orderID, zoneID, amount, maximumCodOrderAmount, fromCart, isCashOnDeliveryActive, placeOrderBody.contactPersonNumber!);
+      } else {
+        Get.find<CartController>().getCartDataOnline();
+      }
       if (kDebugMode) {
         print('-------- Order placed successfully $orderID ----------');
       }
     } else {
-      callback(false, response.statusText, '-1', amount);
+      if(!isOfflinePay){
+        callback(false, response.statusText, '-1', zoneID, amount, maximumCodOrderAmount, fromCart, isCashOnDeliveryActive, placeOrderBody.contactPersonNumber!);
+      }else{
+        showCustomSnackBar(response.statusText);
+      }
     }
     update();
+    return orderID;
+  }
+
+  void callback(bool isSuccess, String? message, String orderID, int? zoneID, double amount,
+      double? maximumCodOrderAmount, bool fromCart, bool isCashOnDeliveryActive, String? contactNumber) async {
+    if(isSuccess) {
+      Get.find<OrderController>().getRunningOrders(1, notify: false);
+      if(fromCart) {
+        Get.find<CartController>().clearCartList();
+      }
+      Get.find<OrderController>().setGuestAddress(null);
+      Get.find<OrderController>().stopLoader();
+      if(Get.find<OrderController>().paymentMethodIndex == 0 || Get.find<OrderController>().paymentMethodIndex == 1) {
+        double total = ((amount / 100) * Get.find<SplashController>().configModel!.loyaltyPointItemPurchasePoint!);
+        Get.find<AuthController>().saveEarningPoint(total.toStringAsFixed(0));
+        if(ResponsiveHelper.isDesktop(Get.context)) {
+          Get.offNamed(RouteHelper.getInitialRoute());
+          Future.delayed(const Duration(seconds: 2) , () => Get.dialog(Center(child: SizedBox(height: 350, width : 500, child: OrderSuccessfulDialog(orderID: orderID, contactNumber: contactNumber)))));
+        } else {
+          Get.offNamed(RouteHelper.getOrderSuccessRoute(orderID, 'success', amount, contactNumber));
+        }
+
+      }else {
+        if(GetPlatform.isWeb) {
+          // Get.back();
+          await Get.find<AuthController>().saveGuestNumber(contactNumber ?? '');
+          String? hostname = html.window.location.hostname;
+          String protocol = html.window.location.protocol;
+          String selectedUrl = '${AppConstants.baseUrl}/payment-mobile?order_id=$orderID&customer_id=${Get.find<UserController>().userInfoModel?.id ?? Get.find<AuthController>().getGuestId()}'
+              '&payment_method=${Get.find<OrderController>().digitalPaymentName}&payment_platform=web&&callback=$protocol//$hostname${RouteHelper.orderSuccess}?id=$orderID&amount=$amount&status=';
+          html.window.open(selectedUrl,"_self");
+        } else{
+          Get.offNamed(RouteHelper.getPaymentRoute(
+            OrderModel(id: int.parse(orderID), userId: Get.find<UserController>().userInfoModel?.id ?? 0, orderAmount: amount, restaurant: Get.find<RestaurantController>().restaurant),
+            Get.find<OrderController>().digitalPaymentName, guestId: Get.find<AuthController>().getGuestId(), contactNumber: contactNumber,
+          ),
+          );
+        }
+      }
+      Get.find<OrderController>().clearPrevData();
+      Get.find<OrderController>().updateTips(0);
+      Get.find<CouponController>().removeCouponData(false);
+    }else {
+      showCustomSnackBar(message);
+    }
   }
 
   void stopLoader({bool isUpdate = true}) {
@@ -940,11 +1154,22 @@ class OrderController extends GetxController implements GetxService {
         _allTimeSlots!.add(TimeSlotModel(day: restaurant.schedules![index].day, startTime: openTime, endTime: closeTime));
       }
     }
-    validateSlot(_allTimeSlots!, 0, notify: false);
+    validateSlot(_allTimeSlots!, DateTime.now(), notify: false);
   }
 
-  void updateTimeSlot(int? index, {bool notify = true}) {
-    _selectedTimeSlot = index;
+  void updateTimeSlot(int? index, bool instanceOrder, {bool notify = true}) {
+
+    if(!instanceOrder) {
+      if(index == 0) {
+        if(notify) {
+          showCustomSnackBar('instance_order_is_not_active'.tr, showToaster: true);
+        }
+      } else {
+        _selectedTimeSlot = index;
+      }
+    } else {
+      _selectedTimeSlot = index;
+    }
     if(notify) {
       update();
     }
@@ -962,30 +1187,36 @@ class OrderController extends GetxController implements GetxService {
     }
   }
 
-  void updateDateSlot(int index) {
-    _selectedDateSlot = index;
-    _selectedTimeSlot = 0;
+  void updateDateSlot(int index, DateTime date, bool instanceOrder, {bool fromCustomDate = false}) {
+    if(!fromCustomDate) {
+      _selectedDateSlot = index;
+    }
+    if(instanceOrder) {
+      _selectedTimeSlot = 0;
+    } else {
+      _selectedTimeSlot = 1;
+    }
     if(_allTimeSlots != null) {
-      validateSlot(_allTimeSlots!, index);
+      validateSlot(_allTimeSlots!, date);
     }
     update();
   }
 
-  void validateSlot(List<TimeSlotModel> slots, int dateIndex, {bool notify = true}) {
+  void validateSlot(List<TimeSlotModel> slots, DateTime date, {bool notify = true}) {
     _timeSlots = [];
     int day = 0;
-    if(dateIndex == 0) {
-      day = DateTime.now().weekday;
-    }else {
-      day = DateTime.now().add(const Duration(days: 1)).weekday;
-    }
+    bool isToday = DateTime(date.year, date.month, date.day).isAtSameMomentAs(
+      DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day),
+    );
+    day = date.weekday;
+
     if(day == 7) {
       day = 0;
     }
     _slotIndexList = [];
     int index0 = 0;
     for(int index=0; index<slots.length; index++) {
-      if (day == slots[index].day && (dateIndex == 0 ? slots[index].endTime!.isAfter(DateTime.now()) : true)) {
+      if (day == slots[index].day && (isToday ? slots[index].endTime!.isAfter(DateTime.now()) : true)) {
         _timeSlots!.add(slots[index]);
         _slotIndexList!.add(index0);
         index0 ++;
@@ -996,7 +1227,7 @@ class OrderController extends GetxController implements GetxService {
     }
   }
 
-  Future<bool> switchToCOD(String? orderID, {double? points}) async {
+  Future<bool> switchToCOD(String? orderID, String? contactNumber, {double? points}) async {
     _isLoading = true;
     update();
     Response response = await orderRepo.switchToCOD(orderID);
@@ -1005,7 +1236,11 @@ class OrderController extends GetxController implements GetxService {
       if(points != null) {
         Get.find<AuthController>().saveEarningPoint(points.toStringAsFixed(0));
       }
-      await Get.offAllNamed(RouteHelper.getInitialRoute());
+      if(Get.find<AuthController>().isGuestLoggedIn()) {
+        Get.offNamed(RouteHelper.getOrderSuccessRoute(orderID!, 'success', 0, contactNumber));
+      }else {
+        await Get.offAllNamed(RouteHelper.getInitialRoute());
+      }
       showCustomSnackBar(response.body['message'], isError: false);
       isSuccess = true;
     } else {
@@ -1142,8 +1377,12 @@ class OrderController extends GetxController implements GetxService {
     update();
   }
 
-  void setPreferenceTimeForView(String time, {bool isUpdate = true}){
-    _preferableTime = time;
+  void setPreferenceTimeForView(String time, bool instanceOrder, {bool isUpdate = true}){
+    if(instanceOrder) {
+      _preferableTime = time;
+    }else {
+      _preferableTime = '';
+    }
     if(isUpdate) {
       update();
     }
@@ -1154,4 +1393,13 @@ class OrderController extends GetxController implements GetxService {
     update();
   }
 
+}
+
+class MyClass<T> {
+  final T Function() creator;
+  MyClass(this.creator);
+
+  T getGenericInstance() {
+    return creator();
+  }
 }

@@ -12,6 +12,7 @@ import 'package:efood_multivendor/view/base/custom_snackbar.dart';
 import 'package:efood_multivendor/view/base/footer_view.dart';
 import 'package:efood_multivendor/view/base/menu_drawer.dart';
 import 'package:efood_multivendor/view/base/not_logged_in_screen.dart';
+
 import 'package:efood_multivendor/view/base/web_page_title_widget.dart';
 import 'package:efood_multivendor/view/screens/refer_and_earn/widget/bottom_sheet_view.dart';
 import 'package:expandable_bottom_sheet/expandable_bottom_sheet.dart';
@@ -36,6 +37,7 @@ class ReferAndEarnScreen extends StatefulWidget {
 }
 
 class _ReferAndEarnScreenState extends State<ReferAndEarnScreen> {
+  final ScrollController scrollController = ScrollController();
 
   @override
   void initState() {
@@ -60,6 +62,7 @@ class _ReferAndEarnScreenState extends State<ReferAndEarnScreen> {
       endDrawer: const MenuDrawer(), endDrawerEnableOpenDragGesture: false,
       body: ExpandableBottomSheet(
         background: isLoggedIn ? SingleChildScrollView(
+          controller: scrollController,
           padding: EdgeInsets.symmetric(horizontal: ResponsiveHelper.isDesktop(context) ? 0 : Dimensions.paddingSizeLarge),
           child: Column(
             children: [

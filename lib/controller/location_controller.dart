@@ -22,6 +22,7 @@ import 'package:efood_multivendor/view/base/custom_loader.dart';
 import 'package:efood_multivendor/view/base/custom_snackbar.dart';
 import 'package:efood_multivendor/view/screens/home/home_screen.dart';
 import 'package:efood_multivendor/view/screens/location/widget/permission_dialog.dart';
+import 'package:efood_multivendor/view/screens/location/widget/pick_map_dialog.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
@@ -32,8 +33,8 @@ class LocationController extends GetxController implements GetxService {
   final LocationRepo locationRepo;
   LocationController({required this.locationRepo});
 
-  Position _position = Position(longitude: 0, latitude: 0, timestamp: DateTime.now(), accuracy: 1, altitude: 1, heading: 1, speed: 1, speedAccuracy: 1);
-  Position _pickPosition = Position(longitude: 0, latitude: 0, timestamp: DateTime.now(), accuracy: 1, altitude: 1, heading: 1, speed: 1, speedAccuracy: 1);
+  Position _position = Position(longitude: 0, latitude: 0, timestamp: DateTime.now(), accuracy: 1, altitude: 1, heading: 1, speed: 1, speedAccuracy: 1, altitudeAccuracy: 1, headingAccuracy: 1);
+  Position _pickPosition = Position(longitude: 0, latitude: 0, timestamp: DateTime.now(), accuracy: 1, altitude: 1, heading: 1, speed: 1, speedAccuracy: 1, altitudeAccuracy: 1, headingAccuracy: 1);
   bool _loading = false;
   String? _address = '';
   String? _pickAddress = '';
@@ -96,7 +97,8 @@ class LocationController extends GetxController implements GetxService {
       myPosition = Position(
         latitude: defaultLatLng != null ? defaultLatLng.latitude : double.parse(Get.find<SplashController>().configModel!.defaultLocation!.lat ?? '0'),
         longitude: defaultLatLng != null ? defaultLatLng.longitude : double.parse(Get.find<SplashController>().configModel!.defaultLocation!.lng ?? '0'),
-        timestamp: DateTime.now(), accuracy: 1, altitude: 1, heading: 1, speed: 1, speedAccuracy: 1,
+        timestamp: DateTime.now(), accuracy: 1, altitude: 1, heading: 1, speed: 1, speedAccuracy: 1, altitudeAccuracy: 1, headingAccuracy: 1,
+
       );
     }
     if(fromAddress) {
@@ -126,7 +128,7 @@ class LocationController extends GetxController implements GetxService {
   Future<void> setStoreAddressToUserAddress(LatLng restaurantAddress) async {
     Position storePosition = Position(
       latitude: restaurantAddress.latitude, longitude: restaurantAddress.longitude,
-      timestamp: DateTime.now(), accuracy: 1, altitude: 1, heading: 1, speed: 1, speedAccuracy: 1,
+      timestamp: DateTime.now(), accuracy: 1, altitude: 1, heading: 1, speed: 1, speedAccuracy: 1, altitudeAccuracy: 1, headingAccuracy: 1,
     );
     String addressFromGeocode = await getAddressFromGeocode(LatLng(restaurantAddress.latitude, restaurantAddress.longitude));
     ZoneResponseModel responseModel = await getZone(storePosition.latitude.toString(), storePosition.longitude.toString(), true);
@@ -190,12 +192,12 @@ class LocationController extends GetxController implements GetxService {
         if (fromAddress) {
           _position = Position(
             latitude: position!.target.latitude, longitude: position.target.longitude, timestamp: DateTime.now(),
-            heading: 1, accuracy: 1, altitude: 1, speedAccuracy: 1, speed: 1,
+            heading: 1, accuracy: 1, altitude: 1, speedAccuracy: 1, speed: 1, altitudeAccuracy: 1, headingAccuracy: 1,
           );
         } else {
           _pickPosition = Position(
             latitude: position!.target.latitude, longitude: position.target.longitude, timestamp: DateTime.now(),
-            heading: 1, accuracy: 1, altitude: 1, speedAccuracy: 1, speed: 1,
+            heading: 1, accuracy: 1, altitude: 1, speedAccuracy: 1, speed: 1, altitudeAccuracy: 1, headingAccuracy: 1,
           );
         }
         ZoneResponseModel responseModel = await getZone(position.target.latitude.toString(), position.target.longitude.toString(), true);
@@ -408,7 +410,7 @@ class LocationController extends GetxController implements GetxService {
 
     _pickPosition = Position(
       latitude: latLng.latitude, longitude: latLng.longitude,
-      timestamp: DateTime.now(), accuracy: 1, altitude: 1, heading: 1, speed: 1, speedAccuracy: 1,
+      timestamp: DateTime.now(), accuracy: 1, altitude: 1, heading: 1, speed: 1, speedAccuracy: 1, altitudeAccuracy: 1, headingAccuracy: 1,
     );
 
     _pickAddress = address;
@@ -438,7 +440,7 @@ class LocationController extends GetxController implements GetxService {
   void setUpdateAddress(AddressModel address){
     _position = Position(
       latitude: double.parse(address.latitude!), longitude: double.parse(address.longitude!), timestamp: DateTime.now(),
-      altitude: 1, heading: 1, speed: 1, speedAccuracy: 1, floor: 1, accuracy: 1,
+      altitude: 1, heading: 1, speed: 1, speedAccuracy: 1, floor: 1, accuracy: 1, altitudeAccuracy: 1, headingAccuracy: 1,
     );
     _address = address.address;
     _addressTypeIndex = _addressTypeList.indexOf(address.addressType);
@@ -595,8 +597,18 @@ class LocationController extends GetxController implements GetxService {
       Get.dialog(const CustomLoader(), barrierDismissible: false);
       await Get.find<LocationController>().getAddressList();
       Get.back();
-      if(Get.find<LocationController>().addressList!.isEmpty) {
-        Get.toNamed(RouteHelper.getPickMapRoute(page, false));
+      if(Get.find<LocationController>().addressList != null && Get.find<LocationController>().addressList!.isEmpty) {
+        if(ResponsiveHelper.isDesktop(Get.context)) {
+          showGeneralDialog(context: Get.context!, pageBuilder: (_,__,___) {
+            return SizedBox(
+              height: 300, width: 300,
+              child: PickMapDialog(
+                  fromSignUp: (page == RouteHelper.signUp), canRoute: false, fromAddAddress: false, route: null),
+            );
+          });
+        } else {
+          Get.toNamed(RouteHelper.getPickMapRoute(page, false));
+        }
       }else {
         if(offNamed) {
           Get.offNamed(RouteHelper.getAccessLocationRoute(page));
@@ -607,7 +619,17 @@ class LocationController extends GetxController implements GetxService {
         }
       }
     }else {
-      Get.toNamed(RouteHelper.getPickMapRoute(page, false));
+      if(ResponsiveHelper.isDesktop(Get.context)) {
+        showGeneralDialog(context: Get.context!, pageBuilder: (_,__,___) {
+          return SizedBox(
+            height: 300, width: 300,
+            child: PickMapDialog(
+              fromSignUp: (page == RouteHelper.signUp), canRoute: false, fromAddAddress: false, route: null),
+          );
+        });
+      } else {
+        Get.toNamed(RouteHelper.getPickMapRoute(page, false));
+      }
     }
   }
 

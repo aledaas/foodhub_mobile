@@ -1,5 +1,7 @@
+import 'package:efood_multivendor/controller/auth_controller.dart';
 import 'package:efood_multivendor/controller/location_controller.dart';
 import 'package:efood_multivendor/controller/splash_controller.dart';
+import 'package:efood_multivendor/controller/user_controller.dart';
 import 'package:efood_multivendor/data/model/response/address_model.dart';
 import 'package:efood_multivendor/helper/responsive_helper.dart';
 import 'package:efood_multivendor/util/dimensions.dart';
@@ -165,9 +167,20 @@ class _PickMapDialogState extends State<PickMapDialog> {
                           longitude: locationController.pickPosition.longitude.toString(),
                           addressType: 'others', address: locationController.pickAddress,
                         );
-                        locationController.saveAddressAndNavigate(
-                          address, widget.fromSignUp, widget.route, widget.canRoute, ResponsiveHelper.isDesktop(context),
-                        );
+                        if(!Get.find<AuthController>().isGuestLoggedIn() || !Get.find<AuthController>().isLoggedIn()) {
+                          Get.find<AuthController>().guestLogin().then((response) {
+                            if(response.isSuccess) {
+                              Get.find<UserController>().setForceFullyUserEmpty();
+                              locationController.saveAddressAndNavigate(
+                                address, widget.fromSignUp, widget.route, widget.canRoute, ResponsiveHelper.isDesktop(context),
+                              );
+                            }
+                          });
+                        } else {
+                          locationController.saveAddressAndNavigate(
+                            address, widget.fromSignUp, widget.route, widget.canRoute, ResponsiveHelper.isDesktop(context),
+                          );
+                        }
                       }
                     }else {
                       showCustomSnackBar('pick_an_address'.tr);
@@ -257,9 +270,20 @@ class _PickMapDialogState extends State<PickMapDialog> {
                         longitude: locationController.pickPosition.longitude.toString(),
                         addressType: 'others', address: locationController.pickAddress,
                       );
-                      locationController.saveAddressAndNavigate(
-                        address, widget.fromSignUp, widget.route, widget.canRoute, ResponsiveHelper.isDesktop(context),
-                      );
+                      if(!Get.find<AuthController>().isGuestLoggedIn() || !Get.find<AuthController>().isLoggedIn()) {
+                        Get.find<AuthController>().guestLogin().then((response) {
+                          if(response.isSuccess) {
+                            Get.find<UserController>().setForceFullyUserEmpty();
+                            locationController.saveAddressAndNavigate(
+                              address, widget.fromSignUp, widget.route, widget.canRoute, ResponsiveHelper.isDesktop(context),
+                            );
+                          }
+                        });
+                      } else{
+                        locationController.saveAddressAndNavigate(
+                          address, widget.fromSignUp, widget.route, widget.canRoute, ResponsiveHelper.isDesktop(context),
+                        );
+                      }
                     }
                   }else {
                     showCustomSnackBar('pick_an_address'.tr);

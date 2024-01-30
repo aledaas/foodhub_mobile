@@ -3,6 +3,9 @@ import 'package:efood_multivendor/controller/splash_controller.dart';
 import 'package:efood_multivendor/data/model/response/config_model.dart';
 import 'package:efood_multivendor/view/base/custom_web_slider_widget.dart';
 import 'package:efood_multivendor/view/screens/home/widget/bad_weather_widget.dart';
+import 'package:efood_multivendor/view/screens/home/widget/combined_widgets/enjoy_off_banner_view.dart';
+import 'package:efood_multivendor/view/screens/home/widget/combined_widgets/order_again_view.dart';
+import 'package:efood_multivendor/view/screens/home/widget/combined_widgets/refer_banner_view.dart';
 import 'package:efood_multivendor/view/screens/home/widget/cuisine_view.dart';
 import 'package:efood_multivendor/view/screens/home/widget/filter_view.dart';
 import 'package:efood_multivendor/view/screens/home/widget/near_by_button_view.dart';
@@ -139,36 +142,18 @@ class Theme1HomeScreen extends StatelessWidget {
               const BannerView1(),
               const BadWeatherWidget(),
               const CategoryView1(),
-
-              // CustomWebSliderWidget(
-              //   height: 100, weight: 500,
-              //   productList: [1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,],
-              //   indexCallBack: (context, int i) {
-              //     print('------index is : $i');
-              //     return InkWell(
-              //       onTap: () {
-              //         print('------clicked index : $i');
-              //       },
-              //       child: Container(
-              //         margin: EdgeInsets.symmetric(horizontal: 10),
-              //         height: 50, width: 60, color: Colors.blue,
-              //       ),
-              //     );
-              //   },
-              //   child: Container(
-              //     margin: EdgeInsets.symmetric(horizontal: 10),
-              //     height: 50, width: 60, color: Colors.blue,
-              //   ),
-              // ),
-
               const ItemCampaignView1(),
+              isLogin ? const PopularStoreView1(isOrderAgainViewed: true, isPopular: false) : const SizedBox(),
               configModel.mostReviewedFoods == 1 ? const BestReviewedItemView() : const SizedBox(),
+              const ReferBannerView(fromTheme1: true),
               isLogin ? const PopularStoreView1(isPopular: false, isRecentlyViewed: true) : const SizedBox(),
               const CuisinesView(),
               configModel.popularRestaurant == 1 ? const PopularStoreView1(isPopular: true) : const SizedBox(),
               const NearByButtonView(),
               configModel.popularFood == 1 ? const PopularItemView1(isPopular: true) : const SizedBox(),
               configModel.newRestaurant == 1 ? const PopularStoreView1(isPopular: false) : const SizedBox(),
+
+              const PromotionalBannerView(),
 
               Padding(
                 padding: const EdgeInsets.fromLTRB(10, 15, 0, 5),
@@ -184,12 +169,12 @@ class Theme1HomeScreen extends StatelessWidget {
               GetBuilder<RestaurantController>(builder: (restaurantController) {
                 return PaginatedListView(
                   scrollController: scrollController,
-                  totalSize: restaurantController.restaurantModel != null ? restaurantController.restaurantModel!.totalSize : null,
-                  offset: restaurantController.restaurantModel != null ? restaurantController.restaurantModel!.offset : null,
+                  totalSize: restaurantController.restaurantModel?.totalSize,
+                  offset: restaurantController.restaurantModel?.offset,
                   onPaginate: (int? offset) async => await restaurantController.getRestaurantList(offset!, false),
                   productView: ProductView(
                     isRestaurant: true, products: null, showTheme1Restaurant: true,
-                    restaurants: restaurantController.restaurantModel != null ? restaurantController.restaurantModel!.restaurants : null,
+                    restaurants: restaurantController.restaurantModel?.restaurants,
                     padding: EdgeInsets.symmetric(
                       horizontal: ResponsiveHelper.isDesktop(context) ? Dimensions.paddingSizeExtraSmall : Dimensions.paddingSizeSmall,
                       vertical: ResponsiveHelper.isDesktop(context) ? Dimensions.paddingSizeExtraSmall : 0,

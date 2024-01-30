@@ -10,23 +10,26 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class ReferBannerView extends StatelessWidget {
-  const ReferBannerView({Key? key}) : super(key: key);
+  final bool fromTheme1;
+  const ReferBannerView({Key? key, this.fromTheme1 = false}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: ResponsiveHelper.isMobile(context) ? Dimensions.paddingSizeLarge : 0,
-          vertical: ResponsiveHelper.isMobile(context)  ? Dimensions.paddingSizeDefault : Dimensions.paddingSizeLarge),
+    return (Get.find<SplashController>().configModel!.refEarningStatus == 1 ) ? Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: ResponsiveHelper.isMobile(context) ? fromTheme1 ? Dimensions.paddingSizeSmall : Dimensions.paddingSizeLarge : 0,
+        vertical: ResponsiveHelper.isMobile(context)  ? Dimensions.paddingSizeDefault : Dimensions.paddingSizeLarge,
+      ),
       child: Container(
         padding: EdgeInsets.all(ResponsiveHelper.isMobile(context) ? 0 : Dimensions.paddingSizeLarge),
         height: ResponsiveHelper.isMobile(context) ? 95 : 147,
         decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-            image: DecorationImage(image: Image.asset(Images.referBg).image, fit: BoxFit.fitWidth),
+            image: DecorationImage(image: Image.asset(Images.referBg).image, fit: BoxFit.values.last),
             gradient: LinearGradient(colors:[
-              Theme.of(context).colorScheme.tertiary,
-              Theme.of(context).colorScheme.tertiaryContainer,
-            ])),
+              Theme.of(context).primaryColor.withOpacity(0.5),
+              Theme.of(context).primaryColor,
+            ], begin: Alignment.topCenter, end: Alignment.bottomCenter)),
         child: Row(children: [
           Expanded(
               child: Row(children: [
@@ -74,6 +77,6 @@ class ReferBannerView extends StatelessWidget {
         ],
         ),
       ),
-    );
+    ) : const SizedBox();
   }
 }

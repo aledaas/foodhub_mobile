@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class PriceConverter {
-  static String convertPrice(double? price, {double? discount, String? discountType, bool forDM = false}) {
+  static String convertPrice(double? price, {double? discount, String? discountType, bool forDM = false, bool isVariation = false}) {
     if(discount != null && discountType != null){
-      if(discountType == 'amount') {
+      if(discountType == 'amount' && !isVariation) {
         price = price! - discount;
       }else if(discountType == 'percent') {
         price = price! - ((discount / 100) * price);
@@ -43,8 +43,8 @@ class PriceConverter {
   }
 
 
-  static double? convertWithDiscount(double? price, double? discount, String? discountType) {
-    if(discountType == 'amount') {
+  static double? convertWithDiscount(double? price, double? discount, String? discountType, {bool isVariation = false}) {
+    if(discountType == 'amount' && !isVariation) {
       price = price! - discount!;
     }else if(discountType == 'percent') {
       price = price! - ((discount! / 100) * price);

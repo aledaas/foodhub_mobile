@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:efood_multivendor/controller/auth_controller.dart';
 import 'package:efood_multivendor/controller/location_controller.dart';
 import 'package:efood_multivendor/controller/order_controller.dart';
 import 'package:efood_multivendor/controller/splash_controller.dart';
@@ -12,6 +13,7 @@ import 'package:efood_multivendor/util/styles.dart';
 import 'package:efood_multivendor/view/base/custom_button.dart';
 import 'package:efood_multivendor/view/base/footer_view.dart';
 import 'package:efood_multivendor/view/base/menu_drawer.dart';
+
 import 'package:efood_multivendor/view/base/web_menu_bar.dart';
 import 'package:efood_multivendor/view/screens/checkout/widget/payment_failed_dialog.dart';
 import 'package:flutter/material.dart';
@@ -21,18 +23,30 @@ class OrderSuccessfulScreen extends StatefulWidget {
   final String? orderID;
   final int status;
   final double? totalAmount;
-  const OrderSuccessfulScreen({Key? key, required this.orderID, required this.status, required this.totalAmount}) : super(key: key);
+  final String? contactPersonNumber;
+  const OrderSuccessfulScreen({Key? key, required this.orderID, required this.status, required this.totalAmount, this.contactPersonNumber}) : super(key: key);
 
   @override
   State<OrderSuccessfulScreen> createState() => _OrderSuccessfulScreenState();
 }
 
 class _OrderSuccessfulScreenState extends State<OrderSuccessfulScreen> {
+  String? orderId;
+  final ScrollController scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    Get.find<OrderController>().trackOrder(widget.orderID.toString(), null, false);
+
+    orderId = widget.orderID!;
+    if(widget.orderID != null) {
+      if(widget.orderID!.contains('?')){
+        var parts = widget.orderID!.split('?');
+        String id = parts[0].trim();                 // prefix: "date"
+        orderId = id;
+      }
+    }
+    Get.find<OrderController>().trackOrder(orderId.toString(), null, false, contactNumber: widget.contactPersonNumber);
 
   }
 
@@ -54,12 +68,13 @@ class _OrderSuccessfulScreenState extends State<OrderSuccessfulScreen> {
 
           if (!success && !Get.isDialogOpen! && orderController.trackModel!.orderStatus != 'canceled' && Get.currentRoute.startsWith(RouteHelper.orderSuccess)) {
             Future.delayed(const Duration(seconds: 1), () {
-              Get.dialog(PaymentFailedDialog(orderID: widget.orderID, orderAmount: total, maxCodOrderAmount: maximumCodOrderAmount), barrierDismissible: false);
+              Get.dialog(PaymentFailedDialog(orderID: orderId, orderAmount: total, maxCodOrderAmount: maximumCodOrderAmount, contactPersonNumber: widget.contactPersonNumber), barrierDismissible: false);
             });
           }
         }
 
         return orderController.trackModel != null ? Center(child: SingleChildScrollView(
+          controller: scrollController,
           child: FooterView(
             child: SizedBox(width: Dimensions.webMaxWidth, child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
 
@@ -72,6 +87,11 @@ class _OrderSuccessfulScreenState extends State<OrderSuccessfulScreen> {
               ),
               const SizedBox(height: Dimensions.paddingSizeSmall),
 
+              Get.find<AuthController>().isGuestLoggedIn() ? Text(
+                '${'order_id'.tr}: $orderId',
+                style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, color: Theme.of(context).primaryColor),
+              ) : const SizedBox(),
+
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeLarge, vertical: Dimensions.paddingSizeSmall),
                 child: Text(
@@ -81,7 +101,7 @@ class _OrderSuccessfulScreenState extends State<OrderSuccessfulScreen> {
                 ),
               ),
 
-              ResponsiveHelper.isDesktop(context) && (success && Get.find<SplashController>().configModel!.loyaltyPointStatus == 1 && total.floor() > 0 )  ? Column(children: [
+              Get.find<AuthController>().isLoggedIn() && ResponsiveHelper.isDesktop(context) && (success && Get.find<SplashController>().configModel!.loyaltyPointStatus == 1 && total.floor() > 0 )  ? Column(children: [
 
                 Image.asset(Get.find<ThemeController>().darkTheme ? Images.giftBox1 : Images.giftBox, width: 150, height: 150),
 
@@ -102,7 +122,11 @@ class _OrderSuccessfulScreenState extends State<OrderSuccessfulScreen> {
 
               Padding(
                 padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
-                child: CustomButton(buttonText: 'back_to_home'.tr, onPressed: () => Get.offAllNamed(RouteHelper.getInitialRoute())),
+                child: CustomButton(
+                  width: ResponsiveHelper.isDesktop(context) ? 300 : double.infinity,
+                  buttonText: 'back_to_home'.tr,
+                  onPressed: () => Get.offAllNamed(RouteHelper.getInitialRoute()),
+                ),
               ),
 
             ])),

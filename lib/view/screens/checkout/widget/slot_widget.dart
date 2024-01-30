@@ -8,7 +8,8 @@ class SlotWidget extends StatelessWidget {
   final String title;
   final bool isSelected;
   final Function onTap;
-  const SlotWidget({Key? key, required this.title, required this.isSelected, required this.onTap}) : super(key: key);
+  final bool fromCustomDate;
+  const SlotWidget({Key? key, required this.title, required this.isSelected, required this.onTap, this.fromCustomDate = false}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -18,18 +19,18 @@ class SlotWidget extends StatelessWidget {
       child: InkWell(
         onTap: onTap as void Function()?,
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: Dimensions.paddingSizeExtraSmall, horizontal: Dimensions.paddingSizeExtraSmall),
+          padding: EdgeInsets.symmetric(vertical: Dimensions.paddingSizeExtraSmall, horizontal: fromCustomDate ? Dimensions.paddingSizeSmall : Dimensions.paddingSizeExtraSmall),
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: isSelected ? Theme.of(context).primaryColor : isDesktop ? Theme.of(context).disabledColor.withOpacity(0.2) : Theme.of(context).cardColor,
+            color: isSelected ? Theme.of(context).primaryColor : isDesktop || fromCustomDate ? Theme.of(context).disabledColor.withOpacity(0.2) : Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-            boxShadow: isDesktop ? [] : const [BoxShadow(color: Colors.black12, spreadRadius: 0.5, blurRadius: 0.5)],
+            boxShadow: isDesktop || fromCustomDate ? [] : const [BoxShadow(color: Colors.black12, spreadRadius: 0.5, blurRadius: 0.5)],
           ),
           child: Text(
             title,
             style: robotoRegular.copyWith(
               color: isSelected ? Theme.of(context).cardColor : Theme.of(context).textTheme.bodyLarge!.color,
-              fontSize: isDesktop ? 10 : Dimensions.fontSizeExtraSmall,
+              fontSize: isDesktop ? 10 : fromCustomDate ? Dimensions.fontSizeSmall : Dimensions.fontSizeExtraSmall,
             ),
           ),
         ),

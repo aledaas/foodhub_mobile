@@ -18,7 +18,7 @@ class UserRepo {
     body.addAll(<String, String>{
       'f_name': userInfoModel.fName!, 'l_name': userInfoModel.lName!, 'email': userInfoModel.email!
     });
-    return await apiClient.postMultipartData(AppConstants.updateProfileUri, body, [MultipartBody('image', data)]);
+    return await apiClient.postMultipartData(AppConstants.updateProfileUri, body, [MultipartBody('image', data)], []);
   }
 
   Future<Response> changePassword(UserInfoModel userInfoModel) async {
@@ -27,7 +27,7 @@ class UserRepo {
   }
 
   Future<Response> deleteUser() async {
-    return await apiClient.deleteData(AppConstants.customerRemoveUri);
+    return await apiClient.postData(AppConstants.customerRemoveUri, {"_method": "delete"});
   }
 
 }

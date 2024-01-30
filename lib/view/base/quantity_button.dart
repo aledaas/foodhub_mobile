@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 
 class QuantityButton extends StatelessWidget {
   final bool isIncrement;
-  final Function onTap;
+  final Function? onTap;
   final bool showRemoveIcon;
-  const QuantityButton({Key? key, required this.isIncrement, required this.onTap, this.showRemoveIcon = false}) : super(key: key);
+  final Color? color;
+  const QuantityButton({Key? key, required this.isIncrement, required this.onTap, this.showRemoveIcon = false, this.color}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +18,7 @@ class QuantityButton extends StatelessWidget {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           border: Border.all(width: 1, color: showRemoveIcon ? Theme.of(context).colorScheme.error : isIncrement ? Theme.of(context).primaryColor : Theme.of(context).disabledColor),
-          color: showRemoveIcon ? Theme.of(context).cardColor : isIncrement ? Theme.of(context).primaryColor : Theme.of(context).disabledColor.withOpacity(0.2),
+          color: showRemoveIcon ? Theme.of(context).cardColor : isIncrement ? color ?? Theme.of(context).primaryColor : Theme.of(context).disabledColor.withOpacity(0.2),
         ),
         alignment: Alignment.center,
         child: Icon(

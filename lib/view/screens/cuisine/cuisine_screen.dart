@@ -6,6 +6,7 @@ import 'package:efood_multivendor/util/dimensions.dart';
 import 'package:efood_multivendor/view/base/custom_app_bar.dart';
 import 'package:efood_multivendor/view/base/footer_view.dart';
 import 'package:efood_multivendor/view/base/menu_drawer.dart';
+import 'package:efood_multivendor/view/base/web_header.dart';
 import 'package:efood_multivendor/view/base/web_page_title_widget.dart';
 import 'package:efood_multivendor/view/screens/home/widget/new/cuisine_card.dart';
 import 'package:flutter/material.dart';
@@ -18,6 +19,7 @@ class CuisineScreen extends StatefulWidget {
 }
 
 class _CuisineScreenState extends State<CuisineScreen> {
+  final ScrollController scrollController = ScrollController();
   @override
   void initState() {
     super.initState();
@@ -30,23 +32,25 @@ class _CuisineScreenState extends State<CuisineScreen> {
       backgroundColor: Theme.of(context).colorScheme.background,
       endDrawer: const MenuDrawer(), endDrawerEnableOpenDragGesture: false,
       body: Scrollbar(
+        controller: scrollController,
         child: SingleChildScrollView(
+          controller: scrollController,
           child: Column(
             children: [
               WebScreenTitleWidget(title: 'cuisines'.tr),
 
               Center(child: FooterView(
-                  child: SizedBox(
-                    width: Dimensions.webMaxWidth,
-                    child: Column(
-                      children: [
-                        RefreshIndicator(
-                          onRefresh: () async {
-                            await Get.find<CuisineController>().getCuisineList();
-                          },
-                          child: Padding(
-                            padding: EdgeInsets.only(left: ResponsiveHelper.isDesktop(context) ? 0 : Dimensions.paddingSizeDefault, right: ResponsiveHelper.isDesktop(context) ? 0 : Dimensions.paddingSizeDefault),
-                            child: GetBuilder<CuisineController>(
+                child: SizedBox(
+                  width: Dimensions.webMaxWidth,
+                  child: Column(
+                    children: [
+                      RefreshIndicator(
+                        onRefresh: () async {
+                          await Get.find<CuisineController>().getCuisineList();
+                        },
+                        child: Padding(
+                          padding: EdgeInsets.only(left: ResponsiveHelper.isDesktop(context) ? 0 : Dimensions.paddingSizeDefault, right: ResponsiveHelper.isDesktop(context) ? 0 : Dimensions.paddingSizeDefault),
+                          child: GetBuilder<CuisineController>(
                               builder: (cuisineController) {
                                 return cuisineController.cuisineModel != null ? GridView.builder(
                                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -61,6 +65,7 @@ class _CuisineScreenState extends State<CuisineScreen> {
                                     physics: const NeverScrollableScrollPhysics(),
                                     itemBuilder: (context, index){
                                       return InkWell(
+                                        hoverColor: Colors.transparent,
                                         onTap: (){
                                           Get.toNamed(RouteHelper.getCuisineRestaurantRoute(cuisineController.cuisineModel!.cuisines![index].id, cuisineController.cuisineModel!.cuisines![index].name));
                                         },
@@ -68,19 +73,19 @@ class _CuisineScreenState extends State<CuisineScreen> {
                                           height: 130,
                                           child: CuisineCard(
                                             image: '${Get.find<SplashController>().configModel!.baseUrls!.cuisineImageUrl}/${cuisineController.cuisineModel!.cuisines![index].image}',
-                                          name: cuisineController.cuisineModel!.cuisines![index].name!,
+                                            name: cuisineController.cuisineModel!.cuisines![index].name!,
                                           ),
                                         ),
                                       );
                                     }) : const Center(child: CircularProgressIndicator());
                               }
-                            ),
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
+              ),
               ),
             ],
           ),

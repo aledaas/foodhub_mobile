@@ -102,19 +102,23 @@ class Product {
         categoryIds!.add(CategoryIds.fromJson(v));
       });
     }
-    if (json['variations'] != null && json['variations'].isNotEmpty) {
+    if (json['variations'] != null) {
       variations = [];
-      if(json['variations'][0]['values'] != null) {
-        json['variations'].forEach((v) {
-          variations!.add(Variation.fromJson(v));
-        });
-      }
+      json['variations'].forEach((v) {
+        variations!.add(Variation.fromJson(v));
+      });
     }
     if (json['add_ons'] != null) {
       addOns = [];
-      json['add_ons'].forEach((v) {
-        addOns!.add(AddOns.fromJson(v));
-      });
+      if (json['add_ons'].length > 0 && json['add_ons'][0] != '[') {
+        json['add_ons'].forEach((v) {
+          addOns!.add(AddOns.fromJson(v));
+        });
+      } else if(json['addons'] != null){
+        json['addons'].forEach((v) {
+          addOns!.add(AddOns.fromJson(v));
+        });
+      }
     }
     if (json['choice_options'] != null && json['choice_options'] is !String) {
       choiceOptions = [];
@@ -237,18 +241,21 @@ class Variation {
 class VariationValue {
   String? level;
   double? optionPrice;
+  bool? isSelected;
 
-  VariationValue({this.level, this.optionPrice});
+  VariationValue({this.level, this.optionPrice, this.isSelected});
 
   VariationValue.fromJson(Map<String, dynamic> json) {
     level = json['label'];
     optionPrice = double.parse(json['optionPrice'].toString());
+    isSelected = json['isSelected'];
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['label'] = level;
     data['optionPrice'] = optionPrice;
+    data['isSelected'] = isSelected;
     return data;
   }
 }

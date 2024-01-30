@@ -8,6 +8,7 @@ import 'package:efood_multivendor/util/dimensions.dart';
 import 'package:efood_multivendor/util/images.dart';
 import 'package:efood_multivendor/util/styles.dart';
 import 'package:efood_multivendor/view/base/custom_button.dart';
+import 'package:efood_multivendor/view/base/custom_snackbar.dart';
 import 'package:efood_multivendor/view/screens/wallet/widget/add_fund_dialogue.dart';
 import 'package:efood_multivendor/view/screens/wallet/widget/wallet_bottom_sheet.dart';
 import 'package:flutter/material.dart';
@@ -44,7 +45,7 @@ class WalletCardWidget extends StatelessWidget {
 
                     Row(children: [
                       Text(
-                        PriceConverter.convertPrice(userController.userInfoModel!.walletBalance), textDirection: TextDirection.ltr,
+                        PriceConverter.convertPrice(userController.userInfoModel?.walletBalance??0), textDirection: TextDirection.ltr,
                         style: robotoBold.copyWith(fontSize: Dimensions.fontSizeOverLarge, color: Theme.of(context).cardColor),
                       ),
                       const SizedBox(width: Dimensions.paddingSizeSmall),
@@ -76,7 +77,7 @@ class WalletCardWidget extends StatelessWidget {
                     ),
 
                     Text(
-                      userController.userInfoModel!.loyaltyPoint == null ? '0' : userController.userInfoModel!.loyaltyPoint.toString(),
+                      userController.userInfoModel?.loyaltyPoint == null ? '0' : userController.userInfoModel!.loyaltyPoint.toString(),
                       style: robotoBold.copyWith(fontSize: Dimensions.fontSizeOverLarge, color: Theme.of(context).textTheme.bodyLarge!.color),
                     ),
 
@@ -95,10 +96,15 @@ class WalletCardWidget extends StatelessWidget {
                 left: Get.find<LocalizationController>().isLtr ? null : 10,
                 child: InkWell(
                   onTap: (){
-                    Get.dialog(
-                      const Dialog(shadowColor: Colors.transparent, insetPadding: EdgeInsets.zero, backgroundColor: Colors.transparent,
-                          child: SizedBox(width: 500, child: AddFundDialogue())),
-                    );
+                    if(Get.find<SplashController>().configModel!.digitalPayment!) {
+                      Get.dialog(
+                        const Dialog(shadowColor: Colors.transparent, insetPadding: EdgeInsets.zero, backgroundColor: Colors.transparent,
+                            child: SizedBox(width: 500, child: AddFundDialogue())),
+                      );
+                    } else {
+                      showCustomSnackBar('currently_digital_payment_is_not_available'.tr);
+                    }
+
                   },
                   child: Container(
                     decoration: BoxDecoration(shape: BoxShape.circle, color: Theme.of(context).cardColor),

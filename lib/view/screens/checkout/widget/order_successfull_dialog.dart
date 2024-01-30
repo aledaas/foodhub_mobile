@@ -13,7 +13,8 @@ import 'package:get/get.dart';
 
 class OrderSuccessfulDialog extends StatefulWidget {
   final String? orderID;
-  const OrderSuccessfulDialog({Key? key, required this.orderID}) : super(key: key);
+  final String? contactNumber;
+  const OrderSuccessfulDialog({Key? key, required this.orderID, this.contactNumber}) : super(key: key);
 
   @override
   State<OrderSuccessfulDialog> createState() => _OrderSuccessfulDialogState();
@@ -24,7 +25,7 @@ class _OrderSuccessfulDialogState extends State<OrderSuccessfulDialog> {
   @override
   void initState() {
     super.initState();
-    Get.find<OrderController>().trackOrder(widget.orderID.toString(), null, false);
+    Get.find<OrderController>().trackOrder(widget.orderID.toString(), null, false, contactNumber: widget.contactNumber);
   }
 
   @override
@@ -74,6 +75,11 @@ class _OrderSuccessfulDialogState extends State<OrderSuccessfulDialog> {
                 Text(
                   success ? 'you_placed_the_order_successfully'.tr : 'your_order_is_failed_to_place'.tr,
                   style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge),
+                ),
+                const SizedBox(height: Dimensions.paddingSizeDefault),
+                Text(
+                  '${'order_id'.tr}: ${widget.orderID}',
+                  style: robotoMedium.copyWith(fontSize: Dimensions.fontSizeLarge, color: Theme.of(context).primaryColor),
                 ),
                 const SizedBox(height: Dimensions.paddingSizeDefault),
 

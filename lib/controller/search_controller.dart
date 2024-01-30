@@ -23,12 +23,18 @@ class SearchController extends GetxController implements GetxService {
   bool _isSearchMode = true;
   final List<String> _sortList = ['ascending'.tr, 'descending'.tr];
   int _sortIndex = -1;
+  int _restaurantSortIndex = -1;
   int _rating = -1;
+  int _restaurantRating = -1;
   bool _isRestaurant = false;
   bool _isAvailableFoods = false;
+  bool _isAvailableRestaurant = false;
   bool _isDiscountedFoods = false;
+  bool _isDiscountedRestaurant = false;
   bool _veg = false;
+  bool _restaurantVeg = false;
   bool _nonVeg = false;
+  bool _restaurantNonVeg = false;
 
   List<Product>? get searchProductList => _searchProductList;
   List<Product>? get allProductList => _allProductList;
@@ -41,20 +47,35 @@ class SearchController extends GetxController implements GetxService {
   List<String> get historyList => _historyList;
   List<String> get sortList => _sortList;
   int get sortIndex => _sortIndex;
+  int get restaurantSortIndex => _restaurantSortIndex;
   int get rating => _rating;
+  int get restaurantRating => _restaurantRating;
   bool get isRestaurant => _isRestaurant;
   bool get isAvailableFoods => _isAvailableFoods;
+  bool get isAvailableRestaurant => _isAvailableRestaurant;
   bool get isDiscountedFoods => _isDiscountedFoods;
+  bool get isDiscountedRestaurant => _isDiscountedRestaurant;
   bool get veg => _veg;
+  bool get restaurantVeg => _restaurantVeg;
   bool get nonVeg => _nonVeg;
+  bool get restaurantNonVeg => _restaurantNonVeg;
 
   void toggleVeg() {
     _veg = !_veg;
     update();
   }
 
+  void toggleResVeg() {
+    _restaurantVeg = !_restaurantVeg;
+    update();
+  }
+
   void toggleNonVeg() {
     _nonVeg = !_nonVeg;
+    update();
+  }
+  void toggleResNonVeg() {
+    _restaurantNonVeg = !_restaurantNonVeg;
     update();
   }
 
@@ -63,8 +84,18 @@ class SearchController extends GetxController implements GetxService {
     update();
   }
 
+  void toggleAvailableRestaurant() {
+    _isAvailableRestaurant = !_isAvailableRestaurant;
+    update();
+  }
+
   void toggleDiscountedFoods() {
     _isDiscountedFoods = !_isDiscountedFoods;
+    update();
+  }
+
+  void toggleDiscountedRestaurant() {
+    _isDiscountedRestaurant = !_isDiscountedRestaurant;
     update();
   }
 
@@ -73,7 +104,7 @@ class SearchController extends GetxController implements GetxService {
     update();
   }
 
-  void setSearchMode(bool isSearchMode) {
+  void setSearchMode(bool isSearchMode, {bool canUpdate = true}) {
     _isSearchMode = isSearchMode;
     if(isSearchMode) {
       _searchText = '';
@@ -84,15 +115,26 @@ class SearchController extends GetxController implements GetxService {
       _searchProductList = null;
       _searchRestList = null;
       _sortIndex = -1;
+      _restaurantSortIndex = -1;
       _isDiscountedFoods = false;
+      _isDiscountedRestaurant = false;
       _isAvailableFoods = false;
+      _isAvailableRestaurant = false;
       _veg = false;
+      _restaurantVeg = false;
       _nonVeg = false;
+      _restaurantNonVeg = false;
       _rating = -1;
+      _restaurantRating = -1;
       _upperValue = 0;
       _lowerValue = 0;
     }
-    update();
+    if (_isRestaurant){
+      _isRestaurant = !_isRestaurant;
+    }
+    if(canUpdate) {
+      update();
+    }
   }
 
   void setLowerAndUpperValue(double lower, double upper) {
@@ -139,25 +181,25 @@ class SearchController extends GetxController implements GetxService {
   void sortRestSearchList() {
     _searchRestList = [];
     _searchRestList!.addAll(_allRestList!);
-    if(_rating != -1) {
-      _searchRestList!.removeWhere((restaurant) => restaurant.avgRating! < _rating);
+    if(_restaurantRating != -1) {
+      _searchRestList!.removeWhere((restaurant) => restaurant.avgRating! < _restaurantRating);
     }
-    if(!_veg && _nonVeg) {
+    if(!_restaurantVeg && _restaurantNonVeg) {
       _searchRestList!.removeWhere((product) => product.nonVeg == 0);
     }
-    if(!_nonVeg && _veg) {
+    if(!_restaurantNonVeg && _restaurantVeg) {
       _searchRestList!.removeWhere((product) => product.veg == 0);
     }
-    if(_isAvailableFoods || _isDiscountedFoods) {
-      if(_isAvailableFoods) {
+    if(_isAvailableRestaurant || _isDiscountedRestaurant) {
+      if(_isAvailableRestaurant) {
         _searchRestList!.removeWhere((restaurant) => restaurant.open == 0);
       }
-      if(_isDiscountedFoods) {
+      if(_isDiscountedRestaurant) {
         _searchRestList!.removeWhere((restaurant) => restaurant.discount == null);
       }
     }
-    if(_sortIndex != -1) {
-      if(_sortIndex == 0) {
+    if(_restaurantSortIndex != -1) {
+      if(_restaurantSortIndex == 0) {
         _searchRestList!.sort((a, b) => a.name!.toLowerCase().compareTo(b.name!.toLowerCase()));
       }else {
         _searchRestList!.sort((a, b) => a.name!.toLowerCase().compareTo(b.name!.toLowerCase()));
@@ -188,6 +230,7 @@ class SearchController extends GetxController implements GetxService {
     if((_isRestaurant && query.isNotEmpty && query != _restResultText) || (!_isRestaurant && query.isNotEmpty && query != _prodResultText)) {
       _searchText = query;
       _rating = -1;
+      _restaurantRating = -1;
       _upperValue = 0;
       _lowerValue = 0;
       if (_isRestaurant) {
@@ -261,8 +304,18 @@ class SearchController extends GetxController implements GetxService {
     update();
   }
 
+  void setRestaurantRating(int rate) {
+    _restaurantRating = rate;
+    update();
+  }
+
   void setSortIndex(int index) {
     _sortIndex = index;
+    update();
+  }
+
+  void setRestSortIndex(int index) {
+    _restaurantSortIndex = index;
     update();
   }
 
@@ -275,6 +328,16 @@ class SearchController extends GetxController implements GetxService {
     _veg = false;
     _nonVeg = false;
     _sortIndex = -1;
+    update();
+  }
+
+  void resetRestaurantFilter() {
+    _restaurantRating = -1;
+    _isAvailableRestaurant = false;
+    _isDiscountedRestaurant = false;
+    _restaurantVeg = false;
+    _restaurantNonVeg = false;
+    _restaurantSortIndex = -1;
     update();
   }
 

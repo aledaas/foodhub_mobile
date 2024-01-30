@@ -2,7 +2,6 @@ import 'package:efood_multivendor/controller/coupon_controller.dart';
 import 'package:efood_multivendor/controller/localization_controller.dart';
 import 'package:efood_multivendor/controller/order_controller.dart';
 import 'package:efood_multivendor/controller/restaurant_controller.dart';
-import 'package:efood_multivendor/controller/splash_controller.dart';
 import 'package:efood_multivendor/helper/price_converter.dart';
 import 'package:efood_multivendor/helper/responsive_helper.dart';
 import 'package:efood_multivendor/util/dimensions.dart';
@@ -151,11 +150,11 @@ class CouponBottomSheet extends StatelessWidget {
                       const SizedBox(),
                     ]),
 
-                    couponController.couponList!.isNotEmpty ? GridView.builder(
+                    couponController.couponList != null && couponController.couponList!.isNotEmpty ? GridView.builder(
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: ResponsiveHelper.isDesktop(context) ? 2 : ResponsiveHelper.isTab(context) ? 2 : 1,
+                        crossAxisCount: ResponsiveHelper.isDesktop(context) ? 3 : ResponsiveHelper.isTab(context) ? 2 : 1,
                         mainAxisSpacing: Dimensions.paddingSizeSmall, crossAxisSpacing: Dimensions.paddingSizeSmall,
-                        childAspectRatio: ResponsiveHelper.isMobile(context) ? 3 : 3,
+                        childAspectRatio: ResponsiveHelper.isMobile(context) ? 3 : 2.5,
                       ),
                       itemCount: couponController.couponList!.length,
                       shrinkWrap: true,

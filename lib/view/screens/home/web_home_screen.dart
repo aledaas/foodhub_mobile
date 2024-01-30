@@ -4,6 +4,7 @@ import 'package:efood_multivendor/controller/splash_controller.dart';
 import 'package:efood_multivendor/data/model/response/config_model.dart';
 import 'package:efood_multivendor/util/dimensions.dart';
 import 'package:efood_multivendor/view/base/footer_view.dart';
+import 'package:efood_multivendor/view/base/web_header.dart';
 import 'package:efood_multivendor/view/screens/home/web/web_new/web_cuisine_view.dart';
 import 'package:efood_multivendor/view/screens/home/web/web_new/web_new_on_stackfood_view.dart';
 import 'package:efood_multivendor/view/screens/home/widget/combined_widgets/all_restaurant_filter_widget.dart';
@@ -51,7 +52,7 @@ class _WebHomeScreenState extends State<WebHomeScreen> {
 
         const SliverToBoxAdapter(
           child: Center(child: SizedBox(width: Dimensions.webMaxWidth,
-                child: WhatOnYourMindView()),
+              child: WhatOnYourMindView()),
           ),
         ),
 
@@ -62,55 +63,55 @@ class _WebHomeScreenState extends State<WebHomeScreen> {
 
 
         SliverToBoxAdapter(
-          child: Center(child: SizedBox(
-            width: Dimensions.webMaxWidth,
-            child: Column(children: [
-              const BadWeatherWidget(),
+            child: Center(child: SizedBox(
+              width: Dimensions.webMaxWidth,
+              child: Column(children: [
+                const BadWeatherWidget(),
 
-              const TodayTrendsView(),
+                const TodayTrendsView(),
 
-              isLogin ? const OrderAgainView() : const SizedBox(),
+                isLogin ? const OrderAgainView() : const SizedBox(),
 
-              _configModel!.popularFood == 1 ?  const BestReviewItemView(isPopular: false) : const SizedBox(),
+                _configModel!.popularFood == 1 ?  const BestReviewItemView(isPopular: false) : const SizedBox(),
 
-              const WebCuisineView(),
+                const WebCuisineView(),
 
-              const PopularRestaurantsView(),
+                const PopularRestaurantsView(),
 
-              const PopularFoodNearbyView(),
+                const PopularFoodNearbyView(),
 
-              isLogin ? const PopularRestaurantsView(isRecentlyViewed: true) : const SizedBox(),
+                isLogin ? const PopularRestaurantsView(isRecentlyViewed: true) : const SizedBox(),
 
-              const WebLocationAndReferBannerView(),
+                const WebLocationAndReferBannerView(),
 
-              _configModel!.newRestaurant == 1 ? const WebNewOnStackFoodView(isLatest: true) : const SizedBox(),
+                _configModel!.newRestaurant == 1 ? const WebNewOnStackFoodView(isLatest: true) : const SizedBox(),
 
-              const PromotionalBannerView(),
-
-
-
-              const SizedBox(width: Dimensions.paddingSizeExtraSmall),
-
-
-              // _configModel!.popularRestaurant == 1 ? const WebPopularRestaurantView(isPopular: true) : const SizedBox(),
-
-              // const SizedBox(height: Dimensions.paddingSizeSmall),
-              // const WebCampaignView(),
-
-              //const WebCuisineView(),
-
-              // _configModel!.popularFood == 1 ? const WebPopularFoodView(isPopular: true) : const SizedBox(),
-
-              // isLogin ? const WebPopularRestaurantView(isPopular: false) : const SizedBox(),
-
-              // _configModel!.newRestaurant == 1 ? const WebPopularRestaurantView(isPopular: false) : const SizedBox(),
-
-              // _configModel!.mostReviewedFoods == 1 && isLogin ? const WebPopularRestaurantView(isPopular: false, isRecentlyViewed: true) : const SizedBox(),
+                const PromotionalBannerView(),
 
 
 
-            ]),
-          ))
+                const SizedBox(width: Dimensions.paddingSizeExtraSmall),
+
+
+                // _configModel!.popularRestaurant == 1 ? const WebPopularRestaurantView(isPopular: true) : const SizedBox(),
+
+                // const SizedBox(height: Dimensions.paddingSizeSmall),
+                // const WebCampaignView(),
+
+                //const WebCuisineView(),
+
+                // _configModel!.popularFood == 1 ? const WebPopularFoodView(isPopular: true) : const SizedBox(),
+
+                // isLogin ? const WebPopularRestaurantView(isPopular: false) : const SizedBox(),
+
+                // _configModel!.newRestaurant == 1 ? const WebPopularRestaurantView(isPopular: false) : const SizedBox(),
+
+                // _configModel!.mostReviewedFoods == 1 && isLogin ? const WebPopularRestaurantView(isPopular: false, isRecentlyViewed: true) : const SizedBox(),
+
+
+
+              ]),
+            ))
         ),
 
 

@@ -51,6 +51,7 @@ class AddressBottomSheet extends StatelessWidget {
 
                   locationController.addressList != null && locationController.addressList!.isEmpty ? Column(children: [
                     Image.asset(Images.noAddress, width: 150),
+                    const SizedBox(height: Dimensions.paddingSizeSmall),
 
                     Text(
                       'you_dont_have_any_saved_address_yet'.tr, textAlign: TextAlign.center,

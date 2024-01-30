@@ -93,6 +93,7 @@ class DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    bool keyboardVisible = MediaQuery.of(context).viewInsets.bottom != 0;
     return WillPopScope(
       onWillPop: () async {
         if (_pageIndex != 0) {
@@ -121,8 +122,8 @@ class DashboardScreenState extends State<DashboardScreen> {
         key: _scaffoldKey,
 
         floatingActionButton: GetBuilder<OrderController>(builder: (orderController) {
-            return ResponsiveHelper.isDesktop(context) ? const SizedBox() :
-            (orderController.showBottomSheet && orderController.runningOrderList != null && orderController.runningOrderList!.isNotEmpty)
+            return ResponsiveHelper.isDesktop(context) || keyboardVisible ? const SizedBox() :
+            (orderController.showBottomSheet && orderController.runningOrderList != null && orderController.runningOrderList!.isNotEmpty && _isLogin)
             ? const SizedBox.shrink() : FloatingActionButton(
               elevation: 5,
               backgroundColor: _pageIndex == 2 ? Theme.of(context).primaryColor : Theme.of(context).cardColor,
@@ -138,7 +139,7 @@ class DashboardScreenState extends State<DashboardScreen> {
 
         bottomNavigationBar: ResponsiveHelper.isDesktop(context) ? const SizedBox() : GetBuilder<OrderController>(builder: (orderController) {
 
-            return (orderController.showBottomSheet && (orderController.runningOrderList != null && orderController.runningOrderList!.isNotEmpty))
+            return (orderController.showBottomSheet && (orderController.runningOrderList != null && orderController.runningOrderList!.isNotEmpty && _isLogin))
             ? const SizedBox() : BottomAppBar(
               elevation: 5,
               notchMargin: 5,
